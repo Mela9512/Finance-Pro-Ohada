@@ -43,11 +43,28 @@ import { AdminController } from './modules/admin/admin.controller';
 import { AdminService } from './modules/admin/admin.service';
 import { BudgetController } from './modules/budget/budget.controller';
 import { BudgetService } from './modules/budget/budget.service';
+import { SupabaseService } from './supabase.service';
+
+const dbUrl = process.env.DATABASE_URL || '';
+const isDirectPg = dbUrl.startsWith('postgresql://') && !dbUrl.includes('db.lacapogzijbmabzwxexl.supabase.co');
+
+const ormConfig = isDirectPg
+  ? {
+      ...dataSourceOptions,
+      retryAttempts: 1,
+      retryDelay: 500,
+    }
+  : {
+      type: 'sqlite' as const,
+      database: ':memory:',
+      entities: dataSourceOptions.entities,
+      synchronize: true,
+    };
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot(dataSourceOptions),
+    TypeOrmModule.forRoot(ormConfig),
     TypeOrmModule.forFeature([
       AccountEntity,
       CompanyEntity,
@@ -78,6 +95,14 @@ import { BudgetService } from './modules/budget/budget.service';
     BudgetController,
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
     SequenceService,
     AuditLogService,
     DashboardService,
@@ -89,8 +114,7 @@ import { BudgetService } from './modules/budget/budget.service';
     ReportsService,
     AdminService,
     BudgetService,
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
-    { provide: APP_GUARD, useClass: RolesGuard },
+    SupabaseService,
   ],
 })
 export class AppModule {}

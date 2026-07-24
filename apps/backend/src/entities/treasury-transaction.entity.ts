@@ -17,7 +17,7 @@ export class TreasuryTransactionEntity {
   @Column()
   date: string;
 
-  @Column({ type: 'enum', enum: ['ENCAISSEMENT', 'DECAISSEMENT', 'VIREMENT_INTERNE'] })
+  @Column({ type: 'simple-enum', enum: ['ENCAISSEMENT', 'DECAISSEMENT', 'VIREMENT_INTERNE'] })
   type: TreasuryTransactionType;
 
   @Column()
@@ -32,7 +32,7 @@ export class TreasuryTransactionEntity {
   @Column({ nullable: true })
   tierName?: string;
 
-  @Column({ type: 'enum', enum: ['RAPPROCHE', 'EN_ATTENTE'], default: 'EN_ATTENTE' })
+  @Column({ type: 'simple-enum', enum: ['RAPPROCHE', 'EN_ATTENTE'], default: 'EN_ATTENTE' })
   status: TreasuryTransactionStatus;
 
   @Column()

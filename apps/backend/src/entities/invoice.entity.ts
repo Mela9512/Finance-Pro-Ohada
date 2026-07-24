@@ -12,7 +12,7 @@ export class InvoiceEntity {
   @Column({ unique: true })
   invoiceNumber: string;
 
-  @Column({ type: 'enum', enum: ['VENTE', 'ACHAT', 'AVOIR'] })
+  @Column({ type: 'simple-enum', enum: ['VENTE', 'ACHAT', 'AVOIR'] })
   type: InvoiceType;
 
   @Column()
@@ -48,7 +48,7 @@ export class InvoiceEntity {
   @Column('numeric', { precision: 15, scale: 2, default: 0 })
   amountPaid: number;
 
-  @Column({ type: 'enum', enum: ['BROUILLON', 'VALIDE', 'PAYE', 'ANNULE', 'PARTIEL'], default: 'BROUILLON' })
+  @Column({ type: 'simple-enum', enum: ['BROUILLON', 'VALIDE', 'PAYE', 'ANNULE', 'PARTIEL'], default: 'BROUILLON' })
   status: InvoiceStatus;
 
   @Column({ nullable: true })

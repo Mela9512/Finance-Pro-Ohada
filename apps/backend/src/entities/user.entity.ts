@@ -16,7 +16,7 @@ export class UserEntity {
   @Column()
   name: string;
 
-  @Column({ type: 'enum', enum: ['ADMIN', 'COMPTABLE', 'GESTIONNAIRE', 'LECTEUR'], default: 'COMPTABLE' })
+  @Column({ type: 'simple-enum', enum: ['ADMIN', 'COMPTABLE', 'GESTIONNAIRE', 'LECTEUR'], default: 'COMPTABLE' })
   role: UserRole;
 
   @Column({ nullable: true })

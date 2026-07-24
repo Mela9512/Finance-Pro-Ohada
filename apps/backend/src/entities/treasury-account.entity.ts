@@ -13,7 +13,7 @@ export class TreasuryAccountEntity {
   @Column()
   name: string;
 
-  @Column({ type: 'enum', enum: ['BANQUE', 'CAISSE', 'MOBILE_MONEY'] })
+  @Column({ type: 'simple-enum', enum: ['BANQUE', 'CAISSE', 'MOBILE_MONEY'] })
   type: TreasuryAccountType;
 
   @Column({ nullable: true })

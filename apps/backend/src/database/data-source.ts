@@ -18,10 +18,15 @@ import { BudgetEntity } from '../entities/budget.entity';
 
 dotenv.config();
 
+const isSupabase = process.env.DATABASE_URL?.includes('supabase');
+
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
-  url: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  url: process.env.DATABASE_URL || 'postgresql://postgres:Meladieu95%40%40@db.lacapogzijbmabzwxexl.supabase.co:5432/postgres',
+  ssl: isSupabase || process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  extra: {
+    connectionTimeoutMillis: 5000,
+  },
   entities: [
     UserEntity,
     CompanyEntity,
@@ -38,8 +43,9 @@ export const dataSourceOptions: DataSourceOptions = {
     AuditLogEntity,
     BudgetEntity,
   ],
-  migrations: [__dirname + '/migrations/*.{ts,js}'],
-  synchronize: false,
+  migrations: [__dirname + '/migrations/*{.ts,.js}'],
+  synchronize: process.env.NODE_ENV !== 'production',
 };
 
-export default new DataSource(dataSourceOptions);
+const dataSource = new DataSource(dataSourceOptions);
+export default dataSource;
