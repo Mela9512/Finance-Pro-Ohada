@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "npm run dev:frontend",
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "dev:backend": "npm run start:dev --workspace=apps/backend",
     "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
