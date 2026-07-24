@@ -1,0 +1,28 @@
+{
+  "name": "financepro-ohada",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Logiciel SaaS professionnel de comptabilité et gestion conforme au SYSCOHADA révisé",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "dev:backend": "npm run start:dev --workspace=apps/backend",
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
+    "start": "node apps/backend/dist/main.js"
+  },
+  "keywords": [
+    "ohada",
+    "syscohada",
+    "comptabilite",
+    "finance",
+    "saas",
+    "nestjs",
+    "react",
+    "typescript"
+  ],
+  "author": "FinancePro Team",
+  "license": "MIT"
+}
