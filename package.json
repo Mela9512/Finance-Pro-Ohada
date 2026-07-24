@@ -8,10 +8,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm run dev:frontend",
-    "dev:frontend": "npm run dev --workspace=apps/frontend",
-    "dev:backend": "npm run start:dev --workspace=apps/backend",
-    "build": "npm run build --workspace=packages/shared && npm run build --workspace=apps/backend && npm run build --workspace=apps/frontend",
+    "dev": "npm --prefix apps/frontend run dev",
+    "dev:frontend": "npm --prefix apps/frontend run dev",
+    "dev:backend": "node apps/backend/dist/main.js",
+    "build": "npm --prefix packages/shared run build && npm --prefix apps/backend run build && npm --prefix apps/frontend run build",
     "start": "node apps/backend/dist/main.js"
   },
   "keywords": [
