@@ -17,6 +17,7 @@ import { ReportsController } from './modules/reports/reports.controller';
 import { ReportsService } from './modules/reports/reports.service';
 import { AdminController } from './modules/admin/admin.controller';
 import { AdminService } from './modules/admin/admin.service';
+import { SupabaseService } from './supabase.service';
 
 @Module({
   imports: [],
@@ -40,7 +41,8 @@ import { AdminService } from './modules/admin/admin.service';
     SuppliersService,
     InvoicingService,
     ReportsService,
-    AdminService
+    AdminService,
+    SupabaseService
   ],
 })
 export class AppModule {}
