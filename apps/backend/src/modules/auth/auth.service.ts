@@ -46,7 +46,9 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Utilisateur introuvable');
     }
-    const company = await this.companies.findOne({ where: { id: user.companyId } });
+    const company = user.companyId 
+      ? await this.companies.findOne({ where: { id: user.companyId } })
+      : null;
     return {
       user: { id: user.id, email: user.email, name: user.name, role: user.role, companyId: user.companyId },
       company,

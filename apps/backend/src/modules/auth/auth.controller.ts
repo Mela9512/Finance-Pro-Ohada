@@ -42,8 +42,16 @@ export class AuthController {
     return { success: true };
   }
 
+  @Public()
   @Get('me')
-  getProfile(@CurrentUser() currentUser: AuthenticatedUser) {
-    return this.authService.getProfile(currentUser.userId);
+  async getProfile(@CurrentUser() currentUser?: AuthenticatedUser) {
+    if (!currentUser || !currentUser.userId) {
+      return { user: null, company: null };
+    }
+    try {
+      return await this.authService.getProfile(currentUser.userId);
+    } catch {
+      return { user: null, company: null };
+    }
   }
 }
