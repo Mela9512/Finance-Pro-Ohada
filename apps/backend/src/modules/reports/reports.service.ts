@@ -1,83 +1,158 @@
 import { Injectable } from '@nestjs/common';
-import { FinancialReportBilan, CompteDeResultat } from '@financepro/shared';
-import { MockDatabase } from '../../mock-db';
+import { FinancialReportBilan, CompteDeResultat, BilanItem } from '@financepro/shared';
+import { AccountingService, AccountBalance } from '../accounting/accounting.service';
+
+const AMORTISSEMENT_PREFIXES = ['28', '29', '39', '49', '59'];
+const EMPRUNT_PREFIXES = ['161', '162'];
+
+function toBilanItem(b: AccountBalance, net: number): BilanItem {
+  const isContra = AMORTISSEMENT_PREFIXES.some((p) => b.code.startsWith(p));
+  return {
+    codeRef: b.code,
+    label: b.label,
+    gross: isContra ? 0 : Math.abs(net),
+    depreciation: isContra ? Math.abs(net) : 0,
+    net,
+    netPrevious: 0,
+  };
+}
 
 @Injectable()
 export class ReportsService {
-  getBilan(): FinancialReportBilan {
-    const totalImmo = 35000000;
-    const totalStocks = 14500000;
-    const totalCreances = 26100000;
-    const totalTresorerieActif = 75900000;
+  constructor(private readonly accountingService: AccountingService) {}
 
-    const totalActif = totalImmo + totalStocks + totalCreances + totalTresorerieActif;
+  private async computeCompteDeResultat(companyId: string): Promise<CompteDeResultat> {
+    const balances = await this.accountingService.getAccountBalances(companyId);
 
-    const capitauxPropres = 85000000;
-    const dettesFinancieres = 25000000;
-    const passifCirculant = 10550000;
-    const resultatNet = 30950000;
-    const totalPassif = capitauxPropres + dettesFinancieres + passifCirculant + resultatNet;
+    const sumCharges = (predicate: (b: AccountBalance) => boolean) =>
+      balances.filter((b) => b.classNum === 6 && predicate(b)).reduce((s, b) => s + (b.soldeDebiteur - b.soldeCrediteur), 0);
+
+    const sumProduits = (predicate: (b: AccountBalance) => boolean) =>
+      balances.filter((b) => b.classNum === 7 && predicate(b)).reduce((s, b) => s + (b.soldeCrediteur - b.soldeDebiteur), 0);
+
+    const chiffreAffaires = sumProduits((b) => b.code.startsWith('70'));
+    const achatsMarchandises = sumCharges((b) => b.code.startsWith('60'));
+    const margeBrute = chiffreAffaires - achatsMarchandises;
+
+    const consommationsIntermediaires = sumCharges(
+      (b) => !b.code.startsWith('60') && !b.code.startsWith('64') && !b.code.startsWith('66') && !b.code.startsWith('67') && !b.code.startsWith('68'),
+    );
+    const valeurAjoutee = margeBrute - consommationsIntermediaires;
+
+    const chargesPersonnel = sumCharges((b) => b.code.startsWith('66'));
+    const ebe = valeurAjoutee - chargesPersonnel;
+
+    const dotationsAmortissements = sumCharges((b) => b.code.startsWith('68'));
+    const resultatExploitation = ebe - dotationsAmortissements;
+
+    const chargesFinancieres = sumCharges((b) => b.code.startsWith('67'));
+    const produitsFinanciers = sumProduits((b) => b.code.startsWith('77'));
+    const resultatFinancier = produitsFinanciers - chargesFinancieres;
+
+    const produitsHAO = balances.filter((b) => b.classNum === 8 && b.type === 'credit').reduce((s, b) => s + (b.soldeCrediteur - b.soldeDebiteur), 0);
+    const chargesHAO = balances.filter((b) => b.classNum === 8 && b.type === 'debit').reduce((s, b) => s + (b.soldeDebiteur - b.soldeCrediteur), 0);
+    const resultatHAO = produitsHAO - chargesHAO;
+
+    const impotSurBenefices = sumCharges((b) => b.code.startsWith('891'));
+
+    const resultatNet = resultatExploitation + resultatFinancier + resultatHAO - impotSurBenefices;
 
     return {
-      actif: {
-        immobilise: [
-          { codeRef: 'AD', label: 'Immobilisations Incorporelles (Logiciels, Brevets)', gross: 5000000, depreciation: 1000000, net: 4000000, netPrevious: 3500000 },
-          { codeRef: 'AF', label: 'Immobilisations Corporelles (Bâtiments, Matériels)', gross: 40000000, depreciation: 9000000, net: 31000000, netPrevious: 28000000 }
-        ],
-        circulant: [
-          { codeRef: 'BH', label: 'Stocks de marchandises et matières premières', gross: 14500000, depreciation: 0, net: 14500000, netPrevious: 12000000 },
-          { codeRef: 'BI', label: 'Clients et comptes rattachés (Compte 411)', gross: 26100000, depreciation: 0, net: 26100000, netPrevious: 21500000 }
-        ],
-        tresorerie: [
-          { codeRef: 'BQ', label: 'Banques, Chèques et Caisses (Comptes 521, 541)', gross: 75900000, depreciation: 0, net: 75900000, netPrevious: 60000000 }
-        ],
-        totalActif
-      },
-      passif: {
-        capitauxPropres: [
-          { codeRef: 'CA', label: 'Capital Social (Compte 101)', gross: 50000000, depreciation: 0, net: 50000000, netPrevious: 50000000 },
-          { codeRef: 'CB', label: 'Réserves et Report à nouveau (Compte 111, 121)', gross: 35000000, depreciation: 0, net: 35000000, netPrevious: 20000000 }
-        ],
-        dettesFinancieres: [
-          { codeRef: 'DA', label: 'Emprunts et dettes financières (Compte 162)', gross: 25000000, depreciation: 0, net: 25000000, netPrevious: 30000000 }
-        ],
-        passifCirculant: [
-          { codeRef: 'DH', label: 'Fournisseurs et dettes d\'exploitation (Compte 401)', gross: 10550000, depreciation: 0, net: 10550000, netPrevious: 9800000 }
-        ],
-        tresoreriePassif: [],
-        totalPassif
+      chiffreAffaires,
+      achatsMarchandises,
+      margeBrute,
+      consommationsIntermediaires,
+      valeurAjoutee,
+      chargesPersonnel,
+      ebe,
+      dotationsAmortissements,
+      resultatExploitation,
+      chargesFinancieres,
+      produitsFinanciers,
+      resultatFinancier,
+      resultatHAO,
+      impotSurBenefices,
+      resultatNet,
+    };
+  }
+
+  async getBilan(companyId: string): Promise<FinancialReportBilan> {
+    const balances = await this.accountingService.getAccountBalances(companyId);
+    const compteDeResultat = await this.computeCompteDeResultat(companyId);
+
+    const immobilise: BilanItem[] = [];
+    const circulant: BilanItem[] = [];
+    const tresorerie: BilanItem[] = [];
+    const capitauxPropres: BilanItem[] = [];
+    const dettesFinancieres: BilanItem[] = [];
+    const passifCirculant: BilanItem[] = [];
+    const tresoreriePassif: BilanItem[] = [];
+
+    for (const b of balances) {
+      const solde = b.soldeDebiteur - b.soldeCrediteur;
+      if (b.classNum === 2) {
+        immobilise.push(toBilanItem(b, solde));
+      } else if (b.classNum === 3) {
+        circulant.push(toBilanItem(b, solde));
+      } else if (b.classNum === 4) {
+        if (b.type === 'debit') {
+          circulant.push(toBilanItem(b, solde));
+        } else {
+          passifCirculant.push(toBilanItem(b, -solde));
+        }
+      } else if (b.classNum === 5) {
+        if (solde >= 0) {
+          tresorerie.push(toBilanItem(b, solde));
+        } else {
+          tresoreriePassif.push(toBilanItem(b, -solde));
+        }
+      } else if (b.classNum === 1) {
+        if (EMPRUNT_PREFIXES.some((p) => b.code.startsWith(p))) {
+          dettesFinancieres.push(toBilanItem(b, -solde));
+        } else {
+          capitauxPropres.push(toBilanItem(b, -solde));
+        }
       }
+    }
+
+    capitauxPropres.push({
+      codeRef: 'RN',
+      label: compteDeResultat.resultatNet >= 0 ? "Résultat net de l'exercice (Bénéfice)" : "Résultat net de l'exercice (Perte)",
+      gross: Math.abs(compteDeResultat.resultatNet),
+      depreciation: 0,
+      net: compteDeResultat.resultatNet,
+      netPrevious: 0,
+    });
+
+    const sum = (items: BilanItem[]) => items.reduce((s, i) => s + i.net, 0);
+    const totalActif = sum(immobilise) + sum(circulant) + sum(tresorerie);
+    const totalPassif = sum(capitauxPropres) + sum(dettesFinancieres) + sum(passifCirculant) + sum(tresoreriePassif);
+
+    return {
+      actif: { immobilise, circulant, tresorerie, totalActif },
+      passif: { capitauxPropres, dettesFinancieres, passifCirculant, tresoreriePassif, totalPassif },
     };
   }
 
-  getCompteDeResultat(): CompteDeResultat {
-    return {
-      chiffreAffaires: 148500000,
-      achatsMarchandises: 54000000,
-      margeBrute: 94500000,
-      consommationsIntermediaires: 22000000,
-      valeurAjoutee: 72500000,
-      chargesPersonnel: 28000000,
-      ebe: 44500000,
-      dotationsAmortissements: 5000000,
-      resultatExploitation: 39500000,
-      chargesFinancieres: 3200000,
-      produitsFinanciers: 800000,
-      resultatFinancier: -2400000,
-      resultatHAO: 0,
-      impotSurBenefices: 6150000,
-      resultatNet: 30950000
-    };
+  getCompteDeResultat(companyId: string): Promise<CompteDeResultat> {
+    return this.computeCompteDeResultat(companyId);
   }
 
-  getTFT() {
+  async getTFT(companyId: string) {
+    const balances = await this.accountingService.getAccountBalances(companyId);
+    const tresorerieFin = balances
+      .filter((b) => b.classNum === 5)
+      .reduce((s, b) => s + (b.soldeDebiteur - b.soldeCrediteur), 0);
+
+    const compteDeResultat = await this.computeCompteDeResultat(companyId);
+
     return {
-      fluxExploitation: 38400000,
-      fluxInvestissement: -12500000,
-      fluxFinancement: -5000000,
-      variationTresorerie: 20900000,
-      tresorerieDebut: 55000000,
-      tresorerieFin: 75900000
+      fluxExploitation: compteDeResultat.resultatExploitation + compteDeResultat.dotationsAmortissements,
+      fluxInvestissement: 0,
+      fluxFinancement: 0,
+      variationTresorerie: tresorerieFin,
+      tresorerieDebut: 0,
+      tresorerieFin,
     };
   }
 }

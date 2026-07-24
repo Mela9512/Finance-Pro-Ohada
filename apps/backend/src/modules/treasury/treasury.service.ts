@@ -1,32 +1,41 @@
-import { Injectable } from '@nestjs/common';
-import { TreasuryAccount, TreasuryTransaction } from '@financepro/shared';
-import { MockDatabase } from '../../mock-db';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { TreasuryAccountEntity } from '../../entities/treasury-account.entity';
+import { TreasuryTransactionEntity } from '../../entities/treasury-transaction.entity';
+import { CreateTreasuryTransactionDto } from './dto/create-transaction.dto';
 
 @Injectable()
 export class TreasuryService {
-  getAccounts(): TreasuryAccount[] {
-    return MockDatabase.treasuryAccounts;
+  constructor(
+    @InjectRepository(TreasuryAccountEntity) private readonly accountRepo: Repository<TreasuryAccountEntity>,
+    @InjectRepository(TreasuryTransactionEntity) private readonly txRepo: Repository<TreasuryTransactionEntity>,
+  ) {}
+
+  getAccounts(companyId: string): Promise<TreasuryAccountEntity[]> {
+    return this.accountRepo.find({ where: { companyId }, order: { code: 'ASC' } });
   }
 
-  getTransactions(): TreasuryTransaction[] {
-    return MockDatabase.treasuryTransactions;
+  getTransactions(companyId: string): Promise<TreasuryTransactionEntity[]> {
+    return this.txRepo.find({ where: { companyId }, order: { date: 'DESC' } });
   }
 
-  createTransaction(tx: Omit<TreasuryTransaction, 'id' | 'status'>): TreasuryTransaction {
-    const newTx: TreasuryTransaction = {
-      ...tx,
-      id: `tx-${Date.now()}`,
-      status: 'RAPPROCHE'
-    };
-    MockDatabase.treasuryTransactions.unshift(newTx);
-    
-    // Update account balance
-    const acc = MockDatabase.treasuryAccounts.find(a => a.id === tx.treasuryAccountId);
-    if (acc) {
-      if (tx.type === 'ENCAISSEMENT') acc.balance += tx.amount;
-      if (tx.type === 'DECAISSEMENT') acc.balance -= tx.amount;
+  async createTransaction(companyId: string, dto: CreateTreasuryTransactionDto): Promise<TreasuryTransactionEntity> {
+    const account = await this.accountRepo.findOne({ where: { id: dto.treasuryAccountId, companyId } });
+    if (!account) {
+      throw new NotFoundException('Compte de trésorerie introuvable');
     }
 
-    return newTx;
+    const tx = this.txRepo.create({ ...dto, status: 'RAPPROCHE', companyId });
+    const saved = await this.txRepo.save(tx);
+
+    if (dto.type === 'ENCAISSEMENT') {
+      account.balance = Number(account.balance) + dto.amount;
+    } else if (dto.type === 'DECAISSEMENT') {
+      account.balance = Number(account.balance) - dto.amount;
+    }
+    await this.accountRepo.save(account);
+
+    return saved;
   }
 }

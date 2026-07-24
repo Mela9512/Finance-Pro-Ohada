@@ -1,17 +1,19 @@
 import { Controller, Get, Post, Body } from '@nestjs/common';
 import { ClientsService } from './clients.service';
+import { CurrentUser, AuthenticatedUser } from '../../common/decorators/current-user.decorator';
+import { CreateClientDto } from './dto/create-client.dto';
 
 @Controller('clients')
 export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
   @Get()
-  getClients() {
-    return this.clientsService.getClients();
+  getClients(@CurrentUser() user: AuthenticatedUser) {
+    return this.clientsService.getClients(user.companyId);
   }
 
   @Post()
-  createClient(@Body() body: any) {
-    return this.clientsService.createClient(body);
+  createClient(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateClientDto) {
+    return this.clientsService.createClient(user.companyId, body);
   }
 }

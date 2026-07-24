@@ -1,103 +1,114 @@
-import { 
-  User, Company, JournalEntry, AccountSYSCOHADA, Customer, Supplier, Invoice, 
-  TreasuryAccount, TreasuryTransaction, FinancialReportBilan, CompteDeResultat, DashboardMetrics, SYSCOHADA_PLAN_COMPTABLE 
+import {
+  User, Company, JournalEntry, AccountSYSCOHADA, Customer, Supplier, Invoice,
+  TreasuryAccount, TreasuryTransaction, FinancialReportBilan, CompteDeResultat, DashboardMetrics,
+  Budget, BudgetComparisonRow,
 } from '@financepro/shared';
 
-// Base API Service with local state fallback
-class ApiService {
-  private isOnline = false;
+const API_BASE = '/api';
 
-  async getMetrics(): Promise<DashboardMetrics> {
-    try {
-      const res = await fetch('/api/dashboard/metrics');
-      if (res.ok) return await res.json();
-    } catch (e) {}
-
-    return {
-      chiffreAffairesMois: 42500000,
-      chiffreAffairesVariation: 14.8,
-      tresorerieNetteTotal: 75900000,
-      creancesClientsTotal: 26100000,
-      dettesFournisseursTotal: 10550000,
-      bfr: 12500000,
-      fdr: 35000000,
-      excédentBrutExploitation: 44500000,
-      fluxTrésorerieGraph: [
-        { month: 'Jan', encaissements: 28000000, decaissements: 19000000 },
-        { month: 'Fév', encaissements: 32000000, decaissements: 21000000 },
-        { month: 'Mar', encaissements: 35000000, decaissements: 24000000 },
-        { month: 'Avr', encaissements: 31000000, decaissements: 20000000 },
-        { month: 'Mai', encaissements: 40000000, decaissements: 27000000 },
-        { month: 'Juin', encaissements: 42500000, decaissements: 26000000 }
-      ],
-      ecrituresRecent: [
-        {
-          id: 'entry-1',
-          entryNumber: 'VT-2026-0001',
-          date: '2026-06-15',
-          journalType: 'VENTES',
-          wording: 'Facture Vente N° FAC-2026-001 - AFRIQUE BTP',
-          pieceNumber: 'FAC-2026-001',
-          lines: [
-            { id: 'l1', accountCode: '411', accountLabel: 'Clients, Ventes de biens', debit: 11800000, credit: 0 },
-            { id: 'l2', accountCode: '701', accountLabel: 'Ventes de marchandises', debit: 0, credit: 10000000 },
-            { id: 'l3', accountCode: '443', accountLabel: 'État, TVA facturée sur ventes', debit: 0, credit: 1800000 }
-          ],
-          isValidated: true,
-          createdBy: 'Alain KOUASSI',
-          createdAt: '2026-06-15 10:30'
-        }
-      ]
-    };
-  }
-
-  async getAccounts(): Promise<AccountSYSCOHADA[]> {
-    try {
-      const res = await fetch('/api/accounting/accounts');
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    return SYSCOHADA_PLAN_COMPTABLE;
-  }
-
-  async getEntries(): Promise<JournalEntry[]> {
-    try {
-      const res = await fetch('/api/accounting/entries');
-      if (res.ok) return await res.json();
-    } catch (e) {}
-    return [
-      {
-        id: 'entry-1',
-        entryNumber: 'VT-2026-0001',
-        date: '2026-06-15',
-        journalType: 'VENTES',
-        wording: 'Facture Vente N° FAC-2026-001 - AFRIQUE BTP',
-        pieceNumber: 'FAC-2026-001',
-        lines: [
-          { id: 'l1', accountCode: '411', accountLabel: 'Clients, Ventes de biens', debit: 11800000, credit: 0 },
-          { id: 'l2', accountCode: '701', accountLabel: 'Ventes de marchandises', debit: 0, credit: 10000000 },
-          { id: 'l3', accountCode: '443', accountLabel: 'État, TVA facturée sur ventes', debit: 0, credit: 1800000 }
-        ],
-        isValidated: true,
-        createdBy: 'Alain KOUASSI',
-        createdAt: '2026-06-15 10:30'
-      },
-      {
-        id: 'entry-2',
-        entryNumber: 'BQ-2026-0012',
-        date: '2026-06-20',
-        journalType: 'BANQUE',
-        wording: 'Règlement partiel client AFRIQUE BTP par virement BGFI',
-        pieceNumber: 'VIR-98234',
-        lines: [
-          { id: 'l4', accountCode: '521', accountLabel: 'Banques locales (BGFI)', debit: 5000000, credit: 0 },
-          { id: 'l5', accountCode: '411', accountLabel: 'Clients, Ventes de biens', debit: 0, credit: 5000000 }
-        ],
-        isValidated: true,
-        createdBy: 'Fatou DIOP',
-        createdAt: '2026-06-20 14:15'
-      }
-    ];
+export class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
   }
 }
 
-export const api = new ApiService();
+let csrfToken: string | null = null;
+
+async function ensureCsrfToken(): Promise<string> {
+  if (csrfToken) return csrfToken;
+  const res = await fetch(`${API_BASE}/auth/csrf-token`, { credentials: 'include' });
+  const data = await res.json();
+  csrfToken = data.csrfToken;
+  return csrfToken as string;
+}
+
+function resetCsrfToken() {
+  csrfToken = null;
+}
+
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const method = (options.method || 'GET').toUpperCase();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(options.headers as Record<string, string>) };
+
+  if (method !== 'GET') {
+    headers['X-CSRF-Token'] = await ensureCsrfToken();
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, { ...options, method, headers, credentials: 'include' });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ message: res.statusText }));
+    const message = Array.isArray(body.message) ? body.message.join(', ') : body.message || res.statusText;
+    throw new ApiError(res.status, message);
+  }
+
+  if (res.status === 204) {
+    return undefined as T;
+  }
+  return res.json() as Promise<T>;
+}
+
+export const api = {
+  async login(email: string, password: string): Promise<{ user: User; company: Company }> {
+    const result = await request<{ user: User; company: Company }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    resetCsrfToken();
+    await ensureCsrfToken();
+    return result;
+  },
+
+  async logout(): Promise<void> {
+    await request('/auth/logout', { method: 'POST' });
+    resetCsrfToken();
+  },
+
+  getMe: () => request<{ user: User; company: Company }>('/auth/me'),
+
+  getMetrics: () => request<DashboardMetrics>('/dashboard/metrics'),
+
+  getAccounts: () => request<AccountSYSCOHADA[]>('/accounting/accounts'),
+  getEntries: () => request<JournalEntry[]>('/accounting/entries'),
+  createEntry: (dto: Omit<JournalEntry, 'id' | 'entryNumber' | 'isValidated' | 'createdAt' | 'createdBy'>) =>
+    request<JournalEntry>('/accounting/entries', { method: 'POST', body: JSON.stringify(dto) }),
+  getGrandLivre: (accountCode?: string) =>
+    request<any[]>(`/accounting/grand-livre${accountCode ? `?accountCode=${encodeURIComponent(accountCode)}` : ''}`),
+  getBalance: () => request<any[]>('/accounting/balance'),
+
+  getBilan: () => request<FinancialReportBilan>('/reports/bilan'),
+  getCompteResultat: () => request<CompteDeResultat>('/reports/compte-resultat'),
+  getTFT: () => request<any>('/reports/tft'),
+
+  getClients: () => request<Customer[]>('/clients'),
+  createClient: (dto: { name: string; nif?: string; phone: string; email: string; address: string; creditLimit: number }) =>
+    request<Customer>('/clients', { method: 'POST', body: JSON.stringify(dto) }),
+
+  getSuppliers: () => request<Supplier[]>('/suppliers'),
+  createSupplier: (dto: { name: string; nif?: string; phone: string; email: string; address: string }) =>
+    request<Supplier>('/suppliers', { method: 'POST', body: JSON.stringify(dto) }),
+
+  getTreasuryAccounts: () => request<TreasuryAccount[]>('/treasury/accounts'),
+  getTreasuryTransactions: () => request<TreasuryTransaction[]>('/treasury/transactions'),
+  createTreasuryTransaction: (dto: Omit<TreasuryTransaction, 'id' | 'status'>) =>
+    request<TreasuryTransaction>('/treasury/transactions', { method: 'POST', body: JSON.stringify(dto) }),
+
+  getInvoices: () => request<Invoice[]>('/invoices'),
+  createInvoice: (dto: Omit<Invoice, 'id' | 'invoiceNumber' | 'status' | 'amountPaid'>) =>
+    request<Invoice>('/invoices', { method: 'POST', body: JSON.stringify(dto) }),
+  validateInvoice: (id: string) => request<Invoice>(`/invoices/${id}/validate`, { method: 'PUT' }),
+
+  getCompany: () => request<Company>('/admin/company'),
+  updateCompany: (dto: Partial<Company>) => request<Company>('/admin/company', { method: 'PUT', body: JSON.stringify(dto) }),
+  closeExercice: () => request<Company>('/admin/close-exercice', { method: 'POST' }),
+  reopenExercice: () => request<Company>('/admin/reopen-exercice', { method: 'POST' }),
+  getUsers: () => request<User[]>('/admin/users'),
+  createUser: (dto: { email: string; password: string; name: string; role: string }) =>
+    request<User>('/admin/users', { method: 'POST', body: JSON.stringify(dto) }),
+
+  getBudgets: (exercice: number) => request<Budget[]>(`/budget?exercice=${exercice}`),
+  getBudgetComparison: (exercice: number) => request<BudgetComparisonRow[]>(`/budget/comparison?exercice=${exercice}`),
+  upsertBudget: (dto: { accountCode: string; exercice: number; period?: number; amountBudgeted: number }) =>
+    request<Budget>('/budget', { method: 'POST', body: JSON.stringify(dto) }),
+  deleteBudget: (id: string) => request<void>(`/budget/${id}`, { method: 'DELETE' }),
+};

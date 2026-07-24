@@ -1,28 +1,55 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { User, Company } from '@financepro/shared';
-import { MockDatabase } from '../../mock-db';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
+import { UserEntity } from '../../entities/user.entity';
+import { CompanyEntity } from '../../entities/company.entity';
 
 @Injectable()
 export class AuthService {
-  login(email: string, pass: string): { accessToken: string; user: User; company: Company } {
-    const user = MockDatabase.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+  constructor(
+    @InjectRepository(UserEntity) private readonly users: Repository<UserEntity>,
+    @InjectRepository(CompanyEntity) private readonly companies: Repository<CompanyEntity>,
+    private readonly jwtService: JwtService,
+  ) {}
+
+  async login(email: string, password: string) {
+    const user = await this.users.findOne({ where: { email: email.toLowerCase() } });
     if (!user) {
       throw new UnauthorizedException('Identifiants incorrects');
     }
-    // Simulation du JWT Token
-    const accessToken = `jwt_session_token_${user.id}_${Date.now()}`;
+
+    const passwordValid = await bcrypt.compare(password, user.passwordHash);
+    if (!passwordValid) {
+      throw new UnauthorizedException('Identifiants incorrects');
+    }
+
+    const company = await this.companies.findOne({ where: { id: user.companyId } });
+
+    const accessToken = await this.jwtService.signAsync({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      companyId: user.companyId,
+    });
+
     return {
       accessToken,
-      user,
-      company: MockDatabase.company
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, companyId: user.companyId },
+      company,
     };
   }
 
-  getProfile(userId: string): { user: User; company: Company } {
-    const user = MockDatabase.users.find(u => u.id === userId) || MockDatabase.users[0];
+  async getProfile(userId: string) {
+    const user = await this.users.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('Utilisateur introuvable');
+    }
+    const company = await this.companies.findOne({ where: { id: user.companyId } });
     return {
-      user,
-      company: MockDatabase.company
+      user: { id: user.id, email: user.email, name: user.name, role: user.role, companyId: user.companyId },
+      company,
     };
   }
 }

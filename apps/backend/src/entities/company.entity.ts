@@ -32,6 +32,9 @@ export class CompanyEntity {
   @Column()
   fiscalYearEnd: string;
 
+  @Column({ default: false })
+  isExerciceClosed: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 

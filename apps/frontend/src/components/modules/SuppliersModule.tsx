@@ -1,51 +1,54 @@
-import React, { useState } from 'react';
-import { Truck, Plus, Phone, Mail, MapPin, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Truck, Plus, Phone, Mail, ShieldCheck } from 'lucide-react';
 import { Supplier } from '@financepro/shared';
+import { api, ApiError } from '../../services/api';
 
 export const SuppliersModule: React.FC = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([
-    { id: 'supp-1', code: '401001', name: 'TOTAL ENERGIES MARKETING', nif: 'M20201010', phone: '+242 06 800 00 00', email: 'pro@totalenergies.cg', address: 'Pointe-Noire', balance: 6800000 },
-    { id: 'supp-2', code: '401002', name: 'TELECOM AFRIQUE (MTN)', nif: 'M20212233', phone: '+242 06 600 11 22', email: 'corporate@mtn.cg', address: 'Brazzaville', balance: 1250000 },
-    { id: 'supp-3', code: '401003', name: 'CABINET FIDUCIAIRE OHADA', nif: 'M20229900', phone: '+242 05 555 44 33', email: 'audit@fiduciaireohada.cg', address: 'Centre-Ville', balance: 2500000 }
-  ]);
-
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [nif, setNif] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [address, setAddress] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const totalDettes = suppliers.reduce((sum, s) => sum + s.balance, 0);
+  const loadSuppliers = () => api.getSuppliers().then(setSuppliers);
 
-  const handleCreateSupplier = (e: React.FormEvent) => {
+  useEffect(() => {
+    loadSuppliers();
+  }, []);
+
+  const totalDettes = suppliers.reduce((sum, s) => sum + Number(s.balance), 0);
+
+  const handleCreateSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = `401${String(suppliers.length + 1).padStart(3, '0')}`;
-    const newSupp: Supplier = {
-      id: `supp-${Date.now()}`,
-      code,
-      name,
-      nif: nif || 'M-NON-RENSEIGNE',
-      phone: phone || '+242 06 000 00 00',
-      email: email || 'fournisseur@entreprise.cg',
-      address: address || 'Brazzaville, Congo',
-      balance: 0
-    };
-
-    setSuppliers([...suppliers, newSupp]);
-    setShowModal(false);
-    setName('');
-    setNif('');
-    setPhone('');
-    setEmail('');
+    setErrorMessage(null);
+    try {
+      await api.createSupplier({
+        name,
+        nif: nif || undefined,
+        phone: phone || '+242 06 000 00 00',
+        email: email || 'fournisseur@entreprise.cg',
+        address: address || 'Brazzaville, Congo',
+      });
+      await loadSuppliers();
+      setShowModal(false);
+      setName('');
+      setNif('');
+      setPhone('');
+      setEmail('');
+      setAddress('');
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Erreur lors de la création du fournisseur');
+    }
   };
 
-  const formatMoney = (val: number) => 
+  const formatMoney = (val: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
     <div className="space-y-6">
-      {/* Top Header Card */}
       <div className="glass-card rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-sm font-bold text-white uppercase tracking-wider">Gestion des Fournisseurs & Dettes (Compte 401 SYSCOHADA)</h2>
@@ -62,7 +65,6 @@ export const SuppliersModule: React.FC = () => {
         </button>
       </div>
 
-      {/* Suppliers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {suppliers.map((supp) => (
           <div key={supp.id} className="glass-card rounded-xl p-5 space-y-4">
@@ -75,7 +77,7 @@ export const SuppliersModule: React.FC = () => {
               </div>
               <div className="text-right">
                 <div className="text-xs text-slate-400">Solde Créditeur</div>
-                <div className="text-base font-extrabold text-rose-300 font-mono">{formatMoney(supp.balance)}</div>
+                <div className="text-base font-extrabold text-rose-300 font-mono">{formatMoney(Number(supp.balance))}</div>
               </div>
             </div>
 
@@ -97,11 +99,11 @@ export const SuppliersModule: React.FC = () => {
         ))}
       </div>
 
-      {/* Modal New Supplier */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-card rounded-2xl p-6 w-full max-w-md space-y-4 border border-slate-700">
             <h3 className="text-base font-bold text-white">Nouveau Fournisseur Auxiliaire (401)</h3>
+            {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
             <form onSubmit={handleCreateSupplier} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">Raison Sociale Fournisseur</label>
@@ -149,6 +151,17 @@ export const SuppliersModule: React.FC = () => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Adresse</label>
+                <input
+                  type="text"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Ex: Pointe-Noire"
+                  className="w-full glass-input rounded-lg px-3 py-2 text-xs"
+                />
+              </div>
+
               <div className="flex justify-end space-x-3 pt-2">
                 <button
                   type="button"
@@ -157,10 +170,7 @@ export const SuppliersModule: React.FC = () => {
                 >
                   Annuler
                 </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
-                >
+                <button type="submit" className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold">
                   Créer le Fournisseur
                 </button>
               </div>

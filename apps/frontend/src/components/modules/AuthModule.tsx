@@ -1,33 +1,20 @@
-import React, { useState } from 'react';
-import { ShieldCheck, Key, Lock, CheckCircle2, UserCheck, AlertCircle } from 'lucide-react';
-import { UserRole } from '@financepro/shared';
+import React from 'react';
+import { ShieldCheck, UserCheck } from 'lucide-react';
+import { User } from '@financepro/shared';
 
 interface AuthModuleProps {
-  currentUser: { name: string; email: string; role: UserRole };
-  onSwitchUserRole: (role: UserRole) => void;
+  currentUser: User;
 }
 
-export const AuthModule: React.FC<AuthModuleProps> = ({ currentUser, onSwitchUserRole }) => {
-  const [email, setEmail] = useState('admin@financpro.ci');
-  const [pass, setPass] = useState('••••••••••••');
-  const [token, setToken] = useState<string | null>(`jwt_token_ohada_session_${Date.now()}`);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newToken = `jwt_token_session_${Date.now()}`;
-    setToken(newToken);
-    alert('Authentification JWT réussie ! Token de session renouvelé.');
-  };
-
+export const AuthModule: React.FC<AuthModuleProps> = ({ currentUser }) => {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Active Session Card */}
       <div className="glass-card rounded-xl p-6 space-y-4">
         <div className="flex items-center space-x-3 border-b border-slate-800 pb-3">
           <ShieldCheck className="w-6 h-6 text-emerald-400" />
           <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">État de l'Authentification JWT & Session Active</h3>
-            <p className="text-xs text-slate-400">Jeton sécurisé avec algorithme HMAC SHA-256</p>
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Session active</h3>
+            <p className="text-xs text-slate-400">Authentification par cookie JWT httpOnly signé côté serveur</p>
           </div>
         </div>
 
@@ -39,22 +26,17 @@ export const AuthModule: React.FC<AuthModuleProps> = ({ currentUser, onSwitchUse
 
           <div className="p-3 bg-slate-900 rounded-lg border border-slate-800 space-y-1">
             <span className="text-slate-400">Rôle Actuel (RBAC):</span>
-            <div className="text-indigo-400 font-bold text-sm">{currentUser.role}</div>
+            <div className="text-indigo-400 font-bold text-sm flex items-center space-x-1.5">
+              <UserCheck className="w-3.5 h-3.5" />
+              <span>{currentUser.role}</span>
+            </div>
           </div>
         </div>
-
-        {token && (
-          <div className="p-3 bg-slate-950 rounded-lg border border-slate-800 space-y-1">
-            <span className="text-[10px] text-slate-500 font-mono">Bearer JWT Token:</span>
-            <div className="text-[11px] font-mono text-slate-300 truncate">{token}</div>
-          </div>
-        )}
       </div>
 
-      {/* Permissions Matrix */}
       <div className="glass-card rounded-xl p-6 space-y-4">
         <h3 className="text-sm font-bold text-white uppercase tracking-wider">Matrice des Permissions par Rôle (RBAC)</h3>
-        <p className="text-xs text-slate-400">Sécurité et étanchéité de la comptabilité OHADA</p>
+        <p className="text-xs text-slate-400">Règles appliquées côté serveur (guards NestJS), pas seulement côté interface</p>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -76,17 +58,24 @@ export const AuthModule: React.FC<AuthModuleProps> = ({ currentUser, onSwitchUse
                 <td className="p-3 text-rose-400">Non</td>
               </tr>
               <tr>
-                <td className="p-3 text-slate-200 font-medium">Validation & Clôture Exercice</td>
-                <td className="p-3 text-emerald-400">Oui</td>
-                <td className="p-3 text-rose-400">Non</td>
-                <td className="p-3 text-rose-400">Non</td>
-                <td className="p-3 text-rose-400">Non</td>
-              </tr>
-              <tr>
                 <td className="p-3 text-slate-200 font-medium">Facturation Client</td>
                 <td className="p-3 text-emerald-400">Oui</td>
                 <td className="p-3 text-emerald-400">Oui</td>
                 <td className="p-3 text-emerald-400">Oui</td>
+                <td className="p-3 text-rose-400">Non</td>
+              </tr>
+              <tr>
+                <td className="p-3 text-slate-200 font-medium">Validation Facture / Écriture</td>
+                <td className="p-3 text-emerald-400">Oui</td>
+                <td className="p-3 text-emerald-400">Oui</td>
+                <td className="p-3 text-rose-400">Non</td>
+                <td className="p-3 text-rose-400">Non</td>
+              </tr>
+              <tr>
+                <td className="p-3 text-slate-200 font-medium">Administration (utilisateurs, société, clôture)</td>
+                <td className="p-3 text-emerald-400">Oui</td>
+                <td className="p-3 text-rose-400">Non</td>
+                <td className="p-3 text-rose-400">Non</td>
                 <td className="p-3 text-rose-400">Non</td>
               </tr>
               <tr>

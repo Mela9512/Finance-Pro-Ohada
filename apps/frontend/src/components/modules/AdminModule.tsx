@@ -1,42 +1,102 @@
-import React, { useState } from 'react';
-import { Settings, Building2, Users, Lock, ShieldCheck, Plus, CheckCircle } from 'lucide-react';
-import { Company, User } from '@financepro/shared';
+import React, { useEffect, useState } from 'react';
+import { Building2, Users, CheckCircle, Lock, Unlock, Plus } from 'lucide-react';
+import { Company, User, UserRole } from '@financepro/shared';
+import { api, ApiError } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 
 export const AdminModule: React.FC = () => {
-  const [company, setCompany] = useState<Company>({
-    id: 'comp-1',
-    name: 'SOCIÉTÉ CONGO TRADING SA',
-    rccm: 'CG-BZV-01-2024-B14-00129',
-    nif: 'M08241198234A',
-    address: '142 Avenue de l\'Indépendance, Poto-Poto',
-    city: 'Brazzaville',
-    country: 'Congo',
-    currency: 'XAF',
-    fiscalYearStart: '2026-01-01',
-    fiscalYearEnd: '2026-12-31'
-  });
-
-  const [users, setUsers] = useState<User[]>([
-    { id: 'usr-1', email: 'admin@financpro.ci', name: 'Alain KOUASSI', role: 'ADMIN', companyId: 'comp-1', createdAt: '2026-01-10' },
-    { id: 'usr-2', email: 'comptable@financpro.ci', name: 'Fatou DIOP', role: 'COMPTABLE', companyId: 'comp-1', createdAt: '2026-01-15' },
-    { id: 'usr-3', email: 'gestionnaire@financpro.ci', name: 'Marc BIKOKO', role: 'GESTIONNAIRE', companyId: 'comp-1', createdAt: '2026-02-01' }
-  ]);
-
+  const { refreshCompany } = useAuth();
+  const [company, setCompany] = useState<Company | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [isSaved, setIsSaved] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleSaveCompany = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 3000);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newRole, setNewRole] = useState<UserRole>('COMPTABLE');
+
+  const load = () => {
+    api.getCompany().then(setCompany);
+    api.getUsers().then(setUsers);
   };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  const handleSaveCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!company) return;
+    setErrorMessage(null);
+    try {
+      const updated = await api.updateCompany({
+        name: company.name,
+        address: company.address,
+        city: company.city,
+        country: company.country,
+        currency: company.currency,
+      });
+      setCompany(updated);
+      await refreshCompany();
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Erreur lors de la mise à jour');
+    }
+  };
+
+  const handleToggleExercice = async () => {
+    if (!company) return;
+    try {
+      const updated = company.isExerciceClosed ? await api.reopenExercice() : await api.closeExercice();
+      setCompany(updated);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : "Erreur lors du changement d'état de l'exercice");
+    }
+  };
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    try {
+      await api.createUser({ email: newEmail, password: newPassword, name: newName, role: newRole });
+      setUsers(await api.getUsers());
+      setShowUserModal(false);
+      setNewEmail('');
+      setNewPassword('');
+      setNewName('');
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : "Erreur lors de la création de l'utilisateur");
+    }
+  };
+
+  if (!company) {
+    return <div className="p-8 text-center text-slate-400">Chargement des paramètres de l'entreprise...</div>;
+  }
 
   return (
     <div className="space-y-6">
-      {/* Company Config Card */}
+      {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+
       <div className="glass-card rounded-xl p-6 space-y-4">
-        <div className="flex items-center space-x-3 border-b border-slate-800 pb-3">
-          <Building2 className="w-5 h-5 text-emerald-400" />
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Paramètres de l'Entreprise (Multi-Sociétés SYSCOHADA)</h3>
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center space-x-3">
+            <Building2 className="w-5 h-5 text-emerald-400" />
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Paramètres de l'Entreprise</h3>
+          </div>
+          <button
+            onClick={handleToggleExercice}
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-bold border ${
+              company.isExerciceClosed
+                ? 'bg-amber-950/60 text-amber-300 border-amber-800'
+                : 'bg-emerald-950/60 text-emerald-300 border-emerald-800'
+            }`}
+          >
+            {company.isExerciceClosed ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}
+            <span>{company.isExerciceClosed ? 'Exercice Clôturé' : 'Exercice Ouvert'}</span>
+          </button>
         </div>
 
         <form onSubmit={handleSaveCompany} className="space-y-4">
@@ -57,9 +117,8 @@ export const AdminModule: React.FC = () => {
               <input
                 type="text"
                 value={company.rccm}
-                onChange={(e) => setCompany({ ...company, rccm: e.target.value })}
-                className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono text-emerald-400"
-                required
+                disabled
+                className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono text-slate-500 opacity-70 cursor-not-allowed"
               />
             </div>
 
@@ -68,9 +127,8 @@ export const AdminModule: React.FC = () => {
               <input
                 type="text"
                 value={company.nif}
-                onChange={(e) => setCompany({ ...company, nif: e.target.value })}
-                className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono text-emerald-400"
-                required
+                disabled
+                className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono text-slate-500 opacity-70 cursor-not-allowed"
               />
             </div>
 
@@ -99,24 +157,26 @@ export const AdminModule: React.FC = () => {
               <span></span>
             )}
 
-            <button
-              type="submit"
-              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-lg"
-            >
+            <button type="submit" className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-lg">
               Enregistrer les Modifications
             </button>
           </div>
         </form>
       </div>
 
-      {/* Users & RBAC Roles */}
       <div className="glass-card rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between border-b border-slate-800 pb-3">
           <div className="flex items-center space-x-3">
             <Users className="w-5 h-5 text-indigo-400" />
             <h3 className="text-sm font-bold text-white uppercase tracking-wider">Gestion des Utilisateurs & Rôles (RBAC)</h3>
           </div>
-          <span className="text-xs text-slate-400">Contrôle d'accès strict par profil</span>
+          <button
+            onClick={() => setShowUserModal(true)}
+            className="flex items-center space-x-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Nouvel utilisateur</span>
+          </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -127,7 +187,6 @@ export const AdminModule: React.FC = () => {
                 <th className="p-3">Email professionnel</th>
                 <th className="p-3">Rôle attribué</th>
                 <th className="p-3">Date de création</th>
-                <th className="p-3 text-right">Statut</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
@@ -142,18 +201,55 @@ export const AdminModule: React.FC = () => {
                       {usr.role}
                     </span>
                   </td>
-                  <td className="p-3 text-slate-400 font-mono">{usr.createdAt}</td>
-                  <td className="p-3 text-right">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                      ACTIF
-                    </span>
-                  </td>
+                  <td className="p-3 text-slate-400 font-mono">{String(usr.createdAt).substring(0, 10)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {showUserModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md space-y-4 border border-slate-700">
+            <h3 className="text-base font-bold text-white">Nouvel Utilisateur</h3>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Nom complet</label>
+                <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full glass-input rounded-lg px-3 py-2 text-xs" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Email</label>
+                <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="w-full glass-input rounded-lg px-3 py-2 text-xs" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Mot de passe initial</label>
+                <input type="password" minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full glass-input rounded-lg px-3 py-2 text-xs" required />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-300 mb-1">Rôle</label>
+                <select value={newRole} onChange={(e) => setNewRole(e.target.value as UserRole)} className="w-full glass-input rounded-lg px-3 py-2 text-xs">
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="COMPTABLE">COMPTABLE</option>
+                  <option value="GESTIONNAIRE">GESTIONNAIRE</option>
+                  <option value="LECTEUR">LECTEUR</option>
+                </select>
+              </div>
+
+              {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+
+              <div className="flex justify-end space-x-3 pt-2">
+                <button type="button" onClick={() => setShowUserModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">
+                  Annuler
+                </button>
+                <button type="submit" className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold">
+                  Créer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

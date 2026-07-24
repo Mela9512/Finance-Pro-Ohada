@@ -1,22 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { Supplier } from '@financepro/shared';
-import { MockDatabase } from '../../mock-db';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SupplierEntity } from '../../entities/supplier.entity';
+import { CreateSupplierDto } from './dto/create-supplier.dto';
 
 @Injectable()
 export class SuppliersService {
-  getSuppliers(): Supplier[] {
-    return MockDatabase.suppliers;
+  constructor(@InjectRepository(SupplierEntity) private readonly repo: Repository<SupplierEntity>) {}
+
+  getSuppliers(companyId: string): Promise<SupplierEntity[]> {
+    return this.repo.find({ where: { companyId }, order: { code: 'ASC' } });
   }
 
-  createSupplier(supp: Omit<Supplier, 'id' | 'balance'>): Supplier {
-    const code = `401${String(MockDatabase.suppliers.length + 1).padStart(3, '0')}`;
-    const newSupp: Supplier = {
-      ...supp,
-      id: `supp-${Date.now()}`,
-      code,
-      balance: 0
-    };
-    MockDatabase.suppliers.push(newSupp);
-    return newSupp;
+  async createSupplier(companyId: string, dto: CreateSupplierDto): Promise<SupplierEntity> {
+    const count = await this.repo.count({ where: { companyId } });
+    const code = `401${String(count + 1).padStart(3, '0')}`;
+    const supplier = this.repo.create({ ...dto, code, balance: 0, companyId });
+    return this.repo.save(supplier);
   }
 }

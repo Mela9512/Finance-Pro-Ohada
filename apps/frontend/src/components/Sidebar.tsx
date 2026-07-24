@@ -1,10 +1,10 @@
 import React from 'react';
-import { 
-  LayoutDashboard, BookOpenCheck, Wallet, Users, Truck, 
-  FileSpreadsheet, BarChart3, Settings, ShieldCheck, LogOut 
+import {
+  LayoutDashboard, BookOpenCheck, Wallet, Users, Truck,
+  FileSpreadsheet, BarChart3, Settings, ShieldCheck, LogOut, Target
 } from 'lucide-react';
 
-export type ModuleId = 
+export type ModuleId =
   | 'dashboard'
   | 'accounting'
   | 'treasury'
@@ -12,6 +12,7 @@ export type ModuleId =
   | 'suppliers'
   | 'invoicing'
   | 'reports'
+  | 'budget'
   | 'admin'
   | 'auth';
 
@@ -29,6 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule }
     { id: 'suppliers' as ModuleId, label: 'Fournisseurs & Dettes', icon: Truck },
     { id: 'invoicing' as ModuleId, label: 'Facturation & Taxes', icon: FileSpreadsheet },
     { id: 'reports' as ModuleId, label: 'États Financiers OHADA', icon: BarChart3 },
+    { id: 'budget' as ModuleId, label: 'Budget Prévisionnel', icon: Target },
     { id: 'admin' as ModuleId, label: 'Administration & Rôles', icon: Settings },
     { id: 'auth' as ModuleId, label: 'Authentification & Accès', icon: ShieldCheck },
   ];

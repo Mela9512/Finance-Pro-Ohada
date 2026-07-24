@@ -1,5 +1,8 @@
 import { Controller, Get, Post, Body, Query } from '@nestjs/common';
 import { AccountingService } from './accounting.service';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser, AuthenticatedUser } from '../../common/decorators/current-user.decorator';
+import { CreateJournalEntryDto } from './dto/create-journal-entry.dto';
 
 @Controller('accounting')
 export class AccountingController {
@@ -11,22 +14,23 @@ export class AccountingController {
   }
 
   @Get('entries')
-  getEntries() {
-    return this.accountingService.getJournalEntries();
+  getEntries(@CurrentUser() user: AuthenticatedUser) {
+    return this.accountingService.getJournalEntries(user.companyId);
   }
 
+  @Roles('ADMIN', 'COMPTABLE')
   @Post('entries')
-  createEntry(@Body() body: any) {
-    return this.accountingService.createJournalEntry(body);
+  createEntry(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateJournalEntryDto) {
+    return this.accountingService.createJournalEntry(user.companyId, user.userId, body);
   }
 
   @Get('grand-livre')
-  getGrandLivre(@Query('accountCode') accountCode?: string) {
-    return this.accountingService.getGrandLivre(accountCode);
+  getGrandLivre(@CurrentUser() user: AuthenticatedUser, @Query('accountCode') accountCode?: string) {
+    return this.accountingService.getGrandLivre(user.companyId, accountCode);
   }
 
   @Get('balance')
-  getBalance() {
-    return this.accountingService.getBalanceGenerale();
+  getBalance(@CurrentUser() user: AuthenticatedUser) {
+    return this.accountingService.getBalanceGenerale(user.companyId);
   }
 }

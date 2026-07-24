@@ -1,51 +1,91 @@
-import { Injectable } from '@nestjs/common';
-import { Invoice } from '@financepro/shared';
-import { MockDatabase } from '../../mock-db';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { InvoiceEntity } from '../../entities/invoice.entity';
+import { InvoiceItemEntity } from '../../entities/invoice-item.entity';
+import { JournalEntryEntity } from '../../entities/journal-entry.entity';
+import { SequenceService } from '../../common/services/sequence.service';
+import { AuditLogService } from '../../common/services/audit-log.service';
+import { CreateInvoiceDto } from './dto/create-invoice.dto';
 
 @Injectable()
 export class InvoicingService {
-  getInvoices(): Invoice[] {
-    return MockDatabase.invoices;
+  constructor(
+    @InjectRepository(InvoiceEntity) private readonly invoiceRepo: Repository<InvoiceEntity>,
+    @InjectRepository(InvoiceItemEntity) private readonly itemRepo: Repository<InvoiceItemEntity>,
+    @InjectRepository(JournalEntryEntity) private readonly entryRepo: Repository<JournalEntryEntity>,
+    private readonly sequenceService: SequenceService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
+
+  getInvoices(companyId: string): Promise<InvoiceEntity[]> {
+    return this.invoiceRepo.find({ where: { companyId }, relations: ['items'], order: { createdAt: 'DESC' } });
   }
 
-  createInvoice(inv: Omit<Invoice, 'id' | 'invoiceNumber' | 'status' | 'amountPaid'>): Invoice {
-    const num = `FAC-2026-${String(MockDatabase.invoices.length + 1).padStart(3, '0')}`;
-    const newInvoice: Invoice = {
-      ...inv,
-      id: `inv-${Date.now()}`,
-      invoiceNumber: num,
+  async createInvoice(companyId: string, dto: CreateInvoiceDto): Promise<InvoiceEntity> {
+    const year = new Date(dto.date).getFullYear();
+    const seqNumber = await this.sequenceService.next(companyId, `INVOICE-${year}`);
+    const invoiceNumber = `FAC-${year}-${String(seqNumber).padStart(3, '0')}`;
+
+    const invoice = this.invoiceRepo.create({
+      ...dto,
+      invoiceNumber,
       status: 'BROUILLON',
-      amountPaid: 0
-    };
-    MockDatabase.invoices.unshift(newInvoice);
-    return newInvoice;
+      amountPaid: 0,
+      companyId,
+      items: dto.items.map((i) => this.itemRepo.create(i)),
+    });
+
+    return this.invoiceRepo.save(invoice);
   }
 
-  validateInvoice(id: string): Invoice {
-    const inv = MockDatabase.invoices.find(i => i.id === id);
-    if (inv) {
-      inv.status = 'VALIDE';
-      // Auto-generate journal entry for sales invoice
-      const debitAccount = inv.type === 'VENTE' ? '411' : '401';
-      const creditAccount = inv.type === 'VENTE' ? '701' : '601';
-
-      MockDatabase.journalEntries.unshift({
-        id: `entry-${Date.now()}`,
-        entryNumber: `VT-2026-${String(MockDatabase.journalEntries.length + 1).padStart(4, '0')}`,
-        date: inv.date,
-        journalType: inv.type === 'VENTE' ? 'VENTES' : 'ACHATS',
-        wording: `Facture ${inv.invoiceNumber} - ${inv.tierName}`,
-        pieceNumber: inv.invoiceNumber,
-        lines: [
-          { id: `l-${Date.now()}-1`, accountCode: debitAccount, accountLabel: inv.tierName, debit: inv.totalTTC, credit: 0 },
-          { id: `l-${Date.now()}-2`, accountCode: creditAccount, accountLabel: 'Chiffre d\'affaires / Charges', debit: 0, credit: inv.subtotalHT },
-          { id: `l-${Date.now()}-3`, accountCode: inv.type === 'VENTE' ? '443' : '445', accountLabel: 'TVA Facturée/Récupérable', debit: 0, credit: inv.totalTVA }
-        ],
-        isValidated: true,
-        createdBy: 'Système Facturation',
-        createdAt: new Date().toISOString().substring(0, 16)
-      });
+  async validateInvoice(companyId: string, userId: string, id: string): Promise<InvoiceEntity> {
+    const invoice = await this.invoiceRepo.findOne({ where: { id, companyId }, relations: ['items'] });
+    if (!invoice) {
+      throw new NotFoundException('Facture introuvable');
     }
-    return inv;
+
+    invoice.status = 'VALIDE';
+    await this.invoiceRepo.save(invoice);
+
+    const debitAccount = invoice.type === 'VENTE' ? '411' : '401';
+    const creditAccount = invoice.type === 'VENTE' ? '701' : '601';
+    const journalType = invoice.type === 'VENTE' ? 'VENTES' : 'ACHATS';
+    const year = new Date(invoice.date).getFullYear();
+    const seqNumber = await this.sequenceService.next(companyId, `${journalType}-${year}`);
+    const entryNumber = `${journalType === 'VENTES' ? 'VT' : 'AC'}-${year}-${String(seqNumber).padStart(4, '0')}`;
+
+    const entry = this.entryRepo.create({
+      entryNumber,
+      date: invoice.date,
+      journalType,
+      wording: `Facture ${invoice.invoiceNumber} - ${invoice.tierName}`,
+      pieceNumber: invoice.invoiceNumber,
+      isValidated: true,
+      createdBy: userId,
+      companyId,
+      lines: [
+        { accountCode: debitAccount, accountLabel: invoice.tierName, debit: invoice.totalTTC, credit: 0 } as any,
+        { accountCode: creditAccount, accountLabel: "Chiffre d'affaires / Charges", debit: 0, credit: invoice.subtotalHT } as any,
+        {
+          accountCode: invoice.type === 'VENTE' ? '443' : '445',
+          accountLabel: 'TVA Facturée/Récupérable',
+          debit: 0,
+          credit: invoice.totalTVA,
+        } as any,
+      ],
+    });
+    await this.entryRepo.save(entry);
+
+    await this.auditLogService.log({
+      companyId,
+      userId,
+      action: 'INVOICE_VALIDATED',
+      entityType: 'Invoice',
+      entityId: invoice.id,
+      metadata: { invoiceNumber: invoice.invoiceNumber },
+    });
+
+    return invoice;
   }
 }

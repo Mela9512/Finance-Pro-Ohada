@@ -20,6 +20,7 @@ export interface Company {
   currency: string; // XAF, XOF, USD, EUR
   fiscalYearStart: string; // Ex: 2026-01-01
   fiscalYearEnd: string;   // Ex: 2026-12-31
+  isExerciceClosed?: boolean;
 }
 
 export type JournalType = 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD';
@@ -169,6 +170,25 @@ export interface CompteDeResultat {
   resultatHAO: number;
   impotSurBenefices: number;
   resultatNet: number;
+}
+
+export interface Budget {
+  id: string;
+  accountCode: string;
+  exercice: number;
+  period: number | null;
+  amountBudgeted: number;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface BudgetComparisonRow {
+  accountCode: string;
+  label: string;
+  budgeted: number;
+  actual: number;
+  variance: number;
+  variancePercent: number | null;
 }
 
 export interface DashboardMetrics {

@@ -1,104 +1,75 @@
-import React, { useState } from 'react';
-import { Wallet, Landmark, Smartphone, ArrowDownLeft, ArrowUpRight, Plus, RefreshCw, CheckCircle } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Wallet, Landmark, Smartphone, Plus, CheckCircle } from 'lucide-react';
 import { TreasuryAccount, TreasuryTransaction } from '@financepro/shared';
+import { api, ApiError } from '../../services/api';
 
 export const TreasuryModule: React.FC = () => {
-  const [accounts, setAccounts] = useState<TreasuryAccount[]>([
-    { id: 'tr-1', code: '521001', name: 'BGFI Bank Congo', type: 'BANQUE', accountNumber: '10004 00129 982341-89', rib: 'BGFI-CG-01-9823', currency: 'XAF', balance: 48500000 },
-    { id: 'tr-2', code: '521002', name: 'Ecobank Congo', type: 'BANQUE', accountNumber: '10012 00045 119842-12', rib: 'ECO-CG-02-1198', currency: 'XAF', balance: 22100000 },
-    { id: 'tr-3', code: '541001', name: 'Caisse Principale Siège', type: 'CAISSE', currency: 'XAF', balance: 3450000 },
-    { id: 'tr-4', code: '571001', name: 'MTN Mobile Money Pro', type: 'MOBILE_MONEY', accountNumber: '+242066123456', currency: 'XAF', balance: 1850000 }
-  ]);
-
-  const [transactions, setTransactions] = useState<TreasuryTransaction[]>([
-    {
-      id: 'tx-1',
-      treasuryAccountId: 'tr-1',
-      treasuryAccountName: 'BGFI Bank Congo',
-      date: '2026-06-20',
-      type: 'ENCAISSEMENT',
-      category: 'Règlement Client',
-      amount: 5000000,
-      reference: 'VIR-BGFI-9823',
-      tierName: 'AFRIQUE BTP SARL',
-      status: 'RAPPROCHE',
-      description: 'Acompte facture FAC-2026-001'
-    },
-    {
-      id: 'tx-2',
-      treasuryAccountId: 'tr-1',
-      treasuryAccountName: 'BGFI Bank Congo',
-      date: '2026-07-01',
-      type: 'DECAISSEMENT',
-      category: 'Paiement Fournisseur',
-      amount: 2500000,
-      reference: 'CHQ-001923',
-      tierName: 'TOTAL ENERGIES MARKETING',
-      status: 'RAPPROCHE',
-      description: 'Règlement carburant flotte véhicules'
-    }
-  ]);
-
+  const [accounts, setAccounts] = useState<TreasuryAccount[]>([]);
+  const [transactions, setTransactions] = useState<TreasuryTransaction[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [txType, setTxType] = useState<'ENCAISSEMENT' | 'DECAISSEMENT'>('ENCAISSEMENT');
-  const [selectedAccId, setSelectedAccId] = useState('tr-1');
+  const [selectedAccId, setSelectedAccId] = useState('');
   const [amount, setAmount] = useState('');
   const [reference, setReference] = useState('');
   const [tierName, setTierName] = useState('');
   const [description, setDescription] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const totalTresorerie = accounts.reduce((sum, a) => sum + a.balance, 0);
-
-  const handleCreateTx = (e: React.FormEvent) => {
-    e.preventDefault();
-    const val = Number(amount);
-    if (!val || val <= 0) return;
-
-    const targetAcc = accounts.find(a => a.id === selectedAccId);
-    const newTx: TreasuryTransaction = {
-      id: `tx-${Date.now()}`,
-      treasuryAccountId: selectedAccId,
-      treasuryAccountName: targetAcc?.name || 'Banque',
-      date: new Date().toISOString().substring(0, 10),
-      type: txType,
-      category: txType === 'ENCAISSEMENT' ? 'Encaissement Manuel' : 'Décaissement Manuel',
-      amount: val,
-      reference: reference || 'REF-TR-001',
-      tierName: tierName || 'Tiers Divers',
-      status: 'RAPPROCHE',
-      description: description || 'Mouvement de trésorerie'
-    };
-
-    // Update balance
-    setAccounts(accounts.map(a => {
-      if (a.id === selectedAccId) {
-        return {
-          ...a,
-          balance: txType === 'ENCAISSEMENT' ? a.balance + val : a.balance - val
-        };
-      }
-      return a;
-    }));
-
-    setTransactions([newTx, ...transactions]);
-    setShowModal(false);
-    setAmount('');
-    setReference('');
-    setTierName('');
-    setDescription('');
+  const loadData = () => {
+    api.getTreasuryAccounts().then((accs) => {
+      setAccounts(accs);
+      if (accs.length > 0 && !selectedAccId) setSelectedAccId(accs[0].id);
+    });
+    api.getTreasuryTransactions().then(setTransactions);
   };
 
-  const formatMoney = (val: number) => 
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const totalTresorerie = accounts.reduce((sum, a) => sum + Number(a.balance), 0);
+
+  const handleCreateTx = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const val = Number(amount);
+    if (!val || val <= 0 || !selectedAccId) return;
+    setErrorMessage(null);
+
+    const targetAcc = accounts.find((a) => a.id === selectedAccId);
+    try {
+      await api.createTreasuryTransaction({
+        treasuryAccountId: selectedAccId,
+        treasuryAccountName: targetAcc?.name || 'Compte',
+        date: new Date().toISOString().substring(0, 10),
+        type: txType,
+        category: txType === 'ENCAISSEMENT' ? 'Encaissement Manuel' : 'Décaissement Manuel',
+        amount: val,
+        reference: reference || 'REF-TR-001',
+        tierName: tierName || 'Tiers Divers',
+        description: description || 'Mouvement de trésorerie',
+      });
+      loadData();
+      setShowModal(false);
+      setAmount('');
+      setReference('');
+      setTierName('');
+      setDescription('');
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : "Erreur lors de l'enregistrement du mouvement");
+    }
+  };
+
+  const formatMoney = (val: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
     <div className="space-y-6">
-      {/* Top Header Card */}
       <div className="glass-card rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-sm font-bold text-white uppercase tracking-wider">Trésorerie Globale (Comptes 521, 541, 571)</h2>
           <div className="text-3xl font-extrabold text-emerald-400 mt-1">{formatMoney(totalTresorerie)}</div>
-          <div className="text-xs text-slate-400 mt-1">4 comptes actifs (Banques locales, Caisse principale, Mobile Money)</div>
+          <div className="text-xs text-slate-400 mt-1">{accounts.length} comptes actifs (Banques locales, Caisse principale, Mobile Money)</div>
         </div>
 
         <button
@@ -110,7 +81,6 @@ export const TreasuryModule: React.FC = () => {
         </button>
       </div>
 
-      {/* Accounts Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {accounts.map((acc) => (
           <div key={acc.id} className="glass-card rounded-xl p-5 relative">
@@ -124,16 +94,11 @@ export const TreasuryModule: React.FC = () => {
             <h3 className="mt-3 text-sm font-bold text-white">{acc.name}</h3>
             {acc.accountNumber && <div className="text-[11px] text-slate-400 font-mono mt-0.5">{acc.accountNumber}</div>}
 
-            <div className="mt-4 text-xl font-extrabold text-white font-mono">{formatMoney(acc.balance)}</div>
-            <div className="mt-2 text-[10px] text-emerald-400 flex items-center space-x-1">
-              <CheckCircle className="w-3 h-3" />
-              <span>Rapprochement bancaire à jour</span>
-            </div>
+            <div className="mt-4 text-xl font-extrabold text-white font-mono">{formatMoney(Number(acc.balance))}</div>
           </div>
         ))}
       </div>
 
-      {/* Recent Transactions Table */}
       <div className="glass-card rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold text-white">Derniers Mouvements & Flux de Trésorerie</h3>
@@ -163,12 +128,12 @@ export const TreasuryModule: React.FC = () => {
                   <td className="p-3 text-slate-300">{tx.description}</td>
                   <td className="p-3 text-right font-mono font-bold">
                     <span className={tx.type === 'ENCAISSEMENT' ? 'text-emerald-400' : 'text-rose-400'}>
-                      {tx.type === 'ENCAISSEMENT' ? '+' : '-'}{formatMoney(tx.amount)}
+                      {tx.type === 'ENCAISSEMENT' ? '+' : '-'}{formatMoney(Number(tx.amount))}
                     </span>
                   </td>
                   <td className="p-3 text-right">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                      RAPPROCHÉ
+                      {tx.status === 'RAPPROCHE' ? 'RAPPROCHÉ' : 'EN ATTENTE'}
                     </span>
                   </td>
                 </tr>
@@ -178,11 +143,11 @@ export const TreasuryModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal New Movement */}
       {showModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-card rounded-2xl p-6 w-full max-w-md space-y-4 border border-slate-700">
             <h3 className="text-base font-bold text-white">Nouveau Mouvement de Trésorerie</h3>
+            {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
             <form onSubmit={handleCreateTx} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">Type d'opération</label>
@@ -211,8 +176,8 @@ export const TreasuryModule: React.FC = () => {
                   onChange={(e) => setSelectedAccId(e.target.value)}
                   className="w-full glass-input rounded-lg px-3 py-2 text-xs"
                 >
-                  {accounts.map(a => (
-                    <option key={a.id} value={a.id}>{a.name} ({a.code}) - Solde: {formatMoney(a.balance)}</option>
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>{a.name} ({a.code}) - Solde: {formatMoney(Number(a.balance))}</option>
                   ))}
                 </select>
               </div>
@@ -261,10 +226,7 @@ export const TreasuryModule: React.FC = () => {
                 >
                   Annuler
                 </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
-                >
+                <button type="submit" className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold">
                   Enregistrer
                 </button>
               </div>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Sidebar, ModuleId } from './components/Sidebar';
+import { LoginScreen } from './components/LoginScreen';
 import { DashboardModule } from './components/modules/DashboardModule';
 import { AccountingModule } from './components/modules/AccountingModule';
 import { TreasuryModule } from './components/modules/TreasuryModule';
@@ -8,28 +10,14 @@ import { ClientsModule } from './components/modules/ClientsModule';
 import { SuppliersModule } from './components/modules/SuppliersModule';
 import { InvoicingModule } from './components/modules/InvoicingModule';
 import { ReportsModule } from './components/modules/ReportsModule';
+import { BudgetModule } from './components/modules/BudgetModule';
 import { AdminModule } from './components/modules/AdminModule';
 import { AuthModule } from './components/modules/AuthModule';
-import { UserRole } from '@financepro/shared';
+import { useAuth } from './context/AuthContext';
 
 export const App: React.FC = () => {
+  const { user, company, isLoading, logout } = useAuth();
   const [activeModule, setActiveModule] = useState<ModuleId>('dashboard');
-  const [currentUser, setCurrentUser] = useState({
-    name: 'Alain KOUASSI',
-    email: 'admin@financpro.ci',
-    role: 'ADMIN' as UserRole
-  });
-
-  const company = {
-    name: 'SOCIÉTÉ CONGO TRADING SA',
-    rccm: 'CG-BZV-01-2024-B14-00129',
-    nif: 'M08241198234A',
-    currency: 'XAF'
-  };
-
-  const handleSwitchUserRole = (role: UserRole) => {
-    setCurrentUser(prev => ({ ...prev, role }));
-  };
 
   const getModuleTitle = (id: ModuleId) => {
     switch (id) {
@@ -40,30 +28,39 @@ export const App: React.FC = () => {
       case 'suppliers': return 'Gestion des fournisseurs & dettes';
       case 'invoicing': return 'Facturation & retenues fiscales (TVA/AIR)';
       case 'reports': return 'États financiers OHADA (Bilan & Compte de Résultat)';
+      case 'budget': return 'Budget prévisionnel & suivi des écarts';
       case 'admin': return 'Administration & paramètres d\'entreprise';
       case 'auth': return 'Authentification JWT & sécurité RBAC';
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-950">
+        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!user || !company) {
+    return <LoginScreen />;
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
-      {/* Sidebar */}
-      <Sidebar 
-        activeModule={activeModule} 
-        onSelectModule={setActiveModule} 
+      <Sidebar
+        activeModule={activeModule}
+        onSelectModule={setActiveModule}
       />
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Navbar */}
-        <Navbar 
+        <Navbar
           currentModule={getModuleTitle(activeModule)}
-          user={currentUser}
+          user={user}
           company={company}
-          onSwitchUserRole={handleSwitchUserRole}
+          onLogout={logout}
         />
 
-        {/* Dynamic View Body */}
         <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
           {activeModule === 'dashboard' && <DashboardModule />}
           {activeModule === 'accounting' && <AccountingModule />}
@@ -72,8 +69,9 @@ export const App: React.FC = () => {
           {activeModule === 'suppliers' && <SuppliersModule />}
           {activeModule === 'invoicing' && <InvoicingModule />}
           {activeModule === 'reports' && <ReportsModule />}
+          {activeModule === 'budget' && <BudgetModule />}
           {activeModule === 'admin' && <AdminModule />}
-          {activeModule === 'auth' && <AuthModule currentUser={currentUser} onSwitchUserRole={handleSwitchUserRole} />}
+          {activeModule === 'auth' && <AuthModule currentUser={user} />}
         </main>
       </div>
     </div>

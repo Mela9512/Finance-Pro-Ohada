@@ -1,19 +1,19 @@
 import React from 'react';
-import { Building2, User, ShieldCheck, Bell, Search, Globe, ChevronDown } from 'lucide-react';
+import { Building2, User, ShieldCheck, Bell, Search, Globe, LogOut } from 'lucide-react';
 import { UserRole } from '@financepro/shared';
 
 interface NavbarProps {
   currentModule: string;
   user: { name: string; email: string; role: UserRole };
   company: { name: string; rccm: string; nif: string; currency: string };
-  onSwitchUserRole: (role: UserRole) => void;
+  onLogout: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentModule,
   user,
   company,
-  onSwitchUserRole,
+  onLogout,
 }) => {
   return (
     <header className="h-16 border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-30">
@@ -69,17 +69,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          <select
-            value={user.role}
-            onChange={(e) => onSwitchUserRole(e.target.value as UserRole)}
-            className="bg-slate-800 text-slate-200 text-xs border border-slate-700 rounded-md px-2 py-1 focus:outline-none focus:border-emerald-500"
-            title="Changer de rôle pour tester les permissions RBAC"
+          <button
+            onClick={onLogout}
+            className="flex items-center space-x-1.5 bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 text-xs border border-slate-700 hover:border-rose-800 rounded-md px-2.5 py-1.5 transition-colors"
+            title="Se déconnecter"
           >
-            <option value="ADMIN">ADMIN</option>
-            <option value="COMPTABLE">COMPTABLE</option>
-            <option value="GESTIONNAIRE">GESTIONNAIRE</option>
-            <option value="LECTEUR">LECTEUR</option>
-          </select>
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Déconnexion</span>
+          </button>
         </div>
       </div>
     </header>
