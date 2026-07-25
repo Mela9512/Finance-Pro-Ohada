@@ -1,7 +1,7 @@
 import { doubleCsrf } from 'csrf-csrf';
 
 export const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
-  getSecret: () => process.env.CSRF_SECRET as string,
+  getSecret: () => process.env.CSRF_SECRET || 'financepro_csrf_super_secret_key_2026',
   getSessionIdentifier: (req: any) => req.cookies?.access_token || 'anonymous',
   cookieName: 'csrf_token',
   cookieOptions: {

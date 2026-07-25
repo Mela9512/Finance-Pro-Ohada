@@ -45,10 +45,9 @@ import { BudgetController } from './modules/budget/budget.controller';
 import { BudgetService } from './modules/budget/budget.service';
 import { SupabaseService } from './supabase.service';
 
-const dbUrl = process.env.DATABASE_URL || '';
-const isDirectPg = dbUrl.startsWith('postgresql://') && !dbUrl.includes('db.lacapogzijbmabzwxexl.supabase.co');
+const usePg = process.env.USE_POSTGRES === 'true';
 
-const ormConfig = isDirectPg
+const ormConfig = usePg
   ? {
       ...dataSourceOptions,
       retryAttempts: 1,

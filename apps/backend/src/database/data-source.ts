@@ -22,7 +22,7 @@ const isSupabase = process.env.DATABASE_URL?.includes('supabase');
 
 export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
-  url: process.env.DATABASE_URL || 'postgresql://postgres:Meladieu95%40%40@db.lacapogzijbmabzwxexl.supabase.co:5432/postgres',
+  url: process.env.DATABASE_URL,
   ssl: isSupabase || process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
   extra: {
     connectionTimeoutMillis: 5000,
@@ -44,7 +44,7 @@ export const dataSourceOptions: DataSourceOptions = {
     BudgetEntity,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
-  synchronize: process.env.NODE_ENV !== 'production',
+  synchronize: false,
 };
 
 const dataSource = new DataSource(dataSourceOptions);
