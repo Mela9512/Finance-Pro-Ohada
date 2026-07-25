@@ -13,7 +13,14 @@ export const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
 });
 
-const CSRF_EXEMPT_PATHS = ['/api/auth/login', '/api/auth/logout'];
+const CSRF_EXEMPT_PATHS = [
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/api/auth/register',
+  '/api/auth/forgot-password',
+  '/api/auth/reset-password',
+  '/api/auth/accept-invite',
+];
 
 export function csrfMiddleware(req: any, res: any, next: any) {
   if (CSRF_EXEMPT_PATHS.includes(req.path)) {

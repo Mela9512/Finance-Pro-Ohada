@@ -26,63 +26,76 @@ export class DashboardService {
     private readonly reportsService: ReportsService,
   ) {}
 
-  private async salesForMonth(companyId: string, key: string): Promise<number> {
+  /** Une seule requête groupée par mois au lieu d'une requête par mois de la fenêtre. */
+  private async salesByMonth(companyId: string, fromKey: string): Promise<Map<string, number>> {
     const rows = await this.lineRepo
       .createQueryBuilder('line')
       .innerJoin('line.entry', 'entry')
-      .select('SUM(line.credit)', 'total')
+      .select("SUBSTRING(entry.date, 1, 7)", 'month')
+      .addSelect('SUM(line.credit)', 'total')
       .where('entry.companyId = :companyId', { companyId })
-      .andWhere('entry.date LIKE :key', { key: `${key}%` })
+      .andWhere('entry.date >= :fromDate', { fromDate: `${fromKey}-01` })
       .andWhere("line.accountCode LIKE '70%'")
-      .getRawOne<{ total: string }>();
-    return Number(rows?.total) || 0;
+      .groupBy('month')
+      .getRawMany<{ month: string; total: string }>();
+    return new Map(rows.map((r) => [r.month, Number(r.total) || 0]));
+  }
+
+  /** Une seule requête groupée par mois au lieu d'une requête par mois de la fenêtre. */
+  private async treasuryFlowsByMonth(
+    companyId: string,
+    fromKey: string,
+  ): Promise<Map<string, { encaissements: number; decaissements: number }>> {
+    const rows = await this.txRepo
+      .createQueryBuilder('tx')
+      .select('SUBSTRING(tx.date, 1, 7)', 'month')
+      .addSelect("SUM(CASE WHEN tx.type = 'ENCAISSEMENT' THEN tx.amount ELSE 0 END)", 'encaissements')
+      .addSelect("SUM(CASE WHEN tx.type = 'DECAISSEMENT' THEN tx.amount ELSE 0 END)", 'decaissements')
+      .where('tx.companyId = :companyId', { companyId })
+      .andWhere('tx.date >= :fromDate', { fromDate: `${fromKey}-01` })
+      .groupBy('month')
+      .getRawMany<{ month: string; encaissements: string; decaissements: string }>();
+    return new Map(rows.map((r) => [r.month, { encaissements: Number(r.encaissements) || 0, decaissements: Number(r.decaissements) || 0 }]));
   }
 
   async getMetrics(companyId: string): Promise<DashboardMetrics> {
-    const [customers, suppliers, treasuryAccounts, recentEntries] = await Promise.all([
+    const now = new Date();
+    const currentKey = monthKey(now);
+    const previousMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const previousKey = monthKey(previousMonthDate);
+    const sixMonthsAgoDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const sixMonthsAgoKey = monthKey(sixMonthsAgoDate);
+
+    const [customers, suppliers, treasuryAccounts, recentEntries, { bilan, compteDeResultat }, salesMap, treasuryMap] = await Promise.all([
       this.customerRepo.find({ where: { companyId } }),
       this.supplierRepo.find({ where: { companyId } }),
       this.treasuryAccountRepo.find({ where: { companyId } }),
       this.entryRepo.find({ where: { companyId }, relations: ['lines'], order: { createdAt: 'DESC' }, take: 5 }),
+      this.reportsService.getBilanAndCompteDeResultat(companyId),
+      this.salesByMonth(companyId, previousKey),
+      this.treasuryFlowsByMonth(companyId, sixMonthsAgoKey),
     ]);
 
     const totalTresorerie = treasuryAccounts.reduce((s, a) => s + Number(a.balance), 0);
     const totalCreances = customers.reduce((s, c) => s + Number(c.balance), 0);
     const totalDettes = suppliers.reduce((s, sup) => s + Number(sup.balance), 0);
 
-    const bilan = await this.reportsService.getBilan(companyId);
     const sumNet = (items: { net: number }[]) => items.reduce((s, i) => s + i.net, 0);
     const bfr = sumNet(bilan.actif.circulant) - sumNet(bilan.passif.passifCirculant);
     const fdr = sumNet(bilan.passif.capitauxPropres) + sumNet(bilan.passif.dettesFinancieres) - sumNet(bilan.actif.immobilise);
-    const cr = await this.reportsService.getCompteDeResultat(companyId);
 
-    const now = new Date();
-    const currentKey = monthKey(now);
-    const previousMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const previousKey = monthKey(previousMonthDate);
-
-    const [chiffreAffairesMois, chiffreAffairesPrecedent] = await Promise.all([
-      this.salesForMonth(companyId, currentKey),
-      this.salesForMonth(companyId, previousKey),
-    ]);
+    const chiffreAffairesMois = salesMap.get(currentKey) || 0;
+    const chiffreAffairesPrecedent = salesMap.get(previousKey) || 0;
     const chiffreAffairesVariation =
       chiffreAffairesPrecedent > 0 ? ((chiffreAffairesMois - chiffreAffairesPrecedent) / chiffreAffairesPrecedent) * 100 : 0;
 
-    const fluxTrésorerieGraph: { month: string; encaissements: number; decaissements: number }[] = [];
     const monthLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+    const fluxTrésorerieGraph: { month: string; encaissements: number; decaissements: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       const key = monthKey(d);
-      const txs = await this.txRepo
-        .createQueryBuilder('tx')
-        .where('tx.companyId = :companyId', { companyId })
-        .andWhere('tx.date LIKE :key', { key: `${key}%` })
-        .getMany();
-      fluxTrésorerieGraph.push({
-        month: monthLabels[d.getMonth()],
-        encaissements: txs.filter((t) => t.type === 'ENCAISSEMENT').reduce((s, t) => s + Number(t.amount), 0),
-        decaissements: txs.filter((t) => t.type === 'DECAISSEMENT').reduce((s, t) => s + Number(t.amount), 0),
-      });
+      const flow = treasuryMap.get(key) || { encaissements: 0, decaissements: 0 };
+      fluxTrésorerieGraph.push({ month: monthLabels[d.getMonth()], ...flow });
     }
 
     return {
@@ -93,7 +106,7 @@ export class DashboardService {
       dettesFournisseursTotal: totalDettes,
       bfr,
       fdr,
-      excédentBrutExploitation: cr.ebe,
+      excédentBrutExploitation: compteDeResultat.ebe,
       fluxTrésorerieGraph,
       ecrituresRecent: recentEntries as any,
     };

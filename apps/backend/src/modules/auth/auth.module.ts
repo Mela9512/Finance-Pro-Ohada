@@ -8,22 +8,25 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserEntity } from '../../entities/user.entity';
 import { CompanyEntity } from '../../entities/company.entity';
+import { PasswordResetTokenEntity } from '../../entities/password-reset-token.entity';
+import { InviteTokenEntity } from '../../entities/invite-token.entity';
+import { EmailService } from '../../common/services/email.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, CompanyEntity]),
+    TypeOrmModule.forFeature([UserEntity, CompanyEntity, PasswordResetTokenEntity, InviteTokenEntity]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'financepro_jwt_secret_key_2026',
+        secret: config.get<string>('JWT_SECRET'),
         signOptions: { expiresIn: config.get<string>('JWT_EXPIRES_IN', '8h') },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, EmailService],
   exports: [AuthService],
 })
 export class AuthModule {}

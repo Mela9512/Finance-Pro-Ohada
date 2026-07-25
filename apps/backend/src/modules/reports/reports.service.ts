@@ -21,9 +21,7 @@ function toBilanItem(b: AccountBalance, net: number): BilanItem {
 export class ReportsService {
   constructor(private readonly accountingService: AccountingService) {}
 
-  private async computeCompteDeResultat(companyId: string): Promise<CompteDeResultat> {
-    const balances = await this.accountingService.getAccountBalances(companyId);
-
+  private computeCompteDeResultatFromBalances(balances: AccountBalance[]): CompteDeResultat {
     const sumCharges = (predicate: (b: AccountBalance) => boolean) =>
       balances.filter((b) => b.classNum === 6 && predicate(b)).reduce((s, b) => s + (b.soldeDebiteur - b.soldeCrediteur), 0);
 
@@ -76,10 +74,7 @@ export class ReportsService {
     };
   }
 
-  async getBilan(companyId: string): Promise<FinancialReportBilan> {
-    const balances = await this.accountingService.getAccountBalances(companyId);
-    const compteDeResultat = await this.computeCompteDeResultat(companyId);
-
+  private buildBilanFromBalances(balances: AccountBalance[], compteDeResultat: CompteDeResultat): FinancialReportBilan {
     const immobilise: BilanItem[] = [];
     const circulant: BilanItem[] = [];
     const tresorerie: BilanItem[] = [];
@@ -134,17 +129,32 @@ export class ReportsService {
     };
   }
 
-  getCompteDeResultat(companyId: string): Promise<CompteDeResultat> {
-    return this.computeCompteDeResultat(companyId);
+  async getBilan(companyId: string): Promise<FinancialReportBilan> {
+    const balances = await this.accountingService.getAccountBalances(companyId);
+    const compteDeResultat = this.computeCompteDeResultatFromBalances(balances);
+    return this.buildBilanFromBalances(balances, compteDeResultat);
+  }
+
+  async getCompteDeResultat(companyId: string): Promise<CompteDeResultat> {
+    const balances = await this.accountingService.getAccountBalances(companyId);
+    return this.computeCompteDeResultatFromBalances(balances);
+  }
+
+  /** Évite de recalculer deux fois les soldes de comptes quand bilan + CR sont nécessaires ensemble. */
+  async getBilanAndCompteDeResultat(companyId: string): Promise<{ bilan: FinancialReportBilan; compteDeResultat: CompteDeResultat }> {
+    const balances = await this.accountingService.getAccountBalances(companyId);
+    const compteDeResultat = this.computeCompteDeResultatFromBalances(balances);
+    const bilan = this.buildBilanFromBalances(balances, compteDeResultat);
+    return { bilan, compteDeResultat };
   }
 
   async getTFT(companyId: string) {
     const balances = await this.accountingService.getAccountBalances(companyId);
+    const compteDeResultat = this.computeCompteDeResultatFromBalances(balances);
+
     const tresorerieFin = balances
       .filter((b) => b.classNum === 5)
       .reduce((s, b) => s + (b.soldeDebiteur - b.soldeCrediteur), 0);
-
-    const compteDeResultat = await this.computeCompteDeResultat(companyId);
 
     return {
       fluxExploitation: compteDeResultat.resultatExploitation + compteDeResultat.dotationsAmortissements,

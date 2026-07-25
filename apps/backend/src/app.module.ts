@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
@@ -21,9 +22,11 @@ import { TreasuryTransactionEntity } from './entities/treasury-transaction.entit
 import { SequenceEntity } from './entities/sequence.entity';
 import { AuditLogEntity } from './entities/audit-log.entity';
 import { BudgetEntity } from './entities/budget.entity';
+import { InviteTokenEntity } from './entities/invite-token.entity';
 
 import { SequenceService } from './common/services/sequence.service';
 import { AuditLogService } from './common/services/audit-log.service';
+import { EmailService } from './common/services/email.service';
 
 import { DashboardController } from './modules/dashboard/dashboard.controller';
 import { DashboardService } from './modules/dashboard/dashboard.service';
@@ -43,27 +46,12 @@ import { AdminController } from './modules/admin/admin.controller';
 import { AdminService } from './modules/admin/admin.service';
 import { BudgetController } from './modules/budget/budget.controller';
 import { BudgetService } from './modules/budget/budget.service';
-import { SupabaseService } from './supabase.service';
-
-const usePg = process.env.USE_POSTGRES === 'true';
-
-const ormConfig = usePg
-  ? {
-      ...dataSourceOptions,
-      retryAttempts: 1,
-      retryDelay: 500,
-    }
-  : {
-      type: 'sqlite' as const,
-      database: ':memory:',
-      entities: dataSourceOptions.entities,
-      synchronize: true,
-    };
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    TypeOrmModule.forRoot(ormConfig),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
+    TypeOrmModule.forRoot(dataSourceOptions),
     TypeOrmModule.forFeature([
       AccountEntity,
       CompanyEntity,
@@ -79,6 +67,7 @@ const ormConfig = usePg
       SequenceEntity,
       AuditLogEntity,
       BudgetEntity,
+      InviteTokenEntity,
     ]),
     AuthModule,
   ],
@@ -94,16 +83,9 @@ const ormConfig = usePg
     BudgetController,
   ],
   providers: [
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard,
-    },
     SequenceService,
     AuditLogService,
+    EmailService,
     DashboardService,
     AccountingService,
     TreasuryService,
@@ -113,7 +95,8 @@ const ormConfig = usePg
     ReportsService,
     AdminService,
     BudgetService,
-    SupabaseService,
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}

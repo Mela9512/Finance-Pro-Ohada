@@ -15,6 +15,8 @@ import { TreasuryTransactionEntity } from '../entities/treasury-transaction.enti
 import { SequenceEntity } from '../entities/sequence.entity';
 import { AuditLogEntity } from '../entities/audit-log.entity';
 import { BudgetEntity } from '../entities/budget.entity';
+import { PasswordResetTokenEntity } from '../entities/password-reset-token.entity';
+import { InviteTokenEntity } from '../entities/invite-token.entity';
 
 dotenv.config();
 
@@ -25,7 +27,16 @@ export const dataSourceOptions: DataSourceOptions = {
   url: process.env.DATABASE_URL,
   ssl: isSupabase || process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
   extra: {
+    max: 10,
     connectionTimeoutMillis: 5000,
+    // Sans ces réglages, une connexion coupée côté pooler Supabase (idle) reste
+    // "vivante" dans le pool node-pg et toute requête qui la réutilise reste
+    // bloquée indéfiniment (pas d'erreur, pas de timeout — juste un hang).
+    idleTimeoutMillis: 30000,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
+    statement_timeout: 15000,
+    query_timeout: 15000,
   },
   entities: [
     UserEntity,
@@ -42,6 +53,8 @@ export const dataSourceOptions: DataSourceOptions = {
     SequenceEntity,
     AuditLogEntity,
     BudgetEntity,
+    PasswordResetTokenEntity,
+    InviteTokenEntity,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false,

@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Put, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Body, Req } from '@nestjs/common';
+import { Request } from 'express';
 import { AdminService } from './admin.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
 
 @Controller('admin')
 @Roles('ADMIN')
@@ -18,6 +20,11 @@ export class AdminController {
   @Put('company')
   updateCompany(@CurrentUser() user: AuthenticatedUser, @Body() body: UpdateCompanyDto) {
     return this.adminService.updateCompany(user.companyId, user.userId, body);
+  }
+
+  @Post('onboarding')
+  completeOnboarding(@CurrentUser() user: AuthenticatedUser, @Body() body: UpdateCompanyDto) {
+    return this.adminService.completeOnboarding(user.companyId, user.userId, body);
   }
 
   @Post('close-exercice')
@@ -38,5 +45,11 @@ export class AdminController {
   @Post('users')
   createUser(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateUserDto) {
     return this.adminService.createUser(user.companyId, user.userId, body);
+  }
+
+  @Post('invite')
+  inviteUser(@CurrentUser() user: AuthenticatedUser, @Body() body: InviteUserDto, @Req() req: Request) {
+    const appUrl = process.env.FRONTEND_URL || `${req.protocol}://${req.get('host')}`;
+    return this.adminService.inviteUser(user.companyId, user.userId, body, appUrl);
   }
 }

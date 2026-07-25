@@ -8,32 +8,35 @@ export class CompanyEntity {
   @Column()
   name: string;
 
-  @Column({ unique: true })
-  rccm: string; // Registre du Commerce et du Crédit Mobilier
+  @Column({ unique: true, nullable: true })
+  rccm?: string; // Registre du Commerce et du Crédit Mobilier — renseigné pendant l'onboarding
 
-  @Column({ unique: true })
-  nif: string;  // Numéro d'Identification Fiscale
+  @Column({ unique: true, nullable: true })
+  nif?: string;  // Numéro d'Identification Fiscale — renseigné pendant l'onboarding
 
-  @Column()
+  @Column({ default: '' })
   address: string;
 
-  @Column()
+  @Column({ default: '' })
   city: string;
 
-  @Column()
+  @Column({ default: '' })
   country: string;
 
   @Column({ default: 'XAF' })
   currency: string; // XAF, XOF, EUR, USD
 
-  @Column()
+  @Column({ default: () => "to_char(now(), 'YYYY') || '-01-01'" })
   fiscalYearStart: string;
 
-  @Column()
+  @Column({ default: () => "to_char(now(), 'YYYY') || '-12-31'" })
   fiscalYearEnd: string;
 
   @Column({ default: false })
   isExerciceClosed: boolean;
+
+  @Column({ default: false })
+  isOnboarded: boolean;
 
   @CreateDateColumn()
   createdAt: Date;

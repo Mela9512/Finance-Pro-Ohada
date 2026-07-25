@@ -7,6 +7,14 @@ export class UpdateCompanyDto {
 
   @IsOptional()
   @IsString()
+  rccm?: string;
+
+  @IsOptional()
+  @IsString()
+  nif?: string;
+
+  @IsOptional()
+  @IsString()
   address?: string;
 
   @IsOptional()

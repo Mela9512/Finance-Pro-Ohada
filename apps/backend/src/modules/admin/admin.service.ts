@@ -2,18 +2,30 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
 import { CompanyEntity } from '../../entities/company.entity';
 import { UserEntity } from '../../entities/user.entity';
+import { InviteTokenEntity } from '../../entities/invite-token.entity';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { InviteUserDto } from './dto/invite-user.dto';
 import { AuditLogService } from '../../common/services/audit-log.service';
+import { EmailService } from '../../common/services/email.service';
+
+const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 jours
+
+function hashToken(rawToken: string): string {
+  return crypto.createHash('sha256').update(rawToken).digest('hex');
+}
 
 @Injectable()
 export class AdminService {
   constructor(
     @InjectRepository(CompanyEntity) private readonly companyRepo: Repository<CompanyEntity>,
     @InjectRepository(UserEntity) private readonly userRepo: Repository<UserEntity>,
+    @InjectRepository(InviteTokenEntity) private readonly inviteRepo: Repository<InviteTokenEntity>,
     private readonly auditLogService: AuditLogService,
+    private readonly emailService: EmailService,
   ) {}
 
   getCompany(companyId: string): Promise<CompanyEntity> {
@@ -29,6 +41,18 @@ export class AdminService {
       entityType: 'Company',
       entityId: companyId,
       metadata: dto as Record<string, unknown>,
+    });
+    return this.companyRepo.findOne({ where: { id: companyId } });
+  }
+
+  async completeOnboarding(companyId: string, userId: string, dto: UpdateCompanyDto): Promise<CompanyEntity> {
+    await this.companyRepo.update({ id: companyId }, { ...dto, isOnboarded: true });
+    await this.auditLogService.log({
+      companyId,
+      userId,
+      action: 'ONBOARDING_COMPLETED',
+      entityType: 'Company',
+      entityId: companyId,
     });
     return this.companyRepo.findOne({ where: { id: companyId } });
   }
@@ -77,5 +101,39 @@ export class AdminService {
 
     const { passwordHash: _omit, ...safeUser } = user;
     return safeUser;
+  }
+
+  async inviteUser(companyId: string, actorUserId: string, dto: InviteUserDto, appUrl: string): Promise<{ message: string }> {
+    const existing = await this.userRepo.findOne({ where: { email: dto.email.toLowerCase() } });
+    if (existing) {
+      throw new ConflictException('Un utilisateur avec cet email existe déjà');
+    }
+
+    const company = await this.companyRepo.findOne({ where: { id: companyId } });
+    const rawToken = crypto.randomBytes(32).toString('hex');
+
+    await this.inviteRepo.save(
+      this.inviteRepo.create({
+        companyId,
+        email: dto.email.toLowerCase(),
+        role: dto.role,
+        tokenHash: hashToken(rawToken),
+        invitedBy: actorUserId,
+        expiresAt: new Date(Date.now() + INVITE_TTL_MS),
+      }),
+    );
+
+    const inviteUrl = `${appUrl}/accept-invite?token=${rawToken}`;
+    await this.emailService.sendInvite(dto.email, company?.name || 'FinancePro OHADA', inviteUrl);
+
+    await this.auditLogService.log({
+      companyId,
+      userId: actorUserId,
+      action: 'USER_INVITED',
+      entityType: 'InviteToken',
+      metadata: { email: dto.email, role: dto.role },
+    });
+
+    return { message: `Invitation envoyée à ${dto.email}` };
   }
 }
