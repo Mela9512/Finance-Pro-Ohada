@@ -50,20 +50,19 @@ export const ClientsModule: React.FC = () => {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6">
-      <div className="glass-card rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Gestion des Clients & Créances (Compte 411 SYSCOHADA)</h2>
-          <div className="text-3xl font-extrabold text-amber-400 mt-1">{formatMoney(totalCreances)}</div>
-          <div className="text-xs text-slate-400 mt-1">{customers.length} comptes clients auxiliaires enregistrés</div>
+          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">Portefeuille Clients & Compte 411</h2>
+          <div className="text-xs text-slate-500 font-medium mt-0.5">{customers.length} tiers enregistrés (Créances et encours)</div>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-emerald-600/20"
+          className="flex items-center space-x-2 px-5 py-2.5 bg-[#0f2d5e] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all shadow-md"
         >
           <Plus className="w-4 h-4" />
-          <span>Nouveau Client Auxiliaire</span>
+          <span>Nouveau Client</span>
         </button>
       </div>
 

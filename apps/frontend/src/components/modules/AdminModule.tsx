@@ -76,21 +76,23 @@ export const AdminModule: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+      {errorMessage && <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded-xl p-3 font-medium">{errorMessage}</div>}
 
-      <div className="glass-card rounded-xl p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
           <div className="flex items-center space-x-3">
-            <Building2 className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Paramètres de l'Entreprise</h3>
+            <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center font-bold">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">Paramètres de l'Entreprise (Normes SYSCOHADA)</h3>
           </div>
           <button
             onClick={handleToggleExercice}
-            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-bold border ${
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-xl text-xs font-bold border ${
               company.isExerciceClosed
-                ? 'bg-amber-950/60 text-amber-300 border-amber-800'
-                : 'bg-emerald-950/60 text-emerald-300 border-emerald-800'
+                ? 'bg-red-50 text-red-800 border-red-200'
+                : 'bg-emerald-50 text-emerald-800 border-emerald-200'
             }`}
           >
             {company.isExerciceClosed ? <Lock className="w-3.5 h-3.5" /> : <Unlock className="w-3.5 h-3.5" />}

@@ -89,17 +89,17 @@ export const InvoicingModule: React.FC = () => {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6">
-      <div className="glass-card rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">Module de Facturation & Retenues Fiscales (TVA 18% & AIR)</h2>
-          <div className="text-xs text-slate-400 mt-1">Conforme aux obligations fiscales des États membres OHADA</div>
+          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">Facturation & Fiscalité (TVA 18% & AIR)</h2>
+          <div className="text-xs text-slate-500 font-medium mt-1">Conforme aux obligations fiscales des États membres OHADA</div>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
           disabled={customers.length === 0}
-          className="flex items-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-all shadow-lg shadow-emerald-600/20"
+          className="flex items-center space-x-2 px-5 py-2.5 bg-[#0f2d5e] hover:bg-blue-900 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-md"
         >
           <Plus className="w-4 h-4" />
           <span>Émettre une Facture de Vente</span>

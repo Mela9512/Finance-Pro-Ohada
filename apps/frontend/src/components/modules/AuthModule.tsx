@@ -8,13 +8,15 @@ interface AuthModuleProps {
 
 export const AuthModule: React.FC<AuthModuleProps> = ({ currentUser }) => {
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="glass-card rounded-xl p-6 space-y-4">
-        <div className="flex items-center space-x-3 border-b border-slate-800 pb-3">
-          <ShieldCheck className="w-6 h-6 text-emerald-400" />
+    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div className="flex items-center space-x-3 border-b border-slate-100 pb-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center font-bold">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
           <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Session active</h3>
-            <p className="text-xs text-slate-400">Authentification par cookie JWT httpOnly signé côté serveur</p>
+            <h3 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">Session Active & Sécurité JWT</h3>
+            <p className="text-xs text-slate-500 font-medium">Authentification sécurisée par token signé et protocole RBAC</p>
           </div>
         </div>
 

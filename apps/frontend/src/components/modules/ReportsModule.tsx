@@ -20,30 +20,31 @@ export const ReportsModule: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="glass-card rounded-xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-sm font-bold text-white uppercase tracking-wider">États Financiers Annuels (Système Normal SYSCOHADA)</h2>
-          <div className="text-xs text-slate-400 mt-1">Calculés en temps réel à partir des écritures validées du Grand Livre</div>
+          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">États Financiers Annuels (Système Normal SYSCOHADA)</h2>
+          <div className="text-xs text-slate-500 font-medium mt-1">Calculés en temps réel à partir des écritures validées du Grand Livre</div>
         </div>
       </div>
 
-      <div className="flex items-center space-x-2 border-b border-slate-800 pb-3">
+      <div className="flex items-center space-x-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
         <button
           onClick={() => setReportType('bilan')}
-          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-            reportType === 'bilan' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            reportType === 'bilan' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
-          BILAN SYSCOHADA (Actif / Passif)
+          Bilan Synthétique (Actif / Passif)
         </button>
+
         <button
           onClick={() => setReportType('compte-resultat')}
-          className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-            reportType === 'compte-resultat' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            reportType === 'compte-resultat' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
-          COMPTE DE RÉSULTAT (SIG)
+          Compte de Résultat (SIG)
         </button>
       </div>
 

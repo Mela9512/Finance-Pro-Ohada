@@ -117,12 +117,12 @@ export const AccountingModule: React.FC = () => {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+      <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
         <button
           onClick={() => setTab('saisie')}
-          className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-            tab === 'saisie' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            tab === 'saisie' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           <PlusCircle className="w-4 h-4" />
@@ -131,8 +131,8 @@ export const AccountingModule: React.FC = () => {
 
         <button
           onClick={() => setTab('journal')}
-          className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-            tab === 'journal' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            tab === 'journal' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           <FileSpreadsheet className="w-4 h-4" />
@@ -141,8 +141,8 @@ export const AccountingModule: React.FC = () => {
 
         <button
           onClick={() => setTab('grand-livre')}
-          className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-            tab === 'grand-livre' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            tab === 'grand-livre' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           <Layers className="w-4 h-4" />
@@ -151,8 +151,8 @@ export const AccountingModule: React.FC = () => {
 
         <button
           onClick={() => setTab('balance')}
-          className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-            tab === 'balance' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            tab === 'balance' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           <Scale className="w-4 h-4" />
@@ -161,8 +161,8 @@ export const AccountingModule: React.FC = () => {
 
         <button
           onClick={() => setTab('plan')}
-          className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
-            tab === 'plan' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800'
+          className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            tab === 'plan' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           <BookOpen className="w-4 h-4" />
@@ -171,11 +171,11 @@ export const AccountingModule: React.FC = () => {
       </div>
 
       {tab === 'saisie' && (
-        <form onSubmit={handleSubmitEntry} className="glass-card rounded-xl p-6 space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <form onSubmit={handleSubmitEntry} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Nouvelle Écriture Comptable SYSCOHADA</h3>
-              <p className="text-xs text-slate-400">Le système vérifie automatiquement le principe d'équivalence Débit = Crédit</p>
+              <h3 className="text-sm font-extrabold text-slate-900">Nouvelle Écriture Comptable SYSCOHADA</h3>
+              <p className="text-xs text-slate-500">Le système vérifie automatiquement le principe d'équivalence Débit = Crédit</p>
             </div>
 
             <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border text-xs font-bold font-mono ${
