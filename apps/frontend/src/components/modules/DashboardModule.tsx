@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  TrendingUp, Wallet, ArrowUpRight, ArrowDownRight, ShieldCheck, 
-  Scale, AlertCircle, FileText, Activity 
+  Calculator, Network, RefreshCw, FileText, CheckCircle2, 
+  TrendingUp, Users, ArrowRight, ShieldCheck, PieChart,
+  Settings, Layers, ChevronRight, Activity, DollarSign
 } from 'lucide-react';
 import { DashboardMetrics } from '@financepro/shared';
 import { api } from '../../services/api';
@@ -15,7 +16,7 @@ export const DashboardModule: React.FC = () => {
 
   if (!metrics) {
     return (
-      <div className="p-8 text-center text-slate-400">Chargement des métriques financières OHADA...</div>
+      <div className="p-8 text-center text-slate-500 font-medium">Chargement des métriques financières OHADA...</div>
     );
   }
 
@@ -23,195 +24,325 @@ export const DashboardModule: React.FC = () => {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner Alert / Status */}
-      <div className="bg-gradient-to-r from-emerald-950/80 via-slate-900 to-slate-900 border border-emerald-500/30 rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-lg">
-            <ShieldCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-white">Bilan & Exercice 2026 à jour (SYSCOHADA Révisé)</h2>
-            <p className="text-xs text-slate-400">Tous les journaux (Achats, Ventes, Banque, Caisse) sont équilibrés.</p>
-          </div>
+    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+
+      {/* Top Section Title & Subtitle */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Analitics characteristic</h2>
+          <p className="text-xs text-slate-500 font-medium">Vue d'ensemble et contrôle budgétaire de l'entreprise (Norme SYSCOHADA)</p>
         </div>
-        <div className="flex items-center space-x-3">
-          <span className="text-xs bg-slate-800 text-slate-300 px-3 py-1.5 rounded-lg border border-slate-700 font-mono">
-            Ratios de Solvabilité: <strong className="text-emerald-400">1.82 (Excellent)</strong>
+
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-100 text-blue-900 border border-blue-200">
+            Période : 01.01.2026 - 31.12.2026
           </span>
         </div>
       </div>
 
-      {/* KPI Cards Grid */}
+      {/* 4 Top KPI Cards Row (Identical to Red, Blue, Teal, Gray Cards in Image) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* CA Card */}
-        <div className="glass-card rounded-xl p-5 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Chiffre d'Affaires (Mois)</span>
-            <span className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
-              <TrendingUp className="w-4 h-4" />
-            </span>
+        
+        {/* Card 1: Bright Crimson Red Card */}
+        <div className="bg-red-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
+              <Calculator className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[10px] text-white/80 font-mono">Header inside 01.01.2026</span>
           </div>
-          <div className="mt-3 text-2xl font-extrabold text-white tracking-tight">{formatMoney(metrics.chiffreAffairesMois)}</div>
-          <div className="mt-2 flex items-center space-x-1.5 text-xs text-emerald-400 font-medium">
-            <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>+{metrics.chiffreAffairesVariation}% par rapport au mois dernier</span>
-          </div>
-        </div>
-
-        {/* Trésorerie Card */}
-        <div className="glass-card rounded-xl p-5 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Trésorerie Nette Disponible</span>
-            <span className="p-2 bg-indigo-500/10 text-indigo-400 rounded-lg">
-              <Wallet className="w-4 h-4" />
-            </span>
-          </div>
-          <div className="mt-3 text-2xl font-extrabold text-white tracking-tight">{formatMoney(metrics.tresorerieNetteTotal)}</div>
-          <div className="mt-2 text-xs text-slate-400">
-            Comptes 521 (BGFI/Eco) + 541 (Caisse) + 571
+          <div className="mt-4">
+            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{formatMoney(metrics.tresorerieNetteTotal)}</div>
+            <div className="text-xs text-white/90 font-medium mt-1">Trésorerie Nette Disponible (Comptes 521/541)</div>
           </div>
         </div>
 
-        {/* Créances Clients */}
-        <div className="glass-card rounded-xl p-5 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Créances Clients (Compte 411)</span>
-            <span className="p-2 bg-amber-500/10 text-amber-400 rounded-lg">
-              <ArrowUpRight className="w-4 h-4" />
-            </span>
+        {/* Card 2: Deep Blue Card */}
+        <div className="bg-[#0f2d5e] text-white rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
+              <Network className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[10px] text-blue-200/80 font-mono">Header inside</span>
           </div>
-          <div className="mt-3 text-2xl font-extrabold text-amber-300 tracking-tight">{formatMoney(metrics.creancesClientsTotal)}</div>
-          <div className="mt-2 text-xs text-slate-400">Factures non encore encaissées</div>
+          <div className="mt-4">
+            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{formatMoney(metrics.chiffreAffairesMois)}</div>
+            <div className="text-xs text-blue-200 font-medium mt-1">Chiffre d'Affaires Mensuel (Compte 701)</div>
+          </div>
         </div>
 
-        {/* Dettes Fournisseurs */}
-        <div className="glass-card rounded-xl p-5 relative overflow-hidden">
-          <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Dettes Fournisseurs (Compte 401)</span>
-            <span className="p-2 bg-rose-500/10 text-rose-400 rounded-lg">
-              <ArrowDownRight className="w-4 h-4" />
-            </span>
+        {/* Card 3: Teal / Cyan Card */}
+        <div className="bg-teal-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
+              <RefreshCw className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[10px] text-teal-100/80 font-mono">Header inside</span>
           </div>
-          <div className="mt-3 text-2xl font-extrabold text-rose-300 tracking-tight">{formatMoney(metrics.dettesFournisseursTotal)}</div>
-          <div className="mt-2 text-xs text-slate-400">Échéances à régler sous 30j</div>
+          <div className="mt-4">
+            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{formatMoney(metrics.creancesClientsTotal)}</div>
+            <div className="text-xs text-teal-100 font-medium mt-1">Créances Clients à Recouvrer (Compte 411)</div>
+          </div>
+        </div>
+
+        {/* Card 4: Soft Gray Metallic Card */}
+        <div className="bg-slate-200 text-slate-900 border border-slate-300 rounded-2xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
+          <div className="flex items-center justify-between">
+            <div className="w-10 h-10 rounded-xl bg-slate-300 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-slate-700" />
+            </div>
+            <span className="text-[10px] text-slate-500 font-mono">Header inside</span>
+          </div>
+          <div className="mt-4">
+            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{formatMoney(metrics.dettesFournisseursTotal)}</div>
+            <div className="text-xs text-slate-600 font-medium mt-1">Dettes Fournisseurs à Régler (Compte 401)</div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Middle Progress Bar Section (DATA IN NUMBERS / Readiness 62%) */}
+      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+        <div className="flex items-center justify-between text-xs font-bold">
+          <span className="text-slate-900 tracking-wider">DATA IN NUMBERS 01.01.2026 — CONFORMITÉ SYSCOHADA</span>
+          <span className="text-blue-900 font-extrabold">Readiness percentage - 62%</span>
+        </div>
+        <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
+          <div className="bg-gradient-to-r from-blue-900 via-teal-500 to-emerald-500 h-full w-[62%] rounded-full"></div>
         </div>
       </div>
 
-      {/* Financial Health & BFR / FDR Analytics */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cashflow Chart Simulation */}
-        <div className="lg:col-span-2 glass-card rounded-xl p-6">
-          <div className="flex items-center justify-between mb-4">
+      {/* Middle 3 Panel Grid (Identical to Image Layout) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        {/* Left Panel: DEPOSIT PARAMETER / Employee & Partner Table */}
+        <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-                <Activity className="w-4 h-4 text-emerald-400" />
-                <span>Évolution des Flux de Trésorerie (2026)</span>
-              </h3>
-              <p className="text-xs text-slate-400">Encaissements vs Décaissements mensuels</p>
+              <h3 className="text-xs font-extrabold uppercase text-slate-900">DEPOSIT PARAMETER</h3>
+              <p className="text-[10px] text-slate-400">Flux d'écritures & collaborateurs</p>
             </div>
-            <div className="flex items-center space-x-3 text-xs">
-              <span className="flex items-center space-x-1">
-                <span className="w-3 h-3 bg-emerald-500 rounded-sm"></span>
-                <span className="text-slate-300">Encaissements</span>
-              </span>
-              <span className="flex items-center space-x-1">
-                <span className="w-3 h-3 bg-rose-500 rounded-sm"></span>
-                <span className="text-slate-300">Décaissements</span>
-              </span>
+            <div className="text-[10px] text-right text-slate-500 font-mono">
+              <div>Parameter Amount : 99 000 XAF</div>
+              <div>Parameter Percent : 33%</div>
             </div>
           </div>
 
-          {/* Bar Visualization */}
-          <div className="space-y-3 pt-2">
-            {metrics.fluxTrésorerieGraph.map((item) => (
-              <div key={item.month} className="space-y-1">
-                <div className="flex justify-between text-xs text-slate-300 font-mono">
-                  <span>{item.month}</span>
-                  <span className="text-emerald-400">+{formatMoney(item.encaissements)} / <span className="text-rose-400">-{formatMoney(item.decaissements)}</span></span>
-                </div>
-                <div className="w-full bg-slate-900 rounded-full h-3 flex overflow-hidden p-0.5 border border-slate-800">
-                  <div className="bg-emerald-500 h-full rounded-full transition-all duration-500" style={{ width: `${(item.encaissements / 50000000) * 100}%` }}></div>
-                  <div className="bg-rose-500 h-full rounded-full transition-all duration-500 ml-1" style={{ width: `${(item.decaissements / 50000000) * 100}%` }}></div>
+          {/* Table Rows */}
+          <div className="space-y-3 font-mono text-xs">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center font-bold text-[10px]">E1</div>
+                <div>
+                  <div className="font-bold text-slate-900 font-sans">Alain KOUASSI (Comptable)</div>
+                  <div className="text-[10px] text-slate-400">15 documents traités</div>
                 </div>
               </div>
-            ))}
+              <div className="text-right">
+                <div className="font-bold text-blue-900">120 000 XAF</div>
+                <div className="text-[10px] text-red-600 font-bold">-3%</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-teal-100 text-teal-900 flex items-center justify-center font-bold text-[10px]">E2</div>
+                <div>
+                  <div className="font-bold text-slate-900 font-sans">Fatou DIOP (Gestionnaire)</div>
+                  <div className="text-[10px] text-slate-400">15 documents traités</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-teal-900">120 000 XAF</div>
+                <div className="text-[10px] text-red-600 font-bold">-3%</div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-900 flex items-center justify-center font-bold text-[10px]">E3</div>
+                <div>
+                  <div className="font-bold text-slate-900 font-sans">Marc KOFFI (Auditeur)</div>
+                  <div className="text-[10px] text-slate-400">15 documents traités</div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-indigo-900">120 000 XAF</div>
+                <div className="text-[10px] text-red-600 font-bold">-3%</div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* BFR & Ratios Panel */}
-        <div className="glass-card rounded-xl p-6 flex flex-col justify-between">
+        {/* Center Panel: OVERALL EFFICIENCY / Dual Donut Charts */}
+        <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="pb-2 border-b border-slate-100">
+            <h3 className="text-xs font-extrabold uppercase text-slate-900">OVERALL EFFICIENCY</h3>
+            <p className="text-[10px] text-slate-400">Efficacité globale & Ratios financiers</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 py-4 text-center">
+            {/* Donut Meter 1 */}
+            <div className="flex flex-col items-center justify-center">
+              <div className="relative w-24 h-24 rounded-full border-8 border-blue-900 border-t-teal-400 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-base font-extrabold text-slate-900">97,7%</div>
+                  <div className="text-[9px] text-slate-400">Ratio BFR/FDR</div>
+                </div>
+              </div>
+              <div className="text-xs font-bold text-slate-800 mt-2">Effectivity</div>
+            </div>
+
+            {/* Donut Meter 2 */}
+            <div className="flex flex-col items-center justify-center">
+              <div className="relative w-24 h-24 rounded-full border-8 border-red-600 border-l-blue-900 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-xs font-extrabold text-slate-900">6.88M</div>
+                  <div className="text-[9px] text-slate-400">EBE Brut</div>
+                </div>
+              </div>
+              <div className="text-xs font-bold text-slate-800 mt-2">Gross Amount</div>
+            </div>
+          </div>
+
+          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center text-[10px] text-slate-600 font-medium">
+            Tous les ratios de solvabilité sont conformes aux exigences financières OHADA.
+          </div>
+        </div>
+
+        {/* Right Panel: General Indicators (4 Circular Cost Meters matching image) */}
+        <div className="lg:col-span-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <div className="pb-2 border-b border-slate-100">
+            <h3 className="text-xs font-extrabold text-slate-900">General indicators</h3>
+            <p className="text-[10px] text-slate-400">Indicateurs de coûts journaliers</p>
+          </div>
+
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-semibold text-slate-600">Cost data</span>
+              <span className="text-xs font-bold bg-blue-900 text-white px-2 py-0.5 rounded-full">28 000 XAF</span>
+              <span className="text-[9px] text-slate-400">in a day</span>
+            </div>
+
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-semibold text-slate-600">Cost data</span>
+              <span className="text-xs font-bold bg-blue-900 text-white px-2 py-0.5 rounded-full">555 000 XAF</span>
+              <span className="text-[9px] text-slate-400">in a day</span>
+            </div>
+
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-semibold text-slate-600">Score Qualité</span>
+              <span className="text-xs font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full">94,6 / 100</span>
+            </div>
+
+            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="text-[10px] font-semibold text-slate-600">Score Audit</span>
+              <span className="text-xs font-bold bg-amber-600 text-white px-2 py-0.5 rounded-full">48 / 100</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* Bottom Section: Employees Flow Table + Effectivity 5 Action Pill Cards + Accounts Callout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Bottom Left & Center: Employee Rating & 5 Action Cards */}
+        <div className="lg:col-span-8 space-y-6">
+
+          {/* Employee Rating Table */}
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 className="text-xs font-extrabold uppercase text-slate-900 mb-3">EMPLOYEES / RATING & FLOWS</h3>
+            <div className="grid grid-cols-3 gap-4 text-xs font-mono">
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase">Rating</div>
+                <div className="text-slate-800">1. Janbiev Ivan (8.8)</div>
+                <div className="text-slate-800">2. Bychkov Sergey (7.8)</div>
+                <div className="text-slate-800">3. Mal'kov Evgeniy (5.0)</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase">Maximum flow</div>
+                <div className="text-blue-900 font-bold">41 Passed: 4999</div>
+                <div className="text-blue-900 font-bold">32 Passed: 5556</div>
+                <div className="text-blue-900 font-bold">20 Passed: 3589</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-[10px] font-bold text-slate-400 uppercase">Minimum flow</div>
+                <div className="text-slate-600">20 Passed: 4999</div>
+                <div className="text-slate-600">15 Passed: 5556</div>
+                <div className="text-slate-600">10 Passed: 3589</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Effectivity Indicators 5 Pill Cards Bar */}
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center space-x-2 mb-4">
-              <Scale className="w-4 h-4 text-emerald-400" />
-              <span>Indicateurs SYSCOHADA</span>
-            </h3>
-
-            <div className="space-y-4">
-              <div className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-lg">
-                <div className="text-xs text-slate-400">BFR (Besoin en Fonds de Roulement)</div>
-                <div className="text-lg font-bold text-white mt-1">{formatMoney(metrics.bfr)}</div>
-                <div className="text-[11px] text-emerald-400 mt-1">Couvert à 100% par le FDR</div>
+            <h3 className="text-xs font-extrabold uppercase text-slate-900 mb-3">Effectivity indicators</h3>
+            <div className="grid grid-cols-5 gap-3">
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
+                <Calculator className="w-5 h-5 text-blue-900 mx-auto mb-1" />
+                <div className="text-base font-extrabold text-slate-900">11</div>
+                <div className="text-[9px] text-slate-400">in operation</div>
               </div>
 
-              <div className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-lg">
-                <div className="text-xs text-slate-400">FDR (Fonds de Roulement Net Global)</div>
-                <div className="text-lg font-bold text-emerald-400 mt-1">{formatMoney(metrics.fdr)}</div>
-                <div className="text-[11px] text-slate-400 mt-1">Capitaux permanents - Actif immobilisé</div>
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
+                <FileText className="w-5 h-5 text-red-600 mx-auto mb-1" />
+                <div className="text-base font-extrabold text-slate-900">3</div>
+                <div className="text-[9px] text-slate-400">at unloading</div>
               </div>
 
-              <div className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-lg">
-                <div className="text-xs text-slate-400">EBE (Excédent Brut d'Exploitation)</div>
-                <div className="text-lg font-bold text-indigo-300 mt-1">{formatMoney(metrics.excédentBrutExploitation)}</div>
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
+                <Network className="w-5 h-5 text-teal-600 mx-auto mb-1" />
+                <div className="text-base font-extrabold text-slate-900">1</div>
+                <div className="text-[9px] text-slate-400">standing</div>
+              </div>
+
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
+                <Settings className="w-5 h-5 text-amber-600 mx-auto mb-1" />
+                <div className="text-base font-extrabold text-slate-900">0</div>
+                <div className="text-[9px] text-slate-400">on repair</div>
+              </div>
+
+              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
+                <Users className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
+                <div className="text-base font-extrabold text-slate-900">7</div>
+                <div className="text-[9px] text-slate-400">on way</div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Recent Entries */}
-      <div className="glass-card rounded-xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <span>Dernières Écritures Comptables Validées</span>
-          </h3>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px] border-b border-slate-800">
-              <tr>
-                <th className="p-3">N° Écriture</th>
-                <th className="p-3">Date</th>
-                <th className="p-3">Journal</th>
-                <th className="p-3">Libellé</th>
-                <th className="p-3">Montant Total</th>
-                <th className="p-3 text-right">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/60">
-              {metrics.ecrituresRecent.map((entry) => {
-                const totalDebit = entry.lines.reduce((s, l) => s + l.debit, 0);
-                return (
-                  <tr key={entry.id} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3 font-mono font-medium text-emerald-400">{entry.entryNumber}</td>
-                    <td className="p-3 text-slate-300">{entry.date}</td>
-                    <td className="p-3 font-semibold text-white">{entry.journalType}</td>
-                    <td className="p-3 text-slate-200">{entry.wording}</td>
-                    <td className="p-3 font-mono font-bold text-white">{formatMoney(totalDebit)}</td>
-                    <td className="p-3 text-right">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-400 border border-emerald-800">
-                        Équilibré
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        {/* Bottom Right: Accounts Callout Floating Card (Identical to Red Payment Card in Image) */}
+        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-lg space-y-4">
+          <div className="border-b border-slate-100 pb-2">
+            <h3 className="text-base font-extrabold text-slate-900">Accounts & Règlements</h3>
+            <p className="text-xs text-slate-500 font-medium">Synthèse des comptes auxiliaires</p>
+          </div>
+
+          <div className="space-y-2 font-mono text-xs">
+            <div className="flex justify-between items-center p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="font-bold text-slate-700">99 Accounts</span>
+              <span className="font-extrabold text-red-600">9 999 999 XAF</span>
+            </div>
+            <div className="flex justify-between items-center p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <span className="font-bold text-slate-700">SALE 88 Accounts</span>
+              <span className="font-extrabold text-blue-900">8 888 888 XAF</span>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2">
+              <span>Payment / Effectuer un règlement</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
+
       </div>
+
     </div>
   );
 };
+
+export default DashboardModule;

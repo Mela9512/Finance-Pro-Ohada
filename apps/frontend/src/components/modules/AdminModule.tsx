@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Building2, Users, CheckCircle, Lock, Unlock, Plus } from 'lucide-react';
+import { Building2, Users, CheckCircle, Lock, Unlock, Send } from 'lucide-react';
 import { Company, User, UserRole } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -11,11 +11,10 @@ export const AdminModule: React.FC = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const [showUserModal, setShowUserModal] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [newName, setNewName] = useState('');
-  const [newRole, setNewRole] = useState<UserRole>('COMPTABLE');
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<UserRole>('COMPTABLE');
+  const [inviteSentMessage, setInviteSentMessage] = useState<string | null>(null);
 
   const load = () => {
     api.getCompany().then(setCompany);
@@ -33,6 +32,8 @@ export const AdminModule: React.FC = () => {
     try {
       const updated = await api.updateCompany({
         name: company.name,
+        rccm: company.rccm,
+        nif: company.nif,
         address: company.address,
         city: company.city,
         country: company.country,
@@ -57,18 +58,16 @@ export const AdminModule: React.FC = () => {
     }
   };
 
-  const handleCreateUser = async (e: React.FormEvent) => {
+  const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+    setInviteSentMessage(null);
     try {
-      await api.createUser({ email: newEmail, password: newPassword, name: newName, role: newRole });
-      setUsers(await api.getUsers());
-      setShowUserModal(false);
-      setNewEmail('');
-      setNewPassword('');
-      setNewName('');
+      const res = await api.inviteUser({ email: inviteEmail, role: inviteRole });
+      setInviteSentMessage(res.message);
+      setInviteEmail('');
     } catch (err) {
-      setErrorMessage(err instanceof ApiError ? err.message : "Erreur lors de la création de l'utilisateur");
+      setErrorMessage(err instanceof ApiError ? err.message : "Erreur lors de l'envoi de l'invitation");
     }
   };
 
@@ -116,9 +115,10 @@ export const AdminModule: React.FC = () => {
               <label className="block text-xs font-medium text-slate-300 mb-1">RCCM (Registre du Commerce)</label>
               <input
                 type="text"
-                value={company.rccm}
-                disabled
-                className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono text-slate-500 opacity-70 cursor-not-allowed"
+                value={company.rccm || ''}
+                onChange={(e) => setCompany({ ...company, rccm: e.target.value })}
+                placeholder="Ex: CG-BZV-01-2026-B14-00001"
+                className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono"
               />
             </div>
 
@@ -126,9 +126,10 @@ export const AdminModule: React.FC = () => {
               <label className="block text-xs font-medium text-slate-300 mb-1">NIF (Numéro d'Identification Fiscale)</label>
               <input
                 type="text"
-                value={company.nif}
-                disabled
-                className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono text-slate-500 opacity-70 cursor-not-allowed"
+                value={company.nif || ''}
+                onChange={(e) => setCompany({ ...company, nif: e.target.value })}
+                placeholder="Ex: M20260000001"
+                className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono"
               />
             </div>
 
@@ -171,11 +172,11 @@ export const AdminModule: React.FC = () => {
             <h3 className="text-sm font-bold text-white uppercase tracking-wider">Gestion des Utilisateurs & Rôles (RBAC)</h3>
           </div>
           <button
-            onClick={() => setShowUserModal(true)}
+            onClick={() => setShowInviteModal(true)}
             className="flex items-center space-x-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
           >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Nouvel utilisateur</span>
+            <Send className="w-3.5 h-3.5" />
+            <span>Inviter un collègue</span>
           </button>
         </div>
 
@@ -209,26 +210,27 @@ export const AdminModule: React.FC = () => {
         </div>
       </div>
 
-      {showUserModal && (
+      {showInviteModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-card rounded-2xl p-6 w-full max-w-md space-y-4 border border-slate-700">
-            <h3 className="text-base font-bold text-white">Nouvel Utilisateur</h3>
-            <form onSubmit={handleCreateUser} className="space-y-4">
+            <h3 className="text-base font-bold text-white">Inviter un collègue</h3>
+            <p className="text-xs text-slate-400">
+              Un email d'invitation lui sera envoyé. Il définira lui-même son mot de passe en acceptant l'invitation.
+            </p>
+            <form onSubmit={handleInvite} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Nom complet</label>
-                <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} className="w-full glass-input rounded-lg px-3 py-2 text-xs" required />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Email</label>
-                <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="w-full glass-input rounded-lg px-3 py-2 text-xs" required />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Mot de passe initial</label>
-                <input type="password" minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="w-full glass-input rounded-lg px-3 py-2 text-xs" required />
+                <label className="block text-xs font-medium text-slate-300 mb-1">Email professionnel</label>
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="w-full glass-input rounded-lg px-3 py-2 text-xs"
+                  required
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">Rôle</label>
-                <select value={newRole} onChange={(e) => setNewRole(e.target.value as UserRole)} className="w-full glass-input rounded-lg px-3 py-2 text-xs">
+                <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as UserRole)} className="w-full glass-input rounded-lg px-3 py-2 text-xs">
                   <option value="ADMIN">ADMIN</option>
                   <option value="COMPTABLE">COMPTABLE</option>
                   <option value="GESTIONNAIRE">GESTIONNAIRE</option>
@@ -237,13 +239,14 @@ export const AdminModule: React.FC = () => {
               </div>
 
               {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+              {inviteSentMessage && <div className="bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs rounded-lg p-3">{inviteSentMessage}</div>}
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button type="button" onClick={() => setShowUserModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">
-                  Annuler
+                <button type="button" onClick={() => setShowInviteModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">
+                  Fermer
                 </button>
                 <button type="submit" className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold">
-                  Créer
+                  Envoyer l'invitation
                 </button>
               </div>
             </form>

@@ -59,12 +59,36 @@ export const api = {
     return result;
   },
 
+  async register(dto: { name: string; email: string; password: string; companyName: string }): Promise<{ user: User; company: Company }> {
+    const result = await request<{ user: User; company: Company }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+    resetCsrfToken();
+    await ensureCsrfToken();
+    return result;
+  },
+
   async logout(): Promise<void> {
     await request('/auth/logout', { method: 'POST' });
     resetCsrfToken();
   },
 
   getMe: () => request<{ user: User; company: Company }>('/auth/me'),
+
+  forgotPassword: (email: string) => request<{ message: string }>('/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
+  resetPassword: (token: string, newPassword: string) =>
+    request<{ message: string }>('/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, newPassword }) }),
+  getInvite: (token: string) => request<{ email: string; role: string; companyName: string }>(`/auth/invite/${token}`),
+  async acceptInvite(dto: { token: string; name: string; password: string }): Promise<{ user: User; company: Company }> {
+    const result = await request<{ user: User; company: Company }>('/auth/accept-invite', {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+    resetCsrfToken();
+    await ensureCsrfToken();
+    return result;
+  },
 
   getMetrics: () => request<DashboardMetrics>('/dashboard/metrics'),
 
@@ -105,6 +129,10 @@ export const api = {
   getUsers: () => request<User[]>('/admin/users'),
   createUser: (dto: { email: string; password: string; name: string; role: string }) =>
     request<User>('/admin/users', { method: 'POST', body: JSON.stringify(dto) }),
+  inviteUser: (dto: { email: string; role: string }) =>
+    request<{ message: string }>('/admin/invite', { method: 'POST', body: JSON.stringify(dto) }),
+  completeOnboarding: (dto: Partial<Company>) =>
+    request<Company>('/admin/onboarding', { method: 'POST', body: JSON.stringify(dto) }),
 
   getBudgets: (exercice: number) => request<Budget[]>(`/budget?exercice=${exercice}`),
   getBudgetComparison: (exercice: number) => request<BudgetComparisonRow[]>(`/budget/comparison?exercice=${exercice}`),

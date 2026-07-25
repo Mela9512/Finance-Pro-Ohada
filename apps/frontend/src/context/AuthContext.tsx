@@ -7,8 +7,10 @@ interface AuthContextValue {
   company: Company | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  register: (dto: { name: string; email: string; password: string; companyName: string }) => Promise<void>;
   logout: () => Promise<void>;
   refreshCompany: () => Promise<void>;
+  setSession: (user: User, company: Company) => void;
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -38,6 +40,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCompany(res.company);
   }, []);
 
+  const register = useCallback(async (dto: { name: string; email: string; password: string; companyName: string }) => {
+    const res = await api.register(dto);
+    setUser(res.user);
+    setCompany(res.company);
+  }, []);
+
   const logout = useCallback(async () => {
     await api.logout();
     setUser(null);
@@ -50,8 +58,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCompany(res.company);
   }, []);
 
+  const setSession = useCallback((user: User, company: Company) => {
+    setUser(user);
+    setCompany(company);
+  }, []);
+
   return (
-    <AuthContext.Provider value={{ user, company, isLoading, login, logout, refreshCompany }}>
+    <AuthContext.Provider value={{ user, company, isLoading, login, register, logout, refreshCompany, setSession }}>
       {children}
     </AuthContext.Provider>
   );

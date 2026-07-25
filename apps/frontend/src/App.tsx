@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Sidebar, ModuleId } from './components/Sidebar';
 import { LoginScreen } from './components/LoginScreen';
+import { RegisterScreen } from './components/RegisterScreen';
+import { ForgotPasswordScreen } from './components/ForgotPasswordScreen';
+import { ResetPasswordScreen } from './components/ResetPasswordScreen';
+import { AcceptInviteScreen } from './components/AcceptInviteScreen';
+import { OnboardingWizard } from './components/OnboardingWizard';
 import { DashboardModule } from './components/modules/DashboardModule';
 import { AccountingModule } from './components/modules/AccountingModule';
 import { TreasuryModule } from './components/modules/TreasuryModule';
@@ -16,9 +22,31 @@ import { AuthModule } from './components/modules/AuthModule';
 import { LandingPage } from './components/LandingPage';
 import { useAuth } from './context/AuthContext';
 
-export const App: React.FC = () => {
+const FullScreenLoader: React.FC = () => (
+  <div className="flex h-screen w-screen items-center justify-center bg-slate-950">
+    <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+  </div>
+);
+
+const LandingRoute: React.FC = () => {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  if (isLoading) return <FullScreenLoader />;
+  if (user) return <Navigate to="/app" replace />;
+
+  return <LandingPage onLogin={() => navigate('/login')} onSignup={() => navigate('/register')} />;
+};
+
+const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <FullScreenLoader />;
+  if (user) return <Navigate to="/app" replace />;
+  return <>{children}</>;
+};
+
+const AppShell: React.FC = () => {
   const { user, company, isLoading, logout } = useAuth();
-  const [currentView, setCurrentView] = useState<'landing' | 'app'>('landing');
   const [activeModule, setActiveModule] = useState<ModuleId>('dashboard');
 
   const getModuleTitle = (id: ModuleId) => {
@@ -36,42 +64,15 @@ export const App: React.FC = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-950">
-        <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
-      </div>
-    );
-  }
-
-  // If view is landing page, show Landing Page
-  if (currentView === 'landing') {
-    return <LandingPage onLaunchApp={() => setCurrentView('app')} />;
-  }
-
-  // If not logged in when entering app view, prompt login
-  if (!user || !company) {
-    return <LoginScreen />;
-  }
+  if (isLoading) return <FullScreenLoader />;
+  if (!user || !company) return <Navigate to="/login" replace />;
+  if (!company.isOnboarded) return <OnboardingWizard />;
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
-      <Sidebar
-        activeModule={activeModule}
-        onSelectModule={setActiveModule}
-      />
+      <Sidebar activeModule={activeModule} onSelectModule={setActiveModule} />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-2 bg-slate-900/90 border-b border-slate-800 text-xs">
-          <button
-            onClick={() => setCurrentView('landing')}
-            className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
-          >
-            <span>← Voir la Landing Page</span>
-          </button>
-          <span className="text-slate-400 font-medium">Session SaaS FinancePro OHADA Active</span>
-        </div>
-
         <Navbar
           currentModule={getModuleTitle(activeModule)}
           user={user}
@@ -93,6 +94,23 @@ export const App: React.FC = () => {
         </main>
       </div>
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<LandingRoute />} />
+        <Route path="/login" element={<PublicOnlyRoute><LoginScreen /></PublicOnlyRoute>} />
+        <Route path="/register" element={<PublicOnlyRoute><RegisterScreen /></PublicOnlyRoute>} />
+        <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPasswordScreen /></PublicOnlyRoute>} />
+        <Route path="/reset-password" element={<ResetPasswordScreen />} />
+        <Route path="/accept-invite" element={<AcceptInviteScreen />} />
+        <Route path="/app" element={<AppShell />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

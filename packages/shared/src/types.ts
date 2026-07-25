@@ -12,8 +12,8 @@ export interface User {
 export interface Company {
   id: string;
   name: string;
-  rccm: string; // Registre du Commerce et du Crédit Mobilier
-  nif: string;  // Numéro d'Identification Fiscale
+  rccm?: string; // Registre du Commerce et du Crédit Mobilier
+  nif?: string;  // Numéro d'Identification Fiscale
   address: string;
   city: string;
   country: string;
@@ -21,6 +21,7 @@ export interface Company {
   fiscalYearStart: string; // Ex: 2026-01-01
   fiscalYearEnd: string;   // Ex: 2026-12-31
   isExerciceClosed?: boolean;
+  isOnboarded?: boolean;
 }
 
 export type JournalType = 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD';

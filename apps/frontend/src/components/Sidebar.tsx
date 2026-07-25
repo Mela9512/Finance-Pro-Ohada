@@ -1,7 +1,8 @@
 import React from 'react';
 import {
   LayoutDashboard, BookOpenCheck, Wallet, Users, Truck,
-  FileSpreadsheet, BarChart3, Settings, ShieldCheck, LogOut, Target
+  FileSpreadsheet, BarChart3, Settings, ShieldCheck, Target,
+  RefreshCw, MessageSquare, Trash2, FolderCheck, ChevronRight
 } from 'lucide-react';
 
 export type ModuleId =
@@ -23,7 +24,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule }) => {
   const menuItems = [
-    { id: 'dashboard' as ModuleId, label: 'Tableau de bord', icon: LayoutDashboard, badge: 'Live' },
+    { id: 'dashboard' as ModuleId, label: 'Tableau de bord', icon: LayoutDashboard, badge: '99' },
     { id: 'accounting' as ModuleId, label: 'Comptabilité SYSCOHADA', icon: BookOpenCheck },
     { id: 'treasury' as ModuleId, label: 'Trésorerie & Banque', icon: Wallet },
     { id: 'clients' as ModuleId, label: 'Clients & Créances', icon: Users },
@@ -36,21 +37,29 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule }
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between select-none">
+    <aside className="w-64 bg-[#0f2d5e] text-white flex flex-col justify-between select-none shadow-2xl relative z-20 border-r border-blue-900/40">
       <div>
-        {/* Brand Header */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-800 space-x-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <span className="font-extrabold text-slate-950 text-base tracking-wider">FP</span>
+        {/* Brand Pocket Red Wallet Header */}
+        <div className="h-20 flex items-center justify-between px-5 border-b border-blue-800/40">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center shadow-lg shadow-red-600/30">
+              <Wallet className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="font-extrabold text-white text-base tracking-wide">FinancePro</div>
+              <div className="text-[10px] text-blue-200 font-semibold tracking-wider uppercase">SYSCOHADA</div>
+            </div>
           </div>
-          <div>
-            <div className="font-extrabold text-white text-sm tracking-wide">FinancePro</div>
-            <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Norme SYSCOHADA</div>
-          </div>
+          <span className="text-xs text-blue-200/70 font-mono">NAV ◄</span>
         </div>
 
-        {/* Navigation Menu */}
-        <nav className="p-3 space-y-1 mt-2">
+        {/* Navigation Section Title */}
+        <div className="px-5 pt-4 pb-2 text-[10px] font-bold tracking-widest text-blue-300/60 uppercase">
+          NAVIGATION & MODULES
+        </div>
+
+        {/* Navigation Menu (Curved Pill Active Item matching image) */}
+        <nav className="px-3 space-y-1.5">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeModule === item.id;
@@ -58,19 +67,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule }
               <button
                 key={item.id}
                 onClick={() => onSelectModule(item.id)}
-                className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-lg text-xs font-medium transition-all ${
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs font-medium transition-all ${
                   isActive
-                    ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-md shadow-emerald-600/20 font-semibold'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-white text-slate-900 font-bold shadow-lg shadow-blue-950/40'
+                    : 'text-blue-100/80 hover:text-white hover:bg-blue-900/50'
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-red-600' : 'text-blue-200'}`} />
                   <span>{item.label}</span>
                 </div>
                 {item.badge && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-                    isActive ? 'bg-emerald-800 text-emerald-100' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                    isActive ? 'bg-red-600 text-white' : 'bg-blue-900 text-blue-200 border border-blue-700'
                   }`}>
                     {item.badge}
                   </span>
@@ -81,16 +90,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule }
         </nav>
       </div>
 
-      {/* Footer Info */}
-      <div className="p-4 border-t border-slate-800/80 bg-slate-950/40">
-        <div className="bg-slate-850 border border-slate-800 rounded-lg p-3 text-center">
-          <div className="text-[11px] font-semibold text-slate-300">Exercice Comptable 2026</div>
-          <div className="text-[10px] text-emerald-400 font-mono mt-0.5">Clôture : 31/12/2026</div>
-          <div className="w-full bg-slate-800 rounded-full h-1.5 mt-2 overflow-hidden">
-            <div className="bg-emerald-500 h-full w-7/12 rounded-full"></div>
+      {/* Footer Info Badge */}
+      <div className="p-4 border-t border-blue-800/40 bg-blue-950/60">
+        <div className="bg-blue-900/50 border border-blue-800 rounded-xl p-3 text-center">
+          <div className="text-[11px] font-bold text-white">Exercice Comptable 2026</div>
+          <div className="text-[10px] text-blue-200 font-mono mt-0.5">Clôture : 31/12/2026</div>
+          <div className="w-full bg-blue-950 rounded-full h-1.5 mt-2 overflow-hidden border border-blue-800">
+            <div className="bg-red-500 h-full w-8/12 rounded-full"></div>
           </div>
         </div>
       </div>
     </aside>
   );
 };
+
+export default Sidebar;

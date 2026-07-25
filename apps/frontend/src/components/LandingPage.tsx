@@ -24,10 +24,11 @@ import {
 } from 'lucide-react';
 
 interface LandingPageProps {
-  onLaunchApp: () => void;
+  onLogin: () => void;
+  onSignup: () => void;
 }
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLogin, onSignup }) => {
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-600 selection:text-white overflow-x-hidden">
       
@@ -40,7 +41,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
         <div className="max-w-7xl mx-auto relative z-10">
           {/* Top Navbar */}
           <header className="flex items-center justify-between py-4 border-b border-blue-800/40">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={onLaunchApp}>
+            <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center backdrop-blur-md">
                 <Building2 className="w-5 h-5 text-blue-200" />
               </div>
@@ -57,16 +58,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
             <div className="flex items-center gap-3">
               <button
-                onClick={onLaunchApp}
+                onClick={onLogin}
                 className="text-xs font-semibold text-blue-100 hover:text-white px-4 py-2 rounded-lg transition-colors hidden sm:block"
               >
                 Se connecter
               </button>
               <button
-                onClick={onLaunchApp}
+                onClick={onSignup}
                 className="px-5 py-2.5 rounded-full font-semibold text-xs text-slate-900 bg-white hover:bg-blue-50 transition-all shadow-md flex items-center gap-2 group"
               >
-                <span>Accéder au SaaS</span>
+                <span>Essai gratuit</span>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-900 group-hover:translate-x-0.5 transition-transform" />
               </button>
             </div>
@@ -89,18 +90,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
 
             <div className="pt-4 flex items-center gap-4">
               <button
-                onClick={onLaunchApp}
+                onClick={onSignup}
                 className="px-6 py-3.5 rounded-full font-semibold text-xs text-slate-950 bg-white hover:bg-blue-50 transition-all shadow-xl flex items-center gap-2 group"
               >
-                <span>Demander une démo</span>
+                <span>Essayer gratuitement</span>
                 <ArrowRight className="w-4 h-4 text-slate-950 group-hover:translate-x-1 transition-transform" />
               </button>
 
               <button
-                onClick={onLaunchApp}
+                onClick={onLogin}
                 className="px-6 py-3.5 rounded-full font-medium text-xs text-white border border-white/20 hover:bg-white/10 transition-colors backdrop-blur-sm"
               >
-                Essai gratuit 14 jours
+                J'ai déjà un compte
               </button>
             </div>
 
@@ -119,7 +120,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
             <span className="w-2 h-2 rounded-full bg-blue-600"></span>
             <span className="text-xs font-bold uppercase tracking-widest text-slate-500">À PROPOS</span>
           </div>
-          <button onClick={onLaunchApp} className="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-1">
+          <button onClick={onSignup} className="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-1">
             Voir plus <ChevronRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -165,7 +166,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               <p className="text-xs sm:text-sm text-blue-100/80 leading-relaxed">
                 Toutes les écritures au Journal Général, au Grand Livre et à la Balance à 6 colonnes sont contrôlées pour garantir des états financiers irréprochables.
               </p>
-              <button onClick={onLaunchApp} className="px-5 py-2.5 rounded-lg bg-white text-slate-950 font-semibold text-xs hover:bg-blue-50 transition-colors">
+              <button onClick={onSignup} className="px-5 py-2.5 rounded-lg bg-white text-slate-950 font-semibold text-xs hover:bg-blue-50 transition-colors">
                 Tester la saisie comptable →
               </button>
             </div>
@@ -189,7 +190,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
               <span className="w-2 h-2 rounded-full bg-blue-600"></span>
               <span className="text-xs font-bold uppercase tracking-widest text-slate-500">SERVICES & MODULES</span>
             </div>
-            <button onClick={onLaunchApp} className="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-1">
+            <button onClick={onSignup} className="text-xs font-semibold text-blue-700 hover:underline flex items-center gap-1">
               Voir tous les modules <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -344,7 +345,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
           </p>
           <div className="pt-2">
             <button
-              onClick={onLaunchApp}
+              onClick={onSignup}
               className="px-8 py-3.5 rounded-full font-bold text-xs text-slate-950 bg-white hover:bg-blue-50 transition-all shadow-xl inline-flex items-center gap-2"
             >
               <span>Démarrer maintenant</span>
@@ -369,7 +370,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLaunchApp }) => {
             <a href="#about" className="hover:text-white transition-colors">À propos</a>
             <a href="#services" className="hover:text-white transition-colors">Services</a>
             <a href="#excellence" className="hover:text-white transition-colors">Sécurité</a>
-            <button onClick={onLaunchApp} className="hover:text-white transition-colors">Connexion SaaS</button>
+            <button onClick={onLogin} className="hover:text-white transition-colors">Connexion SaaS</button>
           </div>
 
           <div>
