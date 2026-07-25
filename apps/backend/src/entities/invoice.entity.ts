@@ -1,15 +1,16 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Unique } from 'typeorm';
 import { InvoiceItemEntity } from './invoice-item.entity';
 
 export type InvoiceType = 'VENTE' | 'ACHAT' | 'AVOIR';
 export type InvoiceStatus = 'BROUILLON' | 'VALIDE' | 'PAYE' | 'ANNULE' | 'PARTIEL';
 
 @Entity('invoices')
+@Unique(['companyId', 'invoiceNumber'])
 export class InvoiceEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   invoiceNumber: string;
 
   @Column({ type: 'simple-enum', enum: ['VENTE', 'ACHAT', 'AVOIR'] })

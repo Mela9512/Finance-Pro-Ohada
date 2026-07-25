@@ -1,12 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToMany, Unique } from 'typeorm';
 import { JournalLineEntity } from './journal-line.entity';
 
 @Entity('journal_entries')
+@Unique(['companyId', 'entryNumber'])
 export class JournalEntryEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   entryNumber: string; // Ex: VT-2026-0001
 
   @Column()

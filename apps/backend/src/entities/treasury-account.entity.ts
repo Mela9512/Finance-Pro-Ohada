@@ -1,13 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Unique } from 'typeorm';
 
 export type TreasuryAccountType = 'BANQUE' | 'CAISSE' | 'MOBILE_MONEY';
 
 @Entity('treasury_accounts')
+@Unique(['companyId', 'code'])
 export class TreasuryAccountEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ unique: true })
+  @Column()
   code: string;
 
   @Column()

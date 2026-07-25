@@ -9,6 +9,7 @@ import { CompanyEntity } from '../../entities/company.entity';
 import { PasswordResetTokenEntity } from '../../entities/password-reset-token.entity';
 import { InviteTokenEntity } from '../../entities/invite-token.entity';
 import { EmailService } from '../../common/services/email.service';
+import { AuditLogService } from '../../common/services/audit-log.service';
 import { RegisterDto } from './dto/register.dto';
 import { AcceptInviteDto } from './dto/accept-invite.dto';
 
@@ -28,6 +29,7 @@ export class AuthService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
+    private readonly auditLogService: AuditLogService,
   ) {}
 
   private async issueSession(user: UserEntity, company: CompanyEntity | null) {
@@ -56,6 +58,13 @@ export class AuthService {
     }
 
     const company = await this.companies.findOne({ where: { id: user.companyId } });
+    await this.auditLogService.log({
+      companyId: user.companyId,
+      userId: user.id,
+      action: 'LOGIN_SUCCESS',
+      entityType: 'User',
+      entityId: user.id,
+    });
     return this.issueSession(user, company);
   }
 
@@ -83,6 +92,15 @@ export class AuthService {
         }),
       );
       return { user, company };
+    });
+
+    await this.auditLogService.log({
+      companyId: company.id,
+      userId: user.id,
+      action: 'COMPANY_REGISTERED',
+      entityType: 'Company',
+      entityId: company.id,
+      metadata: { companyName: company.name, adminEmail: user.email },
     });
 
     return this.issueSession(user, company);
@@ -137,6 +155,14 @@ export class AuthService {
 
     resetToken.usedAt = new Date();
     await this.resetTokens.save(resetToken);
+
+    await this.auditLogService.log({
+      companyId: user.companyId,
+      userId: user.id,
+      action: 'PASSWORD_RESET_COMPLETED',
+      entityType: 'User',
+      entityId: user.id,
+    });
   }
 
   async validateInvite(rawToken: string) {
@@ -176,6 +202,14 @@ export class AuthService {
     await this.inviteTokens.save(invite);
 
     const company = await this.companies.findOne({ where: { id: invite.companyId } });
+    await this.auditLogService.log({
+      companyId: invite.companyId,
+      userId: user.id,
+      action: 'INVITE_ACCEPTED',
+      entityType: 'User',
+      entityId: user.id,
+      metadata: { role: invite.role },
+    });
     return this.issueSession(user, company);
   }
 }

@@ -10,11 +10,13 @@ import { UserEntity } from '../../entities/user.entity';
 import { CompanyEntity } from '../../entities/company.entity';
 import { PasswordResetTokenEntity } from '../../entities/password-reset-token.entity';
 import { InviteTokenEntity } from '../../entities/invite-token.entity';
+import { AuditLogEntity } from '../../entities/audit-log.entity';
 import { EmailService } from '../../common/services/email.service';
+import { AuditLogService } from '../../common/services/audit-log.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, CompanyEntity, PasswordResetTokenEntity, InviteTokenEntity]),
+    TypeOrmModule.forFeature([UserEntity, CompanyEntity, PasswordResetTokenEntity, InviteTokenEntity, AuditLogEntity]),
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -26,7 +28,7 @@ import { EmailService } from '../../common/services/email.service';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, EmailService],
+  providers: [AuthService, JwtStrategy, EmailService, AuditLogService],
   exports: [AuthService],
 })
 export class AuthModule {}

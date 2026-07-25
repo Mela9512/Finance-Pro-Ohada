@@ -12,7 +12,10 @@
     "dev:frontend": "npm --prefix apps/frontend run dev",
     "dev:backend": "node apps/backend/dist/main.js",
     "build": "npm --prefix packages/shared run build && npm --prefix apps/backend run build && npm --prefix apps/frontend run build",
-    "start": "node apps/backend/dist/main.js"
+    "start": "node apps/backend/dist/main.js",
+    "lint": "eslint apps/backend/src apps/frontend/src packages/shared/src",
+    "test:backend": "npm --prefix apps/backend run test",
+    "test:e2e": "npm --prefix apps/backend run test:e2e"
   },
   "keywords": [
     "ohada",
@@ -25,5 +28,10 @@
     "typescript"
   ],
   "author": "FinancePro Team",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "typescript-eslint": "^8.65.0"
+  }
 }
