@@ -13,10 +13,12 @@ import { ReportsModule } from './components/modules/ReportsModule';
 import { BudgetModule } from './components/modules/BudgetModule';
 import { AdminModule } from './components/modules/AdminModule';
 import { AuthModule } from './components/modules/AuthModule';
+import { LandingPage } from './components/LandingPage';
 import { useAuth } from './context/AuthContext';
 
 export const App: React.FC = () => {
   const { user, company, isLoading, logout } = useAuth();
+  const [currentView, setCurrentView] = useState<'landing' | 'app'>('landing');
   const [activeModule, setActiveModule] = useState<ModuleId>('dashboard');
 
   const getModuleTitle = (id: ModuleId) => {
@@ -42,6 +44,12 @@ export const App: React.FC = () => {
     );
   }
 
+  // If view is landing page, show Landing Page
+  if (currentView === 'landing') {
+    return <LandingPage onLaunchApp={() => setCurrentView('app')} />;
+  }
+
+  // If not logged in when entering app view, prompt login
   if (!user || !company) {
     return <LoginScreen />;
   }
@@ -54,6 +62,16 @@ export const App: React.FC = () => {
       />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-2 bg-slate-900/90 border-b border-slate-800 text-xs">
+          <button
+            onClick={() => setCurrentView('landing')}
+            className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
+          >
+            <span>← Voir la Landing Page</span>
+          </button>
+          <span className="text-slate-400 font-medium">Session SaaS FinancePro OHADA Active</span>
+        </div>
+
         <Navbar
           currentModule={getModuleTitle(activeModule)}
           user={user}
