@@ -34,8 +34,22 @@ export async function createApp(): Promise<INestApplication> {
     }),
   );
 
+  // FRONTEND_URL accepte plusieurs origines séparées par des virgules : Vercel attribue parfois
+  // plusieurs domaines *.vercel.app valides au même projet (alias historique + nom courant), et
+  // exiger une seule valeur exacte cassait le CORS dès que l'un ne correspondait pas à l'autre.
+  const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:3000')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origine non autorisée par CORS : ${origin}`), false);
+      }
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });
