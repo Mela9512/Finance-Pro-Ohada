@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-route
 import { Loader2 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { Sidebar, ModuleId } from './components/Sidebar';
+import { AIAssistantWidget } from './components/AIAssistantWidget';
 import { LoginScreen } from './components/LoginScreen';
 import { RegisterScreen } from './components/RegisterScreen';
 import { ForgotPasswordScreen } from './components/ForgotPasswordScreen';
@@ -96,6 +97,8 @@ const AppShell: React.FC = () => {
           {activeModule === 'auth' && <AuthModule currentUser={user} />}
         </main>
       </div>
+
+      <AIAssistantWidget currentScreen={getModuleTitle(activeModule) || ''} />
     </div>
   );
 };

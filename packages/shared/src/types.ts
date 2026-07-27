@@ -251,6 +251,45 @@ export interface CashflowForecast {
   analyseIA: string | null;
 }
 
+export type RiskLevel = 'AUCUN' | 'FAIBLE' | 'MOYEN' | 'ELEVE';
+
+export interface ClientRisk {
+  customerId: string;
+  customerName: string;
+  outstandingTotal: number;
+  overdueTotal: number;
+  overdueInvoiceCount: number;
+  creditLimit: number;
+  riskLevel: RiskLevel;
+}
+
+export interface ClientRiskReport {
+  clients: ClientRisk[];
+  analyseIA: string | null;
+}
+
+export interface SupplierAlert {
+  supplierId: string;
+  supplierName: string;
+  outstandingTotal: number;
+  overdueTotal: number;
+  overdueInvoiceCount: number;
+  riskLevel: RiskLevel;
+}
+
+export interface SupplierAlertReport {
+  suppliers: SupplierAlert[];
+  analyseIA: string | null;
+}
+
+export interface FinancialVariationExplanation {
+  currentYear: number;
+  previousYear: number;
+  current: CompteDeResultat;
+  previous: CompteDeResultat;
+  analyseIA: string | null;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;

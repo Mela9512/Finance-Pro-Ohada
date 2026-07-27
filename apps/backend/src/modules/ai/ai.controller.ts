@@ -29,12 +29,36 @@ export class AiController {
 
   @Post('chat')
   async chat(@CurrentUser() user: AuthenticatedUser, @Body() body: ChatDto) {
-    const answer = await this.aiService.chat(user.companyId, body.question);
+    const answer = await this.aiService.chat(user.companyId, body.question, body.currentScreen);
     return { answer };
   }
 
   @Get('cashflow-forecast')
   getCashflowForecast(@CurrentUser() user: AuthenticatedUser) {
     return this.aiService.getCashflowForecast(user.companyId);
+  }
+
+  @Get('clients-risk')
+  getClientsRisk(@CurrentUser() user: AuthenticatedUser) {
+    return this.aiService.getClientsRiskAnalysis(user.companyId);
+  }
+
+  @Get('suppliers-overdue')
+  getSuppliersOverdue(@CurrentUser() user: AuthenticatedUser) {
+    return this.aiService.getSuppliersOverdueAnalysis(user.companyId);
+  }
+
+  @Get('explain-variation')
+  getExplainVariation(@CurrentUser() user: AuthenticatedUser) {
+    return this.aiService.explainFinancialVariation(user.companyId);
+  }
+
+  @Get('suggest-budget')
+  suggestBudget(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('accountCode') accountCode: string,
+    @Query('exercice') exercice: string,
+  ) {
+    return this.aiService.suggestBudgetAmount(user.companyId, accountCode, Number(exercice));
   }
 }

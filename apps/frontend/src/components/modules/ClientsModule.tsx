@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Phone, Mail, MapPin } from 'lucide-react';
-import { Customer } from '@financepro/shared';
+import { Plus, Phone, Mail, MapPin, AlertTriangle } from 'lucide-react';
+import { Customer, ClientRisk } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
+
+const RISK_STYLES: Record<string, string> = {
+  ELEVE: 'bg-rose-950 text-rose-400 border-rose-800',
+  MOYEN: 'bg-amber-950 text-amber-300 border-amber-800',
+  FAIBLE: 'bg-yellow-950 text-yellow-300 border-yellow-800',
+  AUCUN: 'bg-emerald-950 text-emerald-400 border-emerald-800',
+};
 
 export const ClientsModule: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [risks, setRisks] = useState<Map<string, ClientRisk>>(new Map());
+  const [riskAnalyseIA, setRiskAnalyseIA] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [nif, setNif] = useState('');
@@ -18,9 +27,11 @@ export const ClientsModule: React.FC = () => {
 
   useEffect(() => {
     loadClients();
+    api.aiGetClientsRisk().then((report) => {
+      setRisks(new Map(report.clients.map((c) => [c.customerId, c])));
+      setRiskAnalyseIA(report.analyseIA);
+    }).catch(() => {});
   }, []);
-
-  const totalCreances = customers.reduce((sum, c) => sum + Number(c.balance), 0);
 
   const handleCreateCustomer = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,9 +77,18 @@ export const ClientsModule: React.FC = () => {
         </button>
       </div>
 
+      {riskAnalyseIA && (
+        <div className="flex items-start gap-2 bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs rounded-xl p-4">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-indigo-500" />
+          <span>{riskAnalyseIA}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {customers.map((cust) => {
-          const usagePercent = Math.round((Number(cust.balance) / Number(cust.creditLimit)) * 100);
+          const risk = risks.get(cust.id);
+          const outstandingTotal = risk?.outstandingTotal ?? 0;
+          const usagePercent = Number(cust.creditLimit) > 0 ? Math.round((outstandingTotal / Number(cust.creditLimit)) * 100) : 0;
           return (
             <div key={cust.id} className="glass-card rounded-xl p-5 space-y-4 relative">
               <div className="flex justify-between items-start border-b border-slate-800 pb-3">
@@ -79,10 +99,17 @@ export const ClientsModule: React.FC = () => {
                   <h3 className="text-sm font-bold text-white mt-1.5">{cust.name}</h3>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-400">Solde Débiteur</div>
-                  <div className="text-base font-extrabold text-amber-300 font-mono">{formatMoney(Number(cust.balance))}</div>
+                  <div className="text-xs text-slate-400">Encours Réel</div>
+                  <div className="text-base font-extrabold text-amber-300 font-mono">{formatMoney(outstandingTotal)}</div>
                 </div>
               </div>
+
+              {risk && risk.riskLevel !== 'AUCUN' && (
+                <div className={`flex items-center justify-between text-[10px] font-bold px-2.5 py-1.5 rounded border ${RISK_STYLES[risk.riskLevel]}`}>
+                  <span>RISQUE {risk.riskLevel} — {risk.overdueInvoiceCount} facture(s) en retard</span>
+                  <span>{formatMoney(risk.overdueTotal)}</span>
+                </div>
+              )}
 
               <div className="space-y-1 text-xs text-slate-300">
                 <div className="flex items-center space-x-2">

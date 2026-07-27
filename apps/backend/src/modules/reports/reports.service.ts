@@ -169,6 +169,12 @@ export class ReportsService {
     return this.computeCompteDeResultatFromBalances(balances);
   }
 
+  /** Compte de Résultat scopé à une année civile précise (utile pour comparer deux exercices réels). */
+  async getCompteDeResultatForYear(companyId: string, year: number): Promise<CompteDeResultat> {
+    const balances = await this.accountingService.getAccountBalancesForYear(companyId, year);
+    return this.computeCompteDeResultatFromBalances(balances);
+  }
+
   /** Évite de recalculer deux fois les soldes de comptes quand bilan + CR sont nécessaires ensemble. */
   async getBilanAndCompteDeResultat(companyId: string): Promise<{ bilan: FinancialReportBilan; compteDeResultat: CompteDeResultat }> {
     const balances = await this.accountingService.getAccountBalances(companyId);

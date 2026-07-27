@@ -1,10 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { Truck, Plus, Phone, Mail, ShieldCheck } from 'lucide-react';
-import { Supplier } from '@financepro/shared';
+import { Truck, Plus, Phone, Mail, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { Supplier, SupplierAlert } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
+
+const RISK_STYLES: Record<string, string> = {
+  ELEVE: 'bg-rose-950 text-rose-400 border-rose-800',
+  MOYEN: 'bg-amber-950 text-amber-300 border-amber-800',
+  FAIBLE: 'bg-yellow-950 text-yellow-300 border-yellow-800',
+  AUCUN: 'bg-emerald-950 text-emerald-400 border-emerald-800',
+};
 
 export const SuppliersModule: React.FC = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [alerts, setAlerts] = useState<Map<string, SupplierAlert>>(new Map());
+  const [alertAnalyseIA, setAlertAnalyseIA] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [nif, setNif] = useState('');
@@ -17,9 +26,13 @@ export const SuppliersModule: React.FC = () => {
 
   useEffect(() => {
     loadSuppliers();
+    api.aiGetSuppliersOverdue().then((report) => {
+      setAlerts(new Map(report.suppliers.map((s) => [s.supplierId, s])));
+      setAlertAnalyseIA(report.analyseIA);
+    }).catch(() => {});
   }, []);
 
-  const totalDettes = suppliers.reduce((sum, s) => sum + Number(s.balance), 0);
+  const totalDettes = Array.from(alerts.values()).reduce((sum, a) => sum + a.outstandingTotal, 0);
 
   const handleCreateSupplier = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,8 +78,17 @@ export const SuppliersModule: React.FC = () => {
         </button>
       </div>
 
+      {alertAnalyseIA && (
+        <div className="flex items-start gap-2 bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs rounded-xl p-4">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-indigo-500" />
+          <span>{alertAnalyseIA}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {suppliers.map((supp) => (
+        {suppliers.map((supp) => {
+          const alert = alerts.get(supp.id);
+          return (
           <div key={supp.id} className="glass-card rounded-xl p-5 space-y-4">
             <div className="flex justify-between items-start border-b border-slate-800 pb-3">
               <div>
@@ -76,10 +98,17 @@ export const SuppliersModule: React.FC = () => {
                 <h3 className="text-sm font-bold text-white mt-1.5">{supp.name}</h3>
               </div>
               <div className="text-right">
-                <div className="text-xs text-slate-400">Solde Créditeur</div>
-                <div className="text-base font-extrabold text-rose-300 font-mono">{formatMoney(Number(supp.balance))}</div>
+                <div className="text-xs text-slate-400">Dette Réelle</div>
+                <div className="text-base font-extrabold text-rose-300 font-mono">{formatMoney(alert?.outstandingTotal ?? 0)}</div>
               </div>
             </div>
+
+            {alert && alert.riskLevel !== 'AUCUN' && (
+              <div className={`flex items-center justify-between text-[10px] font-bold px-2.5 py-1.5 rounded border ${RISK_STYLES[alert.riskLevel]}`}>
+                <span>RETARD {alert.riskLevel} — {alert.overdueInvoiceCount} facture(s)</span>
+                <span>{formatMoney(alert.overdueTotal)}</span>
+              </div>
+            )}
 
             <div className="space-y-1 text-xs text-slate-300">
               <div className="flex items-center space-x-2">
@@ -96,7 +125,8 @@ export const SuppliersModule: React.FC = () => {
               </div>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {showModal && (

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Wallet, Landmark, Smartphone, Plus, CheckCircle, Upload } from 'lucide-react';
-import { TreasuryAccount, TreasuryTransaction } from '@financepro/shared';
+import { Wallet, Landmark, Smartphone, Plus, CheckCircle, Upload, TrendingUp } from 'lucide-react';
+import { TreasuryAccount, TreasuryTransaction, CashflowForecast } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 
 export const TreasuryModule: React.FC = () => {
@@ -20,6 +20,9 @@ export const TreasuryModule: React.FC = () => {
   const [importResult, setImportResult] = useState<{ imported: number; matched: number; created: number } | null>(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [forecast, setForecast] = useState<CashflowForecast | null>(null);
+  const [forecastError, setForecastError] = useState<string | null>(null);
 
   const loadData = () => {
     api.getTreasuryAccounts().then((accs) => {
@@ -50,6 +53,9 @@ export const TreasuryModule: React.FC = () => {
 
   useEffect(() => {
     loadData();
+    api.aiGetCashflowForecast()
+      .then(setForecast)
+      .catch((err) => setForecastError(err instanceof ApiError ? err.message : null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -136,6 +142,30 @@ export const TreasuryModule: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {forecast && (
+        <div className="glass-card rounded-xl p-6 space-y-3">
+          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-emerald-400" /> Prévision de Trésorerie IA (30/60/90 jours)
+          </h3>
+          <div className="grid grid-cols-3 gap-2 font-mono text-[11px]">
+            {[
+              { label: '30 jours', h: forecast.horizon30 },
+              { label: '60 jours', h: forecast.horizon60 },
+              { label: '90 jours', h: forecast.horizon90 },
+            ].map((x) => (
+              <div key={x.label} className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-1">
+                <div className="text-slate-400 font-bold">{x.label}</div>
+                <div className="text-emerald-400">Entrées : +{formatMoney(x.h.entrees)}</div>
+                <div className="text-rose-400">Sorties : -{formatMoney(x.h.sorties)}</div>
+                <div className="text-white font-bold border-t border-slate-800 pt-1">Solde projeté : {formatMoney(x.h.soldeProjete)}</div>
+              </div>
+            ))}
+          </div>
+          {forecast.analyseIA && <div className="text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-900 rounded-lg p-3">{forecast.analyseIA}</div>}
+        </div>
+      )}
+      {forecastError && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{forecastError}</div>}
 
       <div className="glass-card rounded-xl p-6 space-y-4">
         <div className="flex items-center justify-between">

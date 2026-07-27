@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Target, Plus, TrendingUp, TrendingDown } from 'lucide-react';
+import { Target, Plus, TrendingUp, TrendingDown, Sparkles, AlertTriangle } from 'lucide-react';
 import { AccountSYSCOHADA, BudgetComparisonRow } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 
@@ -14,17 +14,33 @@ export const BudgetModule: React.FC = () => {
   const [period, setPeriod] = useState('');
   const [amountBudgeted, setAmountBudgeted] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [budgetAnalyseIA, setBudgetAnalyseIA] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<{ basedOnYear: number; suggestedAmount: number } | null>(null);
 
   const loadComparison = () => api.getBudgetComparison(exercice).then(setComparison);
 
   useEffect(() => {
     api.getAccounts().then(setAccounts);
+    api.aiGetAnomalies().then((report) => {
+      const hasBudgetAnomaly = report.anomalies.some((a) => a.type === 'BUDGET_VARIANCE');
+      setBudgetAnalyseIA(hasBudgetAnomaly ? report.analyseIA : null);
+    }).catch(() => {});
   }, []);
 
   useEffect(() => {
     loadComparison();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [exercice]);
+
+  useEffect(() => {
+    if (!showModal || !accountCode) {
+      setSuggestion(null);
+      return;
+    }
+    api.aiSuggestBudget(accountCode, exercice)
+      .then((res) => setSuggestion(res.suggestedAmount > 0 ? { basedOnYear: res.basedOnYear, suggestedAmount: res.suggestedAmount } : null))
+      .catch(() => setSuggestion(null));
+  }, [showModal, accountCode, exercice]);
 
   const handleCreateBudget = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +100,13 @@ export const BudgetModule: React.FC = () => {
       </div>
 
       {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+
+      {budgetAnalyseIA && (
+        <div className="flex items-start gap-2 bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs rounded-xl p-4">
+          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-indigo-500" />
+          <span>{budgetAnalyseIA}</span>
+        </div>
+      )}
 
       <div className="glass-card rounded-xl p-6 space-y-4">
         <div className="flex items-center space-x-2">
@@ -152,6 +175,16 @@ export const BudgetModule: React.FC = () => {
                     <option key={a.code} value={a.code}>{a.code} - {a.label}</option>
                   ))}
                 </select>
+                {suggestion && (
+                  <button
+                    type="button"
+                    onClick={() => setAmountBudgeted(String(suggestion.suggestedAmount))}
+                    className="mt-1 flex items-center gap-1 text-[10px] text-indigo-300 hover:text-indigo-200"
+                  >
+                    <Sparkles className="w-3 h-3" />
+                    <span>Suggestion basée sur le réel {suggestion.basedOnYear} : {formatMoney(suggestion.suggestedAmount)} (appliquer)</span>
+                  </button>
+                )}
               </div>
 
               <div>

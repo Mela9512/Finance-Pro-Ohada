@@ -11,6 +11,7 @@ function makeQueryBuilderMock(rawManyResult: any[] = [], rawOneResult: any = nul
     having: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     limit: jest.fn().mockReturnThis(),
+    setParameter: jest.fn().mockReturnThis(),
     getRawMany: jest.fn().mockResolvedValue(rawManyResult),
     getRawOne: jest.fn().mockResolvedValue(rawOneResult),
   };
@@ -32,9 +33,10 @@ describe('AiService', () => {
   let lineRepo: ReturnType<typeof makeRepoMock>;
   let invoiceRepo: ReturnType<typeof makeRepoMock>;
   let customerRepo: ReturnType<typeof makeRepoMock>;
+  let supplierRepo: ReturnType<typeof makeRepoMock>;
   let treasuryAccountRepo: ReturnType<typeof makeRepoMock>;
-  let accountingService: { getBalanceGenerale: jest.Mock };
-  let reportsService: { getBilan: jest.Mock; getCompteDeResultat: jest.Mock };
+  let accountingService: { getBalanceGenerale: jest.Mock; getAccountBalancesForYear: jest.Mock };
+  let reportsService: { getBilan: jest.Mock; getCompteDeResultat: jest.Mock; getCompteDeResultatForYear: jest.Mock };
   let budgetService: { getComparison: jest.Mock };
   let service: AiService;
 
@@ -44,9 +46,10 @@ describe('AiService', () => {
     lineRepo = makeRepoMock();
     invoiceRepo = makeRepoMock();
     customerRepo = makeRepoMock();
+    supplierRepo = makeRepoMock();
     treasuryAccountRepo = makeRepoMock();
-    accountingService = { getBalanceGenerale: jest.fn() };
-    reportsService = { getBilan: jest.fn(), getCompteDeResultat: jest.fn() };
+    accountingService = { getBalanceGenerale: jest.fn(), getAccountBalancesForYear: jest.fn().mockResolvedValue([]) };
+    reportsService = { getBilan: jest.fn(), getCompteDeResultat: jest.fn(), getCompteDeResultatForYear: jest.fn() };
     budgetService = { getComparison: jest.fn().mockResolvedValue([]) };
 
     service = new AiService(
@@ -55,6 +58,7 @@ describe('AiService', () => {
       lineRepo as any,
       invoiceRepo as any,
       customerRepo as any,
+      supplierRepo as any,
       treasuryAccountRepo as any,
       accountingService as any,
       reportsService as any,
@@ -189,6 +193,102 @@ describe('AiService', () => {
       const forecast = await service.getCashflowForecast('company-1');
 
       expect(forecast.horizon30.entrees + forecast.horizon60.entrees + forecast.horizon90.entrees).toBe(0);
+    });
+  });
+
+  describe('getClientsRiskAnalysis', () => {
+    it('calcule le risque à partir des factures VENTE réellement échues (pas du champ balance jamais mis à jour)', async () => {
+      customerRepo.find.mockResolvedValue([
+        { id: 'c1', name: 'CLIENT A', creditLimit: 1000000 },
+        { id: 'c2', name: 'CLIENT B', creditLimit: 0 },
+      ]);
+      invoiceRepo.createQueryBuilder.mockReturnValue(
+        makeQueryBuilderMock([{ tierId: 'c1', outstanding: '1500000', overdue: '1200000', overdueCount: '3' }]),
+      );
+
+      const { clients } = await service.getClientsRiskAnalysis('company-1');
+
+      const clientA = clients.find((c) => c.customerId === 'c1')!;
+      expect(clientA.outstandingTotal).toBe(1500000);
+      expect(clientA.overdueTotal).toBe(1200000);
+      expect(clientA.riskLevel).toBe('ELEVE'); // ratio > 1 et >= 3 factures
+
+      const clientB = clients.find((c) => c.customerId === 'c2')!;
+      expect(clientB.riskLevel).toBe('AUCUN');
+    });
+
+    it("ne génère pas de synthèse IA quand aucun client n'est à risque", async () => {
+      customerRepo.find.mockResolvedValue([{ id: 'c1', name: 'CLIENT A', creditLimit: 1000000 }]);
+      invoiceRepo.createQueryBuilder.mockReturnValue(makeQueryBuilderMock([]));
+
+      const { analyseIA } = await service.getClientsRiskAnalysis('company-1');
+
+      expect(analyseIA).toBeNull();
+      expect(aiProvider.generateText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getSuppliersOverdueAnalysis', () => {
+    it('calcule les dettes fournisseurs réellement en retard depuis les factures ACHAT', async () => {
+      supplierRepo.find.mockResolvedValue([{ id: 's1', name: 'FOURNISSEUR X' }]);
+      invoiceRepo.createQueryBuilder.mockReturnValue(
+        makeQueryBuilderMock([{ tierId: 's1', outstanding: '500000', overdue: '500000', overdueCount: '2' }]),
+      );
+
+      const { suppliers } = await service.getSuppliersOverdueAnalysis('company-1');
+
+      expect(suppliers[0].overdueTotal).toBe(500000);
+      expect(suppliers[0].riskLevel).toBe('MOYEN'); // >= 2 factures, pas de limite de crédit fournisseur
+    });
+  });
+
+  describe('explainFinancialVariation', () => {
+    it('compare deux exercices réels distincts (année courante vs année précédente)', async () => {
+      const year = new Date().getFullYear();
+      reportsService.getCompteDeResultatForYear.mockImplementation((_companyId: string, y: number) =>
+        Promise.resolve(y === year ? { chiffreAffaires: 2000000, resultatNet: 300000 } : { chiffreAffaires: 1000000, resultatNet: 100000 }),
+      );
+
+      const result = await service.explainFinancialVariation('company-1');
+
+      expect(result.currentYear).toBe(year);
+      expect(result.previousYear).toBe(year - 1);
+      expect(result.current.chiffreAffaires).toBe(2000000);
+      expect(result.previous.chiffreAffaires).toBe(1000000);
+      expect(reportsService.getCompteDeResultatForYear).toHaveBeenCalledWith('company-1', year);
+      expect(reportsService.getCompteDeResultatForYear).toHaveBeenCalledWith('company-1', year - 1);
+    });
+  });
+
+  describe('suggestBudgetAmount', () => {
+    it("suggère un montant basé sur le solde réel de l'exercice précédent pour un compte de charge (sens débiteur)", async () => {
+      accountingService.getAccountBalancesForYear.mockResolvedValue([
+        { code: '601', type: 'debit', soldeDebiteur: 4000000, soldeCrediteur: 0 },
+      ]);
+
+      const result = await service.suggestBudgetAmount('company-1', '601', 2027);
+
+      expect(result.basedOnYear).toBe(2026);
+      expect(result.suggestedAmount).toBe(4000000);
+      expect(accountingService.getAccountBalancesForYear).toHaveBeenCalledWith('company-1', 2026);
+    });
+
+    it("suggère un montant basé sur le solde créditeur pour un compte de produit", async () => {
+      accountingService.getAccountBalancesForYear.mockResolvedValue([
+        { code: '701', type: 'credit', soldeDebiteur: 0, soldeCrediteur: 8000000 },
+      ]);
+
+      const result = await service.suggestBudgetAmount('company-1', '701', 2027);
+
+      expect(result.suggestedAmount).toBe(8000000);
+    });
+
+    it("renvoie 0 quand aucune donnée n'existe pour ce compte l'année précédente (pas d'invention)", async () => {
+      accountingService.getAccountBalancesForYear.mockResolvedValue([]);
+
+      const result = await service.suggestBudgetAmount('company-1', '601', 2027);
+
+      expect(result.suggestedAmount).toBe(0);
     });
   });
 });

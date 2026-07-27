@@ -1,10 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { CompteDeResultat } from '@financepro/shared';
 import { AccountEntity } from '../../entities/account.entity';
 import { JournalLineEntity } from '../../entities/journal-line.entity';
 import { InvoiceEntity } from '../../entities/invoice.entity';
 import { CustomerEntity } from '../../entities/customer.entity';
+import { SupplierEntity } from '../../entities/supplier.entity';
 import { TreasuryAccountEntity } from '../../entities/treasury-account.entity';
 import { AccountingService } from '../accounting/accounting.service';
 import { ReportsService } from '../reports/reports.service';
@@ -31,6 +33,27 @@ export interface Anomaly {
   type: 'DUPLICATE_INVOICE' | 'CREDIT_LIMIT_EXCEEDED' | 'BUDGET_VARIANCE';
   severity: 'HIGH' | 'MEDIUM';
   message: string;
+}
+
+export type RiskLevel = 'AUCUN' | 'FAIBLE' | 'MOYEN' | 'ELEVE';
+
+export interface ClientRisk {
+  customerId: string;
+  customerName: string;
+  outstandingTotal: number;
+  overdueTotal: number;
+  overdueInvoiceCount: number;
+  creditLimit: number;
+  riskLevel: RiskLevel;
+}
+
+export interface SupplierAlert {
+  supplierId: string;
+  supplierName: string;
+  outstandingTotal: number;
+  overdueTotal: number;
+  overdueInvoiceCount: number;
+  riskLevel: RiskLevel;
 }
 
 const INVOICE_SCHEMA = {
@@ -77,6 +100,7 @@ export class AiService {
     @InjectRepository(JournalLineEntity) private readonly lineRepo: Repository<JournalLineEntity>,
     @InjectRepository(InvoiceEntity) private readonly invoiceRepo: Repository<InvoiceEntity>,
     @InjectRepository(CustomerEntity) private readonly customerRepo: Repository<CustomerEntity>,
+    @InjectRepository(SupplierEntity) private readonly supplierRepo: Repository<SupplierEntity>,
     @InjectRepository(TreasuryAccountEntity) private readonly treasuryAccountRepo: Repository<TreasuryAccountEntity>,
     private readonly accountingService: AccountingService,
     private readonly reportsService: ReportsService,
@@ -199,7 +223,7 @@ export class AiService {
   }
 
   /** Assistant conversationnel : répond uniquement à partir des données réelles et actuelles de l'entreprise. */
-  async chat(companyId: string, question: string): Promise<string> {
+  async chat(companyId: string, question: string, currentScreen?: string): Promise<string> {
     const [bilan, compteDeResultat, balanceGenerale, budgetComparison] = await Promise.all([
       this.reportsService.getBilan(companyId),
       this.reportsService.getCompteDeResultat(companyId),
@@ -208,12 +232,13 @@ export class AiService {
     ]);
 
     const context = JSON.stringify({ bilan, compteDeResultat, balanceGenerale, budgetVsReel: budgetComparison });
+    const screenHint = currentScreen ? `\n\nL'utilisateur consulte actuellement l'écran : "${currentScreen}". Privilégie une réponse pertinente pour ce contexte si la question est ambiguë.` : '';
 
     const systemInstruction =
       'Tu es un assistant comptable pour une entreprise utilisant le référentiel SYSCOHADA (OHADA). ' +
       "Réponds UNIQUEMENT à partir des données JSON fournies ci-dessous, qui reflètent l'état réel et à jour de la comptabilité de l'entreprise. " +
       "N'invente JAMAIS un chiffre absent de ces données. Si la question porte sur une donnée absente, dis-le clairement plutôt que d'estimer. " +
-      `Réponds en français, de façon concise.\n\nDonnées réelles de l'entreprise :\n${context}`;
+      `Réponds en français, de façon concise.${screenHint}\n\nDonnées réelles de l'entreprise :\n${context}`;
 
     return this.aiProvider.generateText(question, systemInstruction);
   }
@@ -271,5 +296,159 @@ export class AiService {
     }
 
     return { ...deterministic, analyseIA };
+  }
+
+  private computeRiskLevel(overdueTotal: number, overdueInvoiceCount: number, creditLimit: number): RiskLevel {
+    if (overdueInvoiceCount === 0) return 'AUCUN';
+    const ratio = creditLimit > 0 ? overdueTotal / creditLimit : 0;
+    if (ratio > 1 || overdueInvoiceCount >= 3) return 'ELEVE';
+    if (ratio > 0.5 || overdueInvoiceCount >= 2) return 'MOYEN';
+    return 'FAIBLE';
+  }
+
+  /** Analyse de risque client réelle : encours et retards calculés depuis les factures VENTE non soldées. */
+  async getClientsRiskAnalysis(companyId: string): Promise<{ clients: ClientRisk[]; analyseIA: string | null }> {
+    const today = new Date().toISOString().substring(0, 10);
+    const customers = await this.customerRepo.find({ where: { companyId } });
+
+    const rows = await this.invoiceRepo
+      .createQueryBuilder('invoice')
+      .select('invoice.tierId', 'tierId')
+      .addSelect('SUM(invoice.totalTTC - invoice.amountPaid)', 'outstanding')
+      .addSelect(`SUM(CASE WHEN invoice.dueDate < :today THEN invoice.totalTTC - invoice.amountPaid ELSE 0 END)`, 'overdue')
+      .addSelect(`SUM(CASE WHEN invoice.dueDate < :today THEN 1 ELSE 0 END)`, 'overdueCount')
+      .where('invoice.companyId = :companyId', { companyId })
+      .andWhere("invoice.type = 'VENTE'")
+      .andWhere("invoice.status IN ('VALIDE', 'PARTIEL')")
+      .andWhere('invoice.totalTTC > invoice.amountPaid')
+      .groupBy('invoice.tierId')
+      .setParameter('today', today)
+      .getRawMany<{ tierId: string; outstanding: string; overdue: string; overdueCount: string }>();
+
+    const byTierId = new Map(rows.map((r) => [r.tierId, r]));
+
+    const clients: ClientRisk[] = customers.map((customer) => {
+      const row = byTierId.get(customer.id);
+      const outstandingTotal = Number(row?.outstanding) || 0;
+      const overdueTotal = Number(row?.overdue) || 0;
+      const overdueInvoiceCount = Number(row?.overdueCount) || 0;
+      const creditLimit = Number(customer.creditLimit);
+      return {
+        customerId: customer.id,
+        customerName: customer.name,
+        outstandingTotal,
+        overdueTotal,
+        overdueInvoiceCount,
+        creditLimit,
+        riskLevel: this.computeRiskLevel(overdueTotal, overdueInvoiceCount, creditLimit),
+      };
+    });
+
+    const atRisk = clients.filter((c) => c.riskLevel !== 'AUCUN').sort((a, b) => b.overdueTotal - a.overdueTotal);
+    let analyseIA: string | null = null;
+    if (atRisk.length > 0) {
+      try {
+        analyseIA = await this.aiProvider.generateText(
+          "Voici les clients présentant un risque de retard de paiement (données réelles, factures échues non soldées) :\n" +
+            atRisk.map((c) => `- [${c.riskLevel}] ${c.customerName} : ${c.overdueTotal.toLocaleString('fr-FR')} XAF en retard (${c.overdueInvoiceCount} facture(s))`).join('\n') +
+            '\n\nDonne 2-3 phrases de recommandation concise en français sur les priorités de relance, sans inventer de chiffre absent ci-dessus.',
+        );
+      } catch {
+        analyseIA = null;
+      }
+    }
+
+    return { clients, analyseIA };
+  }
+
+  /** Analyse des dettes fournisseurs réellement en retard, calculée depuis les factures ACHAT non soldées. */
+  async getSuppliersOverdueAnalysis(companyId: string): Promise<{ suppliers: SupplierAlert[]; analyseIA: string | null }> {
+    const today = new Date().toISOString().substring(0, 10);
+    const suppliersList = await this.supplierRepo.find({ where: { companyId } });
+
+    const rows = await this.invoiceRepo
+      .createQueryBuilder('invoice')
+      .select('invoice.tierId', 'tierId')
+      .addSelect('SUM(invoice.totalTTC - invoice.amountPaid)', 'outstanding')
+      .addSelect(`SUM(CASE WHEN invoice.dueDate < :today THEN invoice.totalTTC - invoice.amountPaid ELSE 0 END)`, 'overdue')
+      .addSelect(`SUM(CASE WHEN invoice.dueDate < :today THEN 1 ELSE 0 END)`, 'overdueCount')
+      .where('invoice.companyId = :companyId', { companyId })
+      .andWhere("invoice.type = 'ACHAT'")
+      .andWhere("invoice.status IN ('VALIDE', 'PARTIEL')")
+      .andWhere('invoice.totalTTC > invoice.amountPaid')
+      .groupBy('invoice.tierId')
+      .setParameter('today', today)
+      .getRawMany<{ tierId: string; outstanding: string; overdue: string; overdueCount: string }>();
+
+    const byTierId = new Map(rows.map((r) => [r.tierId, r]));
+
+    const suppliers: SupplierAlert[] = suppliersList.map((supplier) => {
+      const row = byTierId.get(supplier.id);
+      const outstandingTotal = Number(row?.outstanding) || 0;
+      const overdueTotal = Number(row?.overdue) || 0;
+      const overdueInvoiceCount = Number(row?.overdueCount) || 0;
+      return {
+        supplierId: supplier.id,
+        supplierName: supplier.name,
+        outstandingTotal,
+        overdueTotal,
+        overdueInvoiceCount,
+        riskLevel: this.computeRiskLevel(overdueTotal, overdueInvoiceCount, 0),
+      };
+    });
+
+    const atRisk = suppliers.filter((s) => s.riskLevel !== 'AUCUN').sort((a, b) => b.overdueTotal - a.overdueTotal);
+    let analyseIA: string | null = null;
+    if (atRisk.length > 0) {
+      try {
+        analyseIA = await this.aiProvider.generateText(
+          'Voici les dettes fournisseurs en retard de paiement (données réelles, factures échues non soldées) :\n' +
+            atRisk.map((s) => `- [${s.riskLevel}] ${s.supplierName} : ${s.overdueTotal.toLocaleString('fr-FR')} XAF en retard (${s.overdueInvoiceCount} facture(s))`).join('\n') +
+            '\n\nDonne 2-3 phrases de recommandation concise en français sur les priorités de paiement, sans inventer de chiffre absent ci-dessus.',
+        );
+      } catch {
+        analyseIA = null;
+      }
+    }
+
+    return { suppliers, analyseIA };
+  }
+
+  /** Explique les variations du Compte de Résultat vs l'exercice précédent réel (pas de comparaison inventée). */
+  async explainFinancialVariation(companyId: string): Promise<{
+    currentYear: number;
+    previousYear: number;
+    current: CompteDeResultat;
+    previous: CompteDeResultat;
+    analyseIA: string | null;
+  }> {
+    const year = new Date().getFullYear();
+    const [current, previous] = await Promise.all([
+      this.reportsService.getCompteDeResultatForYear(companyId, year),
+      this.reportsService.getCompteDeResultatForYear(companyId, year - 1),
+    ]);
+
+    let analyseIA: string | null = null;
+    try {
+      analyseIA = await this.aiProvider.generateText(
+        `Voici le Compte de Résultat réel de l'exercice ${year} comparé à ${year - 1} (données réelles, JSON) :\n` +
+          JSON.stringify({ [year]: current, [year - 1]: previous }) +
+          "\n\nExplique en 3-4 phrases en français les principales variations (chiffre d'affaires, marge, résultat net). " +
+          "Base-toi STRICTEMENT sur ces chiffres. Si l'un des deux exercices est vide (aucune activité), dis-le clairement plutôt que de commenter une variation qui n'a pas de sens.",
+      );
+    } catch {
+      analyseIA = null;
+    }
+
+    return { currentYear: year, previousYear: year - 1, current, previous, analyseIA };
+  }
+
+  /** Suggère un montant de budget pour un compte, basé sur le réel de l'exercice précédent (aucune invention). */
+  async suggestBudgetAmount(companyId: string, accountCode: string, exercice: number): Promise<{ accountCode: string; basedOnYear: number; suggestedAmount: number }> {
+    const basedOnYear = exercice - 1;
+    const balances = await this.accountingService.getAccountBalancesForYear(companyId, basedOnYear);
+    const balance = balances.find((b) => b.code === accountCode);
+    const suggestedAmount = balance ? (balance.type === 'credit' ? balance.soldeCrediteur : balance.soldeDebiteur) : 0;
+    return { accountCode, basedOnYear, suggestedAmount };
   }
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Download } from 'lucide-react';
-import { FinancialReportBilan, CompteDeResultat, FiscalDeclaration } from '@financepro/shared';
+import { Download, Sparkles } from 'lucide-react';
+import { FinancialReportBilan, CompteDeResultat, FiscalDeclaration, FinancialVariationExplanation } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 
 const now = new Date();
@@ -13,11 +13,20 @@ export const ReportsModule: React.FC = () => {
   const [fiscalMonth, setFiscalMonth] = useState(now.getMonth() + 1);
   const [fiscalData, setFiscalData] = useState<FiscalDeclaration | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [variation, setVariation] = useState<FinancialVariationExplanation | null>(null);
+  const [variationLoading, setVariationLoading] = useState(false);
 
   useEffect(() => {
     api.getBilan().then(setBilanData);
     api.getCompteResultat().then(setCrData);
   }, []);
+
+  const handleExplainVariation = () => {
+    setVariationLoading(true);
+    api.aiExplainVariation()
+      .then(setVariation)
+      .finally(() => setVariationLoading(false));
+  };
 
   useEffect(() => {
     if (reportType === 'fiscal') {
@@ -196,7 +205,39 @@ export const ReportsModule: React.FC = () => {
 
       {reportType === 'compte-resultat' && (
         <div className="glass-card rounded-xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">Soldes Intermédiaires de Gestion (SIG) - Compte de Résultat</h3>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Soldes Intermédiaires de Gestion (SIG) - Compte de Résultat</h3>
+            <button
+              onClick={handleExplainVariation}
+              disabled={variationLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-[11px] font-bold"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              {variationLoading ? 'Analyse...' : `Expliquer vs ${now.getFullYear() - 1} (IA)`}
+            </button>
+          </div>
+
+          {variation && (
+            <div className="bg-indigo-950/40 border border-indigo-900 rounded-xl p-4 space-y-2 text-xs">
+              {variation.analyseIA ? (
+                <p className="text-indigo-200">{variation.analyseIA}</p>
+              ) : (
+                <p className="text-slate-400 italic">Analyse indisponible pour le moment.</p>
+              )}
+              <div className="grid grid-cols-2 gap-3 font-mono text-[11px] pt-2 border-t border-indigo-900">
+                <div className="text-slate-300">
+                  <div className="font-bold text-white mb-1">{variation.previousYear}</div>
+                  <div>CA : {formatMoney(variation.previous.chiffreAffaires)}</div>
+                  <div>Résultat net : {formatMoney(variation.previous.resultatNet)}</div>
+                </div>
+                <div className="text-slate-300">
+                  <div className="font-bold text-white mb-1">{variation.currentYear}</div>
+                  <div>CA : {formatMoney(variation.current.chiffreAffaires)}</div>
+                  <div>Résultat net : {formatMoney(variation.current.resultatNet)}</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-3 font-mono text-xs max-w-3xl">
             <div className="flex justify-between p-2.5 bg-slate-900 rounded border border-slate-800">
