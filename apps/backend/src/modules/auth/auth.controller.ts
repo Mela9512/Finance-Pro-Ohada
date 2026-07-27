@@ -15,11 +15,17 @@ import { OptionalJwtAuthGuard } from './guards/optional-jwt-auth.guard';
 const COOKIE_NAME = 'access_token';
 const COOKIE_MAX_AGE = 8 * 60 * 60 * 1000;
 
+const isProd = process.env.NODE_ENV === 'production';
+
 function setSessionCookie(res: Response, accessToken: string) {
   res.cookie(COOKIE_NAME, accessToken, {
     httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // En production, le frontend et l'API sont sur deux sous-domaines Vercel distincts
+    // (cross-origin) : un cookie SameSite=Lax n'est alors jamais renvoyé par le navigateur
+    // sur les requêtes fetch(), ce qui rendait la connexion impossible. SameSite=None exige
+    // Secure=true (HTTPS, garanti sur Vercel). En local (même site), on reste en Lax/non-Secure.
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd,
     maxAge: COOKIE_MAX_AGE,
   });
 }

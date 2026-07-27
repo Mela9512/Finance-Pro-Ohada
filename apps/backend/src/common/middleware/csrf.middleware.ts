@@ -1,13 +1,17 @@
 import { doubleCsrf } from 'csrf-csrf';
 
+const isProd = process.env.NODE_ENV === 'production';
+
 export const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => process.env.CSRF_SECRET || 'financepro_csrf_super_secret_key_2026',
   getSessionIdentifier: (req: any) => req.cookies?.access_token || 'anonymous',
   cookieName: 'csrf_token',
   cookieOptions: {
     httpOnly: false,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // Même raisonnement que le cookie de session : cross-origin en production (Vercel),
+    // même site en local.
+    sameSite: isProd ? 'none' : 'lax',
+    secure: isProd,
   },
   size: 64,
   ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
