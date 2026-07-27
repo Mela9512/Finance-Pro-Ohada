@@ -4,6 +4,7 @@ dist/
 build/
 .cache/
 *.log
+*.tsbuildinfo
 
 # Environment variables
 .env
