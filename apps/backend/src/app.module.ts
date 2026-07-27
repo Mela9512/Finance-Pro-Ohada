@@ -48,6 +48,10 @@ import { AdminController } from './modules/admin/admin.controller';
 import { AdminService } from './modules/admin/admin.service';
 import { BudgetController } from './modules/budget/budget.controller';
 import { BudgetService } from './modules/budget/budget.service';
+import { AiController } from './modules/ai/ai.controller';
+import { AiService } from './modules/ai/ai.service';
+import { GeminiProvider } from './modules/ai/gemini-provider.service';
+import { AI_PROVIDER } from './modules/ai/ai-provider.interface';
 
 @Module({
   imports: [
@@ -84,6 +88,7 @@ import { BudgetService } from './modules/budget/budget.service';
     ReportsController,
     AdminController,
     BudgetController,
+    AiController,
   ],
   providers: [
     SequenceService,
@@ -99,6 +104,8 @@ import { BudgetService } from './modules/budget/budget.service';
     ReportsService,
     AdminService,
     BudgetService,
+    AiService,
+    { provide: AI_PROVIDER, useClass: GeminiProvider },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],

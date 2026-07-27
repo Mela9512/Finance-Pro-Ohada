@@ -210,6 +210,47 @@ export interface ImportBankStatementResult {
   created: number;
 }
 
+export interface ExtractedInvoiceDraft {
+  supplierName: string;
+  invoiceDate: string;
+  dueDate: string;
+  subtotalHT: number;
+  totalTVA: number;
+  totalTTC: number;
+  lineItems: { description: string; quantity: number; unitPrice: number }[];
+}
+
+export interface AccountSuggestion {
+  accountCode: string;
+  label: string;
+  confidence: number;
+}
+
+export interface Anomaly {
+  type: 'DUPLICATE_INVOICE' | 'CREDIT_LIMIT_EXCEEDED' | 'BUDGET_VARIANCE';
+  severity: 'HIGH' | 'MEDIUM';
+  message: string;
+}
+
+export interface AnomalyReport {
+  anomalies: Anomaly[];
+  analyseIA: string | null;
+}
+
+export interface CashflowHorizon {
+  entrees: number;
+  sorties: number;
+  soldeProjete: number;
+}
+
+export interface CashflowForecast {
+  soldeActuel: number;
+  horizon30: CashflowHorizon;
+  horizon60: CashflowHorizon;
+  horizon90: CashflowHorizon;
+  analyseIA: string | null;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
   BookOpen, PlusCircle, CheckCircle2, AlertTriangle,
-  Search, FileSpreadsheet, Layers, Filter, Scale, Download, Printer
+  Search, FileSpreadsheet, Layers, Filter, Scale, Download, Printer, Sparkles
 } from 'lucide-react';
-import { AccountSYSCOHADA, JournalEntry, JournalLine } from '@financepro/shared';
+import { AccountSYSCOHADA, JournalEntry, JournalLine, AccountSuggestion } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 
 interface BalanceRow {
@@ -48,12 +48,33 @@ export const AccountingModule: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
   const [grandLivreFilter, setGrandLivreFilter] = useState('411');
 
+  const [accountSuggestion, setAccountSuggestion] = useState<AccountSuggestion | null>(null);
+  const [suggestionLoading, setSuggestionLoading] = useState(false);
+
   const loadEntries = () => api.getEntries().then(setEntries);
 
   useEffect(() => {
     api.getAccounts().then(setAccounts);
     loadEntries();
   }, []);
+
+  useEffect(() => {
+    setAccountSuggestion(null);
+    if (wording.trim().length < 5) return;
+    const timeout = setTimeout(() => {
+      setSuggestionLoading(true);
+      api.aiSuggestAccount(wording.trim())
+        .then(setAccountSuggestion)
+        .catch(() => setAccountSuggestion(null))
+        .finally(() => setSuggestionLoading(false));
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [wording]);
+
+  const applySuggestion = () => {
+    if (!accountSuggestion) return;
+    handleLineChange(0, 'accountCode', accountSuggestion.accountCode);
+  };
 
   useEffect(() => {
     if (tab === 'grand-livre') {
@@ -227,6 +248,17 @@ export const AccountingModule: React.FC = () => {
                 className="w-full glass-input rounded-lg px-3 py-2 text-xs"
                 required
               />
+              {suggestionLoading && <div className="text-[10px] text-slate-500 italic mt-1">Suggestion IA en cours...</div>}
+              {accountSuggestion && (
+                <button
+                  type="button"
+                  onClick={applySuggestion}
+                  className="mt-1 flex items-center gap-1 text-[10px] text-indigo-300 hover:text-indigo-200"
+                >
+                  <Sparkles className="w-3 h-3" />
+                  <span>Compte suggéré : {accountSuggestion.accountCode} - {accountSuggestion.label} (appliquer à la 1ère ligne)</span>
+                </button>
+              )}
             </div>
 
             <div>

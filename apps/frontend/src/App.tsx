@@ -17,6 +17,7 @@ import { SuppliersModule } from './components/modules/SuppliersModule';
 import { InvoicingModule } from './components/modules/InvoicingModule';
 import { ReportsModule } from './components/modules/ReportsModule';
 import { BudgetModule } from './components/modules/BudgetModule';
+import { AIModule } from './components/modules/AIModule';
 import { AdminModule } from './components/modules/AdminModule';
 import { AuthModule } from './components/modules/AuthModule';
 import { LandingPage } from './components/LandingPage';
@@ -59,6 +60,7 @@ const AppShell: React.FC = () => {
       case 'invoicing': return 'Facturation & retenues fiscales (TVA/AIR)';
       case 'reports': return 'États financiers OHADA (Bilan & Compte de Résultat)';
       case 'budget': return 'Budget prévisionnel & suivi des écarts';
+      case 'ai': return 'Assistant IA — analyses basées sur vos données réelles';
       case 'admin': return 'Administration & paramètres d\'entreprise';
       case 'auth': return 'Authentification JWT & sécurité RBAC';
     }
@@ -89,6 +91,7 @@ const AppShell: React.FC = () => {
           {activeModule === 'invoicing' && <InvoicingModule />}
           {activeModule === 'reports' && <ReportsModule />}
           {activeModule === 'budget' && <BudgetModule />}
+          {activeModule === 'ai' && <AIModule />}
           {activeModule === 'admin' && <AdminModule />}
           {activeModule === 'auth' && <AuthModule currentUser={user} />}
         </main>

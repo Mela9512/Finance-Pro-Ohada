@@ -2,6 +2,7 @@ import {
   User, Company, JournalEntry, AccountSYSCOHADA, Customer, Supplier, Invoice,
   TreasuryAccount, TreasuryTransaction, FinancialReportBilan, CompteDeResultat, DashboardMetrics,
   Budget, BudgetComparisonRow, FiscalDeclaration, ImportBankStatementResult,
+  ExtractedInvoiceDraft, AccountSuggestion, AnomalyReport, CashflowForecast,
 } from '@financepro/shared';
 
 const API_BASE = '/api';
@@ -167,4 +168,11 @@ export const api = {
   upsertBudget: (dto: { accountCode: string; exercice: number; period?: number; amountBudgeted: number }) =>
     request<Budget>('/budget', { method: 'POST', body: JSON.stringify(dto) }),
   deleteBudget: (id: string) => request<void>(`/budget/${id}`, { method: 'DELETE' }),
+
+  aiExtractInvoice: (fileBase64: string, mimeType: string) =>
+    request<ExtractedInvoiceDraft>('/ai/invoice-ocr', { method: 'POST', body: JSON.stringify({ fileBase64, mimeType }) }),
+  aiSuggestAccount: (wording: string) => request<AccountSuggestion>(`/ai/suggest-account?wording=${encodeURIComponent(wording)}`),
+  aiGetAnomalies: () => request<AnomalyReport>('/ai/anomalies'),
+  aiChat: (question: string) => request<{ answer: string }>('/ai/chat', { method: 'POST', body: JSON.stringify({ question }) }),
+  aiGetCashflowForecast: () => request<CashflowForecast>('/ai/cashflow-forecast'),
 };
