@@ -3,9 +3,10 @@ import {
   TreasuryAccount, TreasuryTransaction, FinancialReportBilan, CompteDeResultat, DashboardMetrics,
   Budget, BudgetComparisonRow, FiscalDeclaration, ImportBankStatementResult,
   ExtractedInvoiceDraft, AccountSuggestion, AnomalyReport, CashflowForecast,
+  ClientRiskReport, SupplierAlertReport, FinancialVariationExplanation,
 } from '@financepro/shared';
 
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -173,6 +174,14 @@ export const api = {
     request<ExtractedInvoiceDraft>('/ai/invoice-ocr', { method: 'POST', body: JSON.stringify({ fileBase64, mimeType }) }),
   aiSuggestAccount: (wording: string) => request<AccountSuggestion>(`/ai/suggest-account?wording=${encodeURIComponent(wording)}`),
   aiGetAnomalies: () => request<AnomalyReport>('/ai/anomalies'),
-  aiChat: (question: string) => request<{ answer: string }>('/ai/chat', { method: 'POST', body: JSON.stringify({ question }) }),
+  aiChat: (question: string, currentScreen?: string) =>
+    request<{ answer: string }>('/ai/chat', { method: 'POST', body: JSON.stringify({ question, currentScreen }) }),
   aiGetCashflowForecast: () => request<CashflowForecast>('/ai/cashflow-forecast'),
+  aiGetClientsRisk: () => request<ClientRiskReport>('/ai/clients-risk'),
+  aiGetSuppliersOverdue: () => request<SupplierAlertReport>('/ai/suppliers-overdue'),
+  aiExplainVariation: () => request<FinancialVariationExplanation>('/ai/explain-variation'),
+  aiSuggestBudget: (accountCode: string, exercice: number) =>
+    request<{ accountCode: string; basedOnYear: number; suggestedAmount: number }>(
+      `/ai/suggest-budget?accountCode=${encodeURIComponent(accountCode)}&exercice=${exercice}`,
+    ),
 };
