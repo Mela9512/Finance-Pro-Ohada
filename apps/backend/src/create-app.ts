@@ -1,6 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
-import * as cookieParser from 'cookie-parser';
+// Import "= require(...)" plutôt que "import * as" : sur Vercel, le bundler serverless
+// (esbuild) enveloppe différemment les modules CJS à export unique (module.exports = fn),
+// et "import * as cookieParser" y devient un objet non-appelable au lieu de la fonction —
+// crash "cookieParser n'est pas une fonction" constaté en production. Le style require()
+// est sans ambiguïté quel que soit le bundler.
+import cookieParser = require('cookie-parser');
 import { AppModule } from './app.module';
 import { csrfMiddleware } from './common/middleware/csrf.middleware';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';

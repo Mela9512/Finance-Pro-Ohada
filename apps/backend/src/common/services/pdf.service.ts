@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import * as PDFDocument from 'pdfkit';
+// Voir la note dans create-app.ts : "import * as X" casse au runtime sur le bundler
+// serverless de Vercel pour un module CJS à export unique. Style require() sans ambiguïté.
+import PDFDocument = require('pdfkit');
 import { CompanyEntity } from '../../entities/company.entity';
 import { InvoiceEntity } from '../../entities/invoice.entity';
 import { BusinessPlanEntity } from '../../entities/business-plan.entity';
