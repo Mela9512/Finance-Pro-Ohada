@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard, BookOpenCheck, Wallet, Users, Truck,
   FileSpreadsheet, BarChart3, Settings, ShieldCheck, Target,
-  RefreshCw, MessageSquare, Trash2, FolderCheck, ChevronRight, Bot
+  RefreshCw, MessageSquare, Trash2, FolderCheck, ChevronRight, Bot, Rocket
 } from 'lucide-react';
 
 export type ModuleId =
@@ -15,6 +15,7 @@ export type ModuleId =
   | 'reports'
   | 'budget'
   | 'ai'
+  | 'business-plan'
   | 'admin'
   | 'auth';
 
@@ -34,6 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule }
     { id: 'reports' as ModuleId, label: 'États Financiers OHADA', icon: BarChart3 },
     { id: 'budget' as ModuleId, label: 'Budget Prévisionnel', icon: Target },
     { id: 'ai' as ModuleId, label: 'Assistant IA (Gemini)', icon: Bot },
+    { id: 'business-plan' as ModuleId, label: 'Business Plan & Levée de Fonds', icon: Rocket },
     { id: 'admin' as ModuleId, label: 'Administration & Rôles', icon: Settings },
     { id: 'auth' as ModuleId, label: 'Authentification & Accès', icon: ShieldCheck },
   ];

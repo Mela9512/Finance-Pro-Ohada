@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import * as PDFDocument from 'pdfkit';
 import { CompanyEntity } from '../../entities/company.entity';
 import { InvoiceEntity } from '../../entities/invoice.entity';
+import { BusinessPlanEntity } from '../../entities/business-plan.entity';
 import { FinancialReportBilan, CompteDeResultat } from '@financepro/shared';
 import { FiscalDeclaration } from '../../modules/reports/reports.service';
 
@@ -193,6 +194,72 @@ export class PdfService {
     doc.font('Helvetica').fontSize(8).fillColor('#888888').text(
       "Déclaration indicative générée à partir du Grand Livre et des factures validées — à vérifier avant transmission à l'administration fiscale.",
       { width: 495 },
+    );
+
+    return toBuffer(doc);
+  }
+
+  async generateBusinessPlanPdf(plan: BusinessPlanEntity, company: CompanyEntity): Promise<Buffer> {
+    const doc = new PDFDocument({ margin: 50, size: 'A4', bufferPages: true }) as unknown as PDFKit.PDFDocument;
+    const currency = company.currency || 'XAF';
+    drawHeader(doc, company, plan.title);
+
+    doc.font('Helvetica-Bold').fontSize(11).text('Description du projet');
+    doc.font('Helvetica').fontSize(9).text(plan.projectDescription, { width: 495 });
+    doc.moveDown(1);
+
+    doc.font('Helvetica-Bold').fontSize(11).text('Hypothèses du porteur de projet');
+    doc.font('Helvetica').fontSize(9);
+    doc.text(`Investissement recherché : ${formatMoney(Number(plan.investmentAmount), currency)}`);
+    doc.text(`Chiffre d'affaires prévisionnel année 1 : ${formatMoney(Number(plan.year1Revenue), currency)}`);
+    doc.text(`Croissance annuelle prévue : ${plan.revenueGrowthRatePercent}%`);
+    doc.text(`Charges variables : ${plan.variableCostPercent}% du CA`);
+    doc.text(`Charges fixes annuelles : ${formatMoney(Number(plan.fixedCostsAnnual), currency)}`);
+    doc.text(`Taux d'actualisation retenu : ${plan.discountRatePercent}%`);
+    doc.moveDown(1);
+
+    doc.font('Helvetica-Bold').fontSize(11).text('Projections financières');
+    doc.moveDown(0.3);
+    const tableTop = doc.y;
+    doc.font('Helvetica-Bold').fontSize(9);
+    doc.text('Année', 50, tableTop);
+    doc.text('CA', 130, tableTop);
+    doc.text('Charges var.', 250, tableTop);
+    doc.text('Charges fixes', 370, tableTop);
+    doc.text('Flux net', 470, tableTop);
+    doc.moveTo(50, tableTop + 15).lineTo(545, tableTop + 15).stroke();
+    let y = tableTop + 22;
+    doc.font('Helvetica').fontSize(9);
+    for (const p of plan.projections) {
+      doc.text(`An ${p.year}`, 50, y);
+      doc.text(formatMoney(p.revenue, currency), 130, y);
+      doc.text(formatMoney(p.variableCosts, currency), 250, y);
+      doc.text(formatMoney(p.fixedCosts, currency), 370, y);
+      doc.text(formatMoney(p.netCashFlow, currency), 470, y);
+      y += 18;
+    }
+    doc.moveDown(2);
+
+    doc.font('Helvetica-Bold').fontSize(11).text('Indicateurs de viabilité');
+    doc.font('Helvetica').fontSize(9);
+    doc.text(`VAN (au taux de ${plan.discountRatePercent}%) : ${formatMoney(Number(plan.van), currency)}`);
+    doc.text(`TRI : ${plan.tri !== null ? Number(plan.tri).toFixed(1) + '%' : 'non calculable avec ces hypothèses'}`);
+    doc.text(
+      `Seuil de rentabilité : ${Number.isFinite(Number(plan.seuilRentabilite)) ? formatMoney(Number(plan.seuilRentabilite), currency) + ' de CA annuel' : 'non atteignable avec ces hypothèses'}`,
+    );
+    doc.font('Helvetica-Bold').text(`Score de crédibilité indicatif : ${plan.creditScore}/100`);
+    doc.font('Helvetica').fontSize(7).fillColor('#888888').text('(indicateur interne, ne constitue pas une notation bancaire officielle)');
+    doc.fillColor('#000000');
+    doc.moveDown(1);
+
+    doc.font('Helvetica-Bold').fontSize(11).text('Résumé exécutif');
+    doc.font('Helvetica').fontSize(9).text(plan.narrative, { width: 495 });
+
+    doc.fontSize(8).fillColor('#888888').text(
+      'Document généré automatiquement à partir des données réelles de l\'entreprise et des hypothèses fournies — à faire relire avant transmission à un partenaire financier.',
+      50,
+      doc.page.height - 60,
+      { align: 'center', width: 495 },
     );
 
     return toBuffer(doc);

@@ -290,6 +290,48 @@ export interface FinancialVariationExplanation {
   analyseIA: string | null;
 }
 
+export interface YearProjection {
+  year: number;
+  revenue: number;
+  variableCosts: number;
+  fixedCosts: number;
+  netCashFlow: number;
+}
+
+export interface BusinessPlan {
+  id: string;
+  companyId: string;
+  createdBy: string;
+  title: string;
+  projectDescription: string;
+  investmentAmount: number;
+  projectionYears: number;
+  year1Revenue: number;
+  revenueGrowthRatePercent: number;
+  variableCostPercent: number;
+  fixedCostsAnnual: number;
+  discountRatePercent: number;
+  projections: YearProjection[];
+  van: number;
+  tri: number | null;
+  seuilRentabilite: number;
+  creditScore: number;
+  narrative: string;
+  createdAt: string;
+}
+
+export interface CreateBusinessPlanDto {
+  title: string;
+  projectDescription: string;
+  investmentAmount: number;
+  projectionYears: number;
+  year1Revenue: number;
+  revenueGrowthRatePercent: number;
+  variableCostPercent: number;
+  fixedCostsAnnual: number;
+  discountRatePercent: number;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;
