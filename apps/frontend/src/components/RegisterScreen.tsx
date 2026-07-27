@@ -19,7 +19,7 @@ export const RegisterScreen: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acceptTerms) {
-      setError("Vous devez accepter les conditions d'utilisation pour continuer.");
+      setError("Vous devez accepter les conditions d'utilisation avant de pouvoir créer votre compte.");
       return;
     }
     setError(null);
@@ -39,9 +39,9 @@ export const RegisterScreen: React.FC = () => {
       subtitle="Créez votre espace entreprise FinancePro OHADA"
       showNavToggle={true}
     >
-      <form onSubmit={handleSubmit} className="space-y-3.5">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="flex items-center space-x-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl p-3.5 font-medium">
+          <div className="flex items-center space-x-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl p-4 font-medium animate-shake">
             <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
@@ -49,11 +49,11 @@ export const RegisterScreen: React.FC = () => {
 
         {/* Company Name */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">
+          <label className="block text-xs font-extrabold text-slate-700 mb-1 uppercase tracking-wider">
             <span className="text-red-500 mr-0.5">*</span>Nom de l'entreprise
           </label>
-          <div className="relative">
-            <Building2 className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative group">
+            <Building2 className="w-4 h-4 text-slate-400 group-focus-within:text-[#2563eb] absolute left-4 top-1/2 -translate-y-1/2 transition-colors" />
             <input
               type="text"
               value={companyName}
@@ -61,18 +61,18 @@ export const RegisterScreen: React.FC = () => {
               required
               minLength={2}
               placeholder="Ex: CONGO TRADING SA"
-              className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+              className="w-full bg-[#f8fafc] border border-slate-200 focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-11 pr-4 py-3 text-xs text-slate-900 font-bold outline-none transition-all duration-200 placeholder:text-slate-400 placeholder:font-normal"
             />
           </div>
         </div>
 
         {/* User Full Name */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">
+          <label className="block text-xs font-extrabold text-slate-700 mb-1 uppercase tracking-wider">
             <span className="text-red-500 mr-0.5">*</span>Votre nom complet
           </label>
-          <div className="relative">
-            <UserIcon className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative group">
+            <UserIcon className="w-4 h-4 text-slate-400 group-focus-within:text-[#2563eb] absolute left-4 top-1/2 -translate-y-1/2 transition-colors" />
             <input
               type="text"
               value={name}
@@ -80,36 +80,36 @@ export const RegisterScreen: React.FC = () => {
               required
               minLength={2}
               placeholder="Ex: Alain Kouassi"
-              className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+              className="w-full bg-[#f8fafc] border border-slate-200 focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-11 pr-4 py-3 text-xs text-slate-900 font-bold outline-none transition-all duration-200 placeholder:text-slate-400 placeholder:font-normal"
             />
           </div>
         </div>
 
         {/* Email */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">
+          <label className="block text-xs font-extrabold text-slate-700 mb-1 uppercase tracking-wider">
             <span className="text-red-500 mr-0.5">*</span>Adresse e-mail
           </label>
-          <div className="relative">
-            <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative group">
+            <Mail className="w-4 h-4 text-slate-400 group-focus-within:text-[#2563eb] absolute left-4 top-1/2 -translate-y-1/2 transition-colors" />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="votre.email@entreprise.cg"
-              className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+              className="w-full bg-[#f8fafc] border border-slate-200 focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-11 pr-4 py-3 text-xs text-slate-900 font-bold outline-none transition-all duration-200 placeholder:text-slate-400 placeholder:font-normal"
             />
           </div>
         </div>
 
         {/* Password */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1">
+          <label className="block text-xs font-extrabold text-slate-700 mb-1 uppercase tracking-wider">
             <span className="text-red-500 mr-0.5">*</span>Mot de passe
           </label>
-          <div className="relative">
-            <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative group">
+            <Lock className="w-4 h-4 text-slate-400 group-focus-within:text-[#2563eb] absolute left-4 top-1/2 -translate-y-1/2 transition-colors" />
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
@@ -117,12 +117,12 @@ export const RegisterScreen: React.FC = () => {
               required
               minLength={8}
               placeholder="8 caractères minimum"
-              className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-10 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+              className="w-full bg-[#f8fafc] border border-slate-200 focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-11 pr-12 py-3 text-xs text-slate-900 font-bold outline-none transition-all duration-200 placeholder:text-slate-400 placeholder:font-normal"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-all"
               title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -132,7 +132,7 @@ export const RegisterScreen: React.FC = () => {
 
         {/* Checkbox Terms Acceptance */}
         <div className="pt-1">
-          <label className="flex items-start space-x-2 text-xs text-slate-600 font-medium cursor-pointer">
+          <label className="flex items-start space-x-2 text-xs text-slate-600 font-semibold cursor-pointer group">
             <input
               type="checkbox"
               checked={acceptTerms}
@@ -140,8 +140,8 @@ export const RegisterScreen: React.FC = () => {
               required
               className="w-4 h-4 mt-0.5 rounded border-slate-300 text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
             />
-            <span className="leading-snug text-[11px]">
-              J'accepte les <span className="font-bold text-[#2563eb]">Conditions Générales d'Utilisation</span> et la <span className="font-bold text-[#2563eb]">Politique de Confidentialité</span>.
+            <span className="leading-snug text-[11px] group-hover:text-slate-900 transition-colors">
+              J'accepte les <span className="font-extrabold text-[#2563eb]">Conditions Générales d'Utilisation</span> et la <span className="font-extrabold text-[#2563eb]">Politique de Confidentialité</span>.
             </span>
           </label>
         </div>
@@ -150,10 +150,10 @@ export const RegisterScreen: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting || !acceptTerms}
-          className="w-full py-3.5 px-6 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af] disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 mt-2"
+          className="w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#2563eb] hover:from-[#2563eb] hover:to-[#1d4ed8] active:scale-[0.99] disabled:from-slate-300 disabled:to-slate-400 disabled:cursor-not-allowed text-white font-extrabold text-xs shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 flex items-center justify-center space-x-2 mt-3"
         >
           {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin text-white" />
           ) : (
             <>
               <UserPlus className="w-4 h-4" />

@@ -33,9 +33,9 @@ export const LoginScreen: React.FC = () => {
       subtitle="Accédez à votre espace comptable SYSCOHADA"
       showNavToggle={true}
     >
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="flex items-center space-x-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl p-3.5 font-medium">
+          <div className="flex items-center space-x-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-2xl p-4 font-medium animate-shake">
             <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
@@ -43,41 +43,41 @@ export const LoginScreen: React.FC = () => {
 
         {/* Email Field */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1.5">
+          <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">
             <span className="text-red-500 mr-0.5">*</span>Adresse e-mail
           </label>
-          <div className="relative">
-            <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative group">
+            <Mail className="w-4 h-4 text-slate-400 group-focus-within:text-[#2563eb] absolute left-4 top-1/2 -translate-y-1/2 transition-colors" />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               placeholder="votre.email@entreprise.cg"
-              className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-4 py-3 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+              className="w-full bg-[#f8fafc] border border-slate-200 focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-11 pr-4 py-3.5 text-xs text-slate-900 font-bold outline-none transition-all duration-200 placeholder:text-slate-400 placeholder:font-normal"
             />
           </div>
         </div>
 
         {/* Password Field with Eye Toggle */}
         <div>
-          <label className="block text-xs font-bold text-slate-700 mb-1.5">
+          <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">
             <span className="text-red-500 mr-0.5">*</span>Mot de passe
           </label>
-          <div className="relative">
-            <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <div className="relative group">
+            <Lock className="w-4 h-4 text-slate-400 group-focus-within:text-[#2563eb] absolute left-4 top-1/2 -translate-y-1/2 transition-colors" />
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="Mot de passe"
-              className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-10 py-3 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
+              className="w-full bg-[#f8fafc] border border-slate-200 focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl pl-11 pr-12 py-3.5 text-xs text-slate-900 font-bold outline-none transition-all duration-200 placeholder:text-slate-400 placeholder:font-normal"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-all"
               title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -87,19 +87,19 @@ export const LoginScreen: React.FC = () => {
 
         {/* Remember me & Forgot password */}
         <div className="flex items-center justify-between text-xs pt-1">
-          <label className="flex items-center space-x-2 text-slate-600 font-medium cursor-pointer">
+          <label className="flex items-center space-x-2 text-slate-600 font-semibold cursor-pointer group">
             <input
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
               className="w-4 h-4 rounded border-slate-300 text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
             />
-            <span>Se souvenir de moi</span>
+            <span className="group-hover:text-slate-900 transition-colors">Se souvenir de moi</span>
           </label>
 
           <Link
             to="/forgot-password"
-            className="text-xs font-bold text-[#2563eb] hover:underline"
+            className="text-xs font-extrabold text-[#2563eb] hover:text-[#1d4ed8] hover:underline transition-all"
           >
             Mot de passe oublié ?
           </Link>
@@ -109,10 +109,10 @@ export const LoginScreen: React.FC = () => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="w-full py-3.5 px-6 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af] text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 mt-2 disabled:opacity-60"
+          className="w-full py-4 px-6 rounded-full bg-gradient-to-r from-[#3b82f6] to-[#2563eb] hover:from-[#2563eb] hover:to-[#1d4ed8] active:scale-[0.99] text-white font-extrabold text-xs shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 flex items-center justify-center space-x-2 mt-3 disabled:opacity-60 cursor-pointer"
         >
           {isSubmitting ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
+            <Loader2 className="w-4 h-4 animate-spin text-white" />
           ) : (
             <>
               <LogIn className="w-4 h-4" />
@@ -122,9 +122,9 @@ export const LoginScreen: React.FC = () => {
         </button>
 
         {/* Back to landing link */}
-        <div className="text-center pt-2">
-          <Link to="/" className="text-slate-400 hover:text-slate-600 text-[11px] font-medium transition-colors">
-            ← Retour à l'accueil
+        <div className="text-center pt-3">
+          <Link to="/" className="text-slate-400 hover:text-slate-700 text-xs font-semibold transition-colors">
+            ← Voir la landing page
           </Link>
         </div>
       </form>
