@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, AlertCircle, CheckCircle2, Loader2, KeyRound } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertCircle, CheckCircle2, Loader2, KeyRound } from 'lucide-react';
 import { api, ApiError } from '../services/api';
+import { AuthLayout } from './AuthLayout';
 
 export const ResetPasswordScreen: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token') || '';
   const [newPassword, setNewPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,69 +29,81 @@ export const ResetPasswordScreen: React.FC = () => {
     }
   };
 
-  if (!token) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-950 text-slate-100">
-        <div className="glass-card rounded-2xl p-8 w-full max-w-md space-y-4 border border-slate-800 text-center">
-          <AlertCircle className="w-8 h-8 text-rose-400 mx-auto" />
-          <p className="text-sm text-slate-300">Lien de réinitialisation invalide.</p>
-          <Link to="/forgot-password" className="text-emerald-400 hover:text-emerald-300 text-xs font-semibold">Demander un nouveau lien</Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-slate-950 text-slate-100">
-      <div className="glass-card rounded-2xl p-8 w-full max-w-md space-y-6 border border-slate-800">
-        <div className="flex flex-col items-center space-y-2">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <KeyRound className="w-5 h-5 text-slate-950" />
-          </div>
-          <h1 className="text-lg font-bold text-white">Nouveau mot de passe</h1>
-        </div>
-
+    <AuthLayout
+      title="Réinitialisation"
+      subtitle="Choisissez un nouveau mot de passe sécurisé"
+      showNavToggle={false}
+    >
+      <div className="space-y-4">
         {error && (
-          <div className="flex items-center space-x-2 bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="flex items-center space-x-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl p-3.5 font-medium">
+            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
             <span>{error}</span>
           </div>
         )}
 
         {success ? (
-          <div className="flex items-center space-x-2 bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs rounded-lg p-3">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>Mot de passe mis à jour. Redirection vers la connexion...</span>
+          <div className="bg-green-50 border border-green-200 text-green-800 text-xs rounded-2xl p-5 space-y-2">
+            <div className="flex items-center space-x-2 font-bold text-sm">
+              <CheckCircle2 className="w-5 h-5 text-green-600" />
+              <span>Mot de passe mis à jour !</span>
+            </div>
+            <p className="text-slate-600 text-xs">Redirection automatique vers l'écran de connexion...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Nouveau mot de passe</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <span className="text-red-500 mr-0.5">*</span>Nouveau mot de passe
+              </label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   required
                   minLength={8}
-                  className="w-full glass-input rounded-lg pl-9 pr-3 py-2.5 text-sm"
                   placeholder="8 caractères minimum"
+                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-10 py-3 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors p-1"
+                  title={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-emerald-600/20"
+              className="w-full py-3.5 px-6 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af] text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 disabled:opacity-60"
             >
-              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-              <span>Mettre à jour le mot de passe</span>
+              {isSubmitting ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <KeyRound className="w-4 h-4" />
+                  <span>Enregistrer le nouveau mot de passe</span>
+                </>
+              )}
             </button>
           </form>
         )}
+
+        <div className="text-center pt-2">
+          <Link to="/login" className="text-xs font-bold text-[#2563eb] hover:underline">
+            ← Annuler et se connecter
+          </Link>
+        </div>
       </div>
-    </div>
+    </AuthLayout>
   );
 };
+
+export default ResetPasswordScreen;
