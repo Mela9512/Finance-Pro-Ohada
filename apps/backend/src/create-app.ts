@@ -44,11 +44,13 @@ export async function createApp(): Promise<INestApplication> {
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error(`Origine non autorisée par CORS : ${origin}`), false);
-      }
+      // Tant qu'aucun nom de domaine personnalisé n'est configuré, Vercel peut réattribuer ou
+      // dupliquer des sous-domaines *.vercel.app d'une manière imprévisible côté code (constaté
+      // en conditions réelles). On les accepte tous temporairement ; à resserrer une fois un
+      // domaine personnalisé en place. Un rejet ne doit jamais planter la requête (pas d'erreur
+      // passée au callback) : on refuse juste silencieusement l'en-tête CORS.
+      const isAllowed = !origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin);
+      callback(null, isAllowed);
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
