@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { Bot, Send, ScanLine, AlertTriangle, TrendingUp, Loader2 } from 'lucide-react';
 import { ExtractedInvoiceDraft, AnomalyReport, CashflowForecast } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -94,9 +94,9 @@ export const AIModule: React.FC = () => {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-        <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-6 border border-[#EDE9FE] shadow-sm">
+        <h2 className="text-base font-extrabold uppercase tracking-wider text-[#1E1060] flex items-center gap-2">
           <Bot className="w-5 h-5 text-indigo-600" /> Assistant IA (Gemini)
         </h2>
         <div className="text-xs text-slate-500 font-medium mt-1">
@@ -106,8 +106,8 @@ export const AIModule: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="glass-card rounded-xl p-6 space-y-4 flex flex-col h-[480px]">
-          <h3 className="text-sm font-bold text-white">Assistant Conversationnel</h3>
+        <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm flex flex-col h-[480px]">
+          <h3 className="text-sm font-bold text-[#1E1060]">Assistant Conversationnel</h3>
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {messages.length === 0 && (
               <div className="text-xs text-slate-500 italic">
@@ -115,7 +115,7 @@ export const AIModule: React.FC = () => {
               </div>
             )}
             {messages.map((m, i) => (
-              <div key={i} className={`text-xs rounded-lg p-3 max-w-[90%] ${m.role === 'user' ? 'ml-auto bg-[#0f2d5e] text-white' : 'bg-slate-800 text-slate-100'}`}>
+              <div key={i} className={`text-xs rounded-lg p-3 max-w-[90%] ${m.role === 'user' ? 'ml-auto bg-[#6B4EFF] text-white' : 'bg-slate-800 text-slate-100'}`}>
                 {m.content}
               </div>
             ))}
@@ -125,7 +125,7 @@ export const AIModule: React.FC = () => {
               </div>
             )}
           </div>
-          {chatError && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{chatError}</div>}
+          {chatError && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{chatError}</div>}
           <form onSubmit={handleAskQuestion} className="flex items-center gap-2">
             <input
               type="text"
@@ -141,22 +141,22 @@ export const AIModule: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-          <div className="glass-card rounded-xl p-6 space-y-4">
-            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
+            <h3 className="text-sm font-bold text-[#1E1060] flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-400" /> Prévision de Trésorerie (30/60/90 jours)
             </h3>
-            {forecastError && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{forecastError}</div>}
+            {forecastError && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{forecastError}</div>}
             {!forecast && !forecastError && <div className="text-xs text-slate-400 italic">Chargement...</div>}
             {forecast && (
               <div className="space-y-3">
-                <div className="text-xs text-slate-400">Solde de trésorerie actuel : <span className="text-white font-bold font-mono">{formatMoney(forecast.soldeActuel)}</span></div>
+                <div className="text-xs text-[#9CA3AF]">Solde de trésorerie actuel : <span className="text-white font-bold font-mono">{formatMoney(forecast.soldeActuel)}</span></div>
                 <div className="grid grid-cols-3 gap-2 font-mono text-[11px]">
                   {[{ label: '30j', h: forecast.horizon30 }, { label: '60j', h: forecast.horizon60 }, { label: '90j', h: forecast.horizon90 }].map((x) => (
-                    <div key={x.label} className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 space-y-1">
+                    <div key={x.label} className="bg-slate-900 border border-[#EDE9FE] rounded-lg p-2.5 space-y-1">
                       <div className="text-slate-400 font-bold">{x.label}</div>
                       <div className="text-emerald-400">+{formatMoney(x.h.entrees)}</div>
                       <div className="text-rose-400">-{formatMoney(x.h.sorties)}</div>
-                      <div className="text-white font-bold border-t border-slate-800 pt-1">{formatMoney(x.h.soldeProjete)}</div>
+                      <div className="text-white font-bold border-t border-[#EDE9FE] pt-1">{formatMoney(x.h.soldeProjete)}</div>
                     </div>
                   ))}
                 </div>
@@ -165,9 +165,9 @@ export const AIModule: React.FC = () => {
             )}
           </div>
 
-          <div className="glass-card rounded-xl p-6 space-y-4">
+          <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <h3 className="text-sm font-bold text-[#1E1060] flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-amber-400" /> Détection d'Anomalies
               </h3>
               <button
@@ -178,7 +178,7 @@ export const AIModule: React.FC = () => {
                 {anomalyLoading ? 'Analyse...' : 'Analyser'}
               </button>
             </div>
-            {anomalyError && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{anomalyError}</div>}
+            {anomalyError && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{anomalyError}</div>}
             {anomalyReport && anomalyReport.anomalies.length === 0 && (
               <div className="text-xs text-emerald-400">Aucune anomalie détectée.</div>
             )}
@@ -196,8 +196,8 @@ export const AIModule: React.FC = () => {
         </div>
       </div>
 
-      <div className="glass-card rounded-xl p-6 space-y-4">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+      <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
+        <h3 className="text-sm font-bold text-[#1E1060] flex items-center gap-2">
           <ScanLine className="w-4 h-4 text-indigo-400" /> Scanner une Facture (OCR IA)
         </h3>
         <p className="text-[11px] text-slate-400">
@@ -221,15 +221,15 @@ export const AIModule: React.FC = () => {
             <Loader2 className="w-3.5 h-3.5 animate-spin" /> Extraction en cours...
           </div>
         )}
-        {ocrError && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{ocrError}</div>}
+        {ocrError && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{ocrError}</div>}
         {ocrDraft && (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2 text-xs font-mono">
+          <div className="bg-slate-900 border border-[#EDE9FE] rounded-xl p-4 space-y-2 text-xs font-mono">
             <div className="flex justify-between"><span className="text-slate-400">Fournisseur</span><span className="text-white font-bold">{ocrDraft.supplierName || '—'}</span></div>
             <div className="flex justify-between"><span className="text-slate-400">Date facture</span><span className="text-white">{ocrDraft.invoiceDate || '—'}</span></div>
             <div className="flex justify-between"><span className="text-slate-400">Échéance</span><span className="text-white">{ocrDraft.dueDate || '—'}</span></div>
             <div className="flex justify-between"><span className="text-slate-400">Total HT</span><span className="text-white">{formatMoney(ocrDraft.subtotalHT)}</span></div>
             <div className="flex justify-between"><span className="text-slate-400">TVA</span><span className="text-emerald-400">{formatMoney(ocrDraft.totalTVA)}</span></div>
-            <div className="flex justify-between font-bold border-t border-slate-800 pt-2"><span className="text-slate-300">Total TTC</span><span className="text-white">{formatMoney(ocrDraft.totalTTC)}</span></div>
+            <div className="flex justify-between font-bold border-t border-[#EDE9FE] pt-2"><span className="text-slate-300">Total TTC</span><span className="text-white">{formatMoney(ocrDraft.totalTTC)}</span></div>
             {ocrDraft.lineItems?.length > 0 && (
               <div className="pt-2 space-y-1">
                 <div className="text-slate-400 uppercase text-[10px] tracking-wider">Lignes détectées</div>

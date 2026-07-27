@@ -4,10 +4,10 @@ import { Customer, ClientRisk } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 
 const RISK_STYLES: Record<string, string> = {
-  ELEVE: 'bg-rose-950 text-rose-400 border-rose-800',
-  MOYEN: 'bg-amber-950 text-amber-300 border-amber-800',
-  FAIBLE: 'bg-yellow-950 text-yellow-300 border-yellow-800',
-  AUCUN: 'bg-emerald-950 text-emerald-400 border-emerald-800',
+  ELEVE: 'bg-red-50 text-red-700 border-red-200',
+  MOYEN: 'bg-amber-50 text-amber-700 border-amber-200',
+  FAIBLE: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  AUCUN: 'bg-green-50 text-green-700 border-green-200',
 };
 
 export const ClientsModule: React.FC = () => {
@@ -61,16 +61,17 @@ export const ClientsModule: React.FC = () => {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4" style={{ border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}>
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">Portefeuille Clients & Compte 411</h2>
-          <div className="text-xs text-slate-500 font-medium mt-0.5">{customers.length} tiers enregistrés (Créances et encours)</div>
+          <h2 className="text-base font-extrabold uppercase tracking-wider" style={{ color: '#1E1060' }}>Portefeuille Clients & Compte 411</h2>
+          <div className="text-xs font-medium mt-0.5" style={{ color: '#9CA3AF' }}>{customers.length} tiers enregistrés (Créances et encours)</div>
         </div>
 
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center space-x-2 px-5 py-2.5 bg-[#0f2d5e] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+          className="flex items-center space-x-2 px-5 py-2.5 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+          style={{ background: '#6B4EFF' }}
         >
           <Plus className="w-4 h-4" />
           <span>Nouveau Client</span>
@@ -90,17 +91,17 @@ export const ClientsModule: React.FC = () => {
           const outstandingTotal = risk?.outstandingTotal ?? 0;
           const usagePercent = Number(cust.creditLimit) > 0 ? Math.round((outstandingTotal / Number(cust.creditLimit)) * 100) : 0;
           return (
-            <div key={cust.id} className="glass-card rounded-xl p-5 space-y-4 relative">
-              <div className="flex justify-between items-start border-b border-slate-800 pb-3">
+            <div key={cust.id} className="rounded-xl p-5 space-y-4 relative" style={{ background: '#fff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 8px rgba(107,78,255,0.05)' }}>
+              <div className="flex justify-between items-start border-b pb-3" style={{ borderColor: '#F3F0FF' }}>
                 <div>
-                  <span className="text-[10px] font-mono font-bold bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded border border-emerald-800">
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded" style={{ background: '#F3F0FF', color: '#6B4EFF', border: '1px solid #DDD6FE' }}>
                     {cust.code}
                   </span>
-                  <h3 className="text-sm font-bold text-white mt-1.5">{cust.name}</h3>
+                  <h3 className="text-sm font-bold mt-1.5" style={{ color: '#1E1060' }}>{cust.name}</h3>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-slate-400">Encours Réel</div>
-                  <div className="text-base font-extrabold text-amber-300 font-mono">{formatMoney(outstandingTotal)}</div>
+                  <div className="text-xs" style={{ color: '#9CA3AF' }}>Encours Réel</div>
+                  <div className="text-base font-extrabold font-mono" style={{ color: '#F59E0B' }}>{formatMoney(outstandingTotal)}</div>
                 </div>
               </div>
 
@@ -111,32 +112,31 @@ export const ClientsModule: React.FC = () => {
                 </div>
               )}
 
-              <div className="space-y-1 text-xs text-slate-300">
+              <div className="space-y-1 text-xs" style={{ color: '#6B7280' }}>
                 <div className="flex items-center space-x-2">
-                  <Phone className="w-3.5 h-3.5 text-slate-400" />
+                  <Phone className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
                   <span>{cust.phone}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Mail className="w-3.5 h-3.5 text-slate-400" />
+                  <Mail className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
                   <span>{cust.email}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  <MapPin className="w-3.5 h-3.5" style={{ color: '#9CA3AF' }} />
                   <span className="truncate">{cust.address}</span>
                 </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-lg p-2.5 space-y-1">
+              <div className="rounded-lg p-2.5 space-y-1" style={{ background: '#F8F7FF', border: '1px solid #EDE9FE' }}>
                 <div className="flex justify-between text-[11px]">
-                  <span className="text-slate-400">Plafond de Crédit:</span>
-                  <span className="font-mono text-slate-200">{formatMoney(Number(cust.creditLimit))}</span>
+                  <span style={{ color: '#6B7280' }}>Plafond de Crédit :</span>
+                  <span className="font-mono" style={{ color: '#1E1060' }}>{formatMoney(Number(cust.creditLimit))}</span>
                 </div>
-                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: '#EDE9FE' }}>
                   <div
-                    className={`h-full rounded-full ${usagePercent > 80 ? 'bg-rose-500' : 'bg-emerald-500'}`}
-                    style={{ width: `${Math.min(usagePercent, 100)}%` }}
-                  ></div>
-                </div>
+                    className="h-full rounded-full"
+                    style={{ width: `${Math.min(usagePercent, 100)}%`, background: usagePercent > 80 ? '#EF4444' : '#6B4EFF' }}
+                  /></div>
               </div>
             </div>
           );
@@ -144,13 +144,13 @@ export const ClientsModule: React.FC = () => {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="glass-card rounded-2xl p-6 w-full max-w-md space-y-4 border border-slate-700">
-            <h3 className="text-base font-bold text-white">Nouveau Client Auxiliaire (411)</h3>
-            {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+        <div className="fixed inset-0 backdrop-blur-sm z-50 flex items-center justify-center p-4" style={{ background: 'rgba(30,16,96,0.5)' }}>
+          <div className="rounded-2xl p-6 w-full max-w-md space-y-4" style={{ background: '#fff', border: '1.5px solid #DDD6FE', boxShadow: '0 8px 40px rgba(107,78,255,0.15)' }}>
+            <h3 className="text-base font-bold" style={{ color: '#1E1060' }}>Nouveau Client Auxiliaire (411)</h3>
+            {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
             <form onSubmit={handleCreateCustomer} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Raison Sociale / Nom du Client</label>
+                <label className="block text-xs font-medium mb-1" style={{ color: '#6B7280' }}>Raison Sociale / Nom du Client</label>
                 <input
                   type="text"
                   value={name}
@@ -220,7 +220,7 @@ export const ClientsModule: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 rounded-lg text-xs font-semibold" style={{ background: '#F3F0FF', color: '#6B4EFF', border: '1px solid #DDD6FE' }}
                 >
                   Annuler
                 </button>

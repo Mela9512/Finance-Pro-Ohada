@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Rocket, Plus, Download, Trash2, ArrowLeft, TrendingUp, Gauge } from 'lucide-react';
 import { BusinessPlan, CreateBusinessPlanDto } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -75,20 +75,20 @@ export const BusinessPlanModule: React.FC = () => {
 
   if (selected) {
     return (
-      <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
           <button onClick={() => setSelected(null)} className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900">
             <ArrowLeft className="w-4 h-4" /> Retour à la liste
           </button>
           <button
             onClick={() => handleDownload(selected.id)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#0f2d5e] hover:bg-blue-900 text-white rounded-xl text-xs font-bold"
+            className="flex items-center gap-2 px-4 py-2 bg-[#6B4EFF] hover:bg-[#5538E0] text-white rounded-xl text-xs font-bold"
           >
             <Download className="w-4 h-4" /> Télécharger PDF
           </button>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white rounded-2xl p-6 border border-[#EDE9FE] shadow-sm">
           <h2 className="text-base font-extrabold text-slate-900">{selected.title}</h2>
           <p className="text-xs text-slate-500 mt-1">{selected.projectDescription}</p>
         </div>
@@ -114,11 +114,11 @@ export const BusinessPlanModule: React.FC = () => {
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-400" /> Projections Financières</h3>
+        <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
+          <h3 className="text-sm font-bold text-[#1E1060] flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-400" /> Projections Financières</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px]">
+              <thead className="bg-[#6B4EFF] text-white uppercase font-semibold text-[10px]">
                 <tr>
                   <th className="p-3">Année</th>
                   <th className="p-3 text-right">Chiffre d'Affaires</th>
@@ -127,7 +127,7 @@ export const BusinessPlanModule: React.FC = () => {
                   <th className="p-3 text-right">Flux Net</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-[#EDE9FE]">
                 {selected.projections.map((p) => (
                   <tr key={p.year}>
                     <td className="p-3 font-bold text-emerald-400">An {p.year}</td>
@@ -143,7 +143,7 @@ export const BusinessPlanModule: React.FC = () => {
         </div>
 
         <div className="glass-card rounded-xl p-6 space-y-3">
-          <h3 className="text-sm font-bold text-white">Résumé Exécutif (généré par IA)</h3>
+          <h3 className="text-sm font-bold text-[#1E1060]">Résumé Exécutif (généré par IA)</h3>
           <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{selected.narrative}</p>
           <p className="text-[10px] text-slate-500 italic">
             Le score de crédibilité est un indicateur interne calculé à partir de vos données réelles et de vos hypothèses — ce n'est pas une notation bancaire officielle.
@@ -154,10 +154,10 @@ export const BusinessPlanModule: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-6 border border-[#EDE9FE] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+          <h2 className="text-base font-extrabold uppercase tracking-wider text-[#1E1060] flex items-center gap-2">
             <Rocket className="w-5 h-5 text-indigo-600" /> Business Plan & Levée de Fonds
           </h2>
           <div className="text-xs text-slate-500 font-medium mt-1">
@@ -166,23 +166,23 @@ export const BusinessPlanModule: React.FC = () => {
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="flex items-center space-x-2 px-5 py-2.5 bg-[#0f2d5e] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+          className="flex items-center space-x-2 px-5 py-2.5 bg-[#6B4EFF] hover:bg-[#5538E0] text-white rounded-xl text-xs font-bold transition-all shadow-md"
         >
           <Plus className="w-4 h-4" />
           <span>Nouveau Business Plan</span>
         </button>
       </div>
 
-      {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+      {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {plans.length === 0 && (
           <div className="col-span-full text-center text-slate-500 italic text-xs py-8">Aucun business plan généré pour le moment.</div>
         )}
         {plans.map((plan) => (
-          <div key={plan.id} className="glass-card rounded-xl p-5 space-y-3 cursor-pointer hover:border-indigo-700 border border-transparent" onClick={() => setSelected(plan)}>
+          <div key={plan.id} className="bg-white rounded-xl p-5 space-y-3 border border-[#EDE9FE] shadow-sm cursor-pointer hover:border-indigo-700 border border-transparent" onClick={() => setSelected(plan)}>
             <div className="flex justify-between items-start">
-              <h3 className="text-sm font-bold text-white">{plan.title}</h3>
+              <h3 className="text-sm font-bold text-[#1E1060]">{plan.title}</h3>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${scoreColor(plan.creditScore)}`}>{plan.creditScore}/100</span>
             </div>
             <p className="text-[11px] text-slate-400 line-clamp-2">{plan.projectDescription}</p>
@@ -262,10 +262,10 @@ export const BusinessPlanModule: React.FC = () => {
                 <input type="number" value={form.discountRatePercent} onChange={(e) => setForm({ ...form, discountRatePercent: Number(e.target.value) })} required min={0} max={100} className="w-full glass-input rounded-lg px-3 py-2 text-xs font-mono" />
               </div>
 
-              {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+              {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-[#F3F0FF] text-[#6B4EFF] rounded-lg text-xs font-semibold border border-[#DDD6FE]">
                   Annuler
                 </button>
                 <button type="submit" disabled={creating} className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold">

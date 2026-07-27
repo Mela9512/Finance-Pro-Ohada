@@ -26,8 +26,11 @@ import { LandingPage } from './components/LandingPage';
 import { useAuth } from './context/AuthContext';
 
 const FullScreenLoader: React.FC = () => (
-  <div className="flex h-screen w-screen items-center justify-center bg-slate-950">
-    <Loader2 className="w-8 h-8 text-emerald-500 animate-spin" />
+  <div className="flex h-screen w-screen items-center justify-center bg-[#F8F7FF]">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-10 h-10 rounded-full border-4 border-[#6B4EFF] border-t-transparent animate-spin" />
+      <span className="text-[#6B4EFF] text-xs font-bold tracking-wider">FinancePro OHADA</span>
+    </div>
   </div>
 );
 
@@ -74,7 +77,7 @@ const AppShell: React.FC = () => {
   if (!company.isOnboarded) return <OnboardingWizard />;
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-950 text-slate-100">
+    <div className="flex h-screen w-screen overflow-hidden bg-[#F8F7FF] text-slate-900">
       <Sidebar activeModule={activeModule} onSelectModule={setActiveModule} />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -85,7 +88,7 @@ const AppShell: React.FC = () => {
           onLogout={logout}
         />
 
-        <main className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+        <main className="flex-1 overflow-y-auto p-6 bg-[#F8F7FF]">
           {activeModule === 'dashboard' && <DashboardModule />}
           {activeModule === 'accounting' && <AccountingModule />}
           {activeModule === 'treasury' && <TreasuryModule />}

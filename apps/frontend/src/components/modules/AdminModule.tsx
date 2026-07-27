@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Building2, Users, CheckCircle, Lock, Unlock, Send } from 'lucide-react';
 import { Company, User, UserRole } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -76,7 +76,7 @@ export const AdminModule: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+    <div className="space-y-6">
       {errorMessage && <div className="bg-red-50 border border-red-200 text-red-800 text-xs rounded-xl p-3 font-medium">{errorMessage}</div>}
 
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
@@ -240,7 +240,7 @@ export const AdminModule: React.FC = () => {
                 </select>
               </div>
 
-              {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+              {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
               {inviteSentMessage && <div className="bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs rounded-lg p-3">{inviteSentMessage}</div>}
 
               <div className="flex justify-end space-x-3 pt-2">

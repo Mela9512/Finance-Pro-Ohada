@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ShieldCheck, UserCheck } from 'lucide-react';
 import { User } from '@financepro/shared';
 
@@ -8,7 +8,7 @@ interface AuthModuleProps {
 
 export const AuthModule: React.FC<AuthModuleProps> = ({ currentUser }) => {
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+    <div className="space-y-6">
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
         <div className="flex items-center space-x-3 border-b border-slate-100 pb-3">
           <div className="w-9 h-9 rounded-xl bg-blue-900 text-white flex items-center justify-center font-bold">

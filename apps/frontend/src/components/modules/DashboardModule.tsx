@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  Calculator, Network, RefreshCw, FileText, CheckCircle2, 
-  TrendingUp, Users, ArrowRight, ShieldCheck, PieChart,
-  Settings, Layers, ChevronRight, Activity, DollarSign
+import {
+  Calculator, Network, RefreshCw, FileText, TrendingUp,
+  Users, ArrowRight, BarChart3, PieChart, AlertCircle
 } from 'lucide-react';
 import { DashboardMetrics } from '@financepro/shared';
 import { api } from '../../services/api';
@@ -16,331 +15,387 @@ export const DashboardModule: React.FC = () => {
 
   if (!metrics) {
     return (
-      <div className="p-8 text-center text-slate-500 font-medium">Chargement des métriques financières OHADA...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-4 border-[#6B4EFF] border-t-transparent animate-spin" />
+          <span className="text-xs font-medium" style={{ color: '#6B7280' }}>Chargement des métriques OHADA...</span>
+        </div>
+      </div>
     );
   }
 
-  const formatMoney = (val: number) => 
+  const formatMoney = (val: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
+  const kpis = [
+    {
+      label: 'Trésorerie Nette',
+      sublabel: 'Comptes 521/541',
+      value: formatMoney(metrics.tresorerieNetteTotal),
+      icon: Calculator,
+      color: '#6B4EFF',
+      bg: '#F3F0FF',
+      border: '#DDD6FE',
+      trend: '+5.2%',
+      trendUp: true,
+    },
+    {
+      label: 'Chiffre d\'Affaires Mensuel',
+      sublabel: 'Compte 701',
+      value: formatMoney(metrics.chiffreAffairesMois),
+      icon: TrendingUp,
+      color: '#10B981',
+      bg: '#ECFDF5',
+      border: '#A7F3D0',
+      trend: '+12.4%',
+      trendUp: true,
+    },
+    {
+      label: 'Créances Clients',
+      sublabel: 'Compte 411 — À recouvrer',
+      value: formatMoney(metrics.creancesClientsTotal),
+      icon: Users,
+      color: '#F59E0B',
+      bg: '#FFFBEB',
+      border: '#FDE68A',
+      trend: '-2.1%',
+      trendUp: false,
+    },
+    {
+      label: 'Dettes Fournisseurs',
+      sublabel: 'Compte 401 — À régler',
+      value: formatMoney(metrics.dettesFournisseursTotal),
+      icon: FileText,
+      color: '#EF4444',
+      bg: '#FEF2F2',
+      border: '#FECACA',
+      trend: '+1.3%',
+      trendUp: false,
+    },
+  ];
+
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
+    <div className="space-y-6">
 
-      {/* Top Section Title & Subtitle */}
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      {/* En-tête page */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">Tableau de bord analytique</h2>
-          <p className="text-xs text-slate-500 font-medium">Vue d'ensemble et contrôle budgétaire de l'entreprise (Norme SYSCOHADA)</p>
+          <h2 className="text-xl font-extrabold" style={{ color: '#1E1060' }}>
+            Tableau de bord financier
+          </h2>
+          <p className="text-xs font-medium mt-0.5" style={{ color: '#9CA3AF' }}>
+            Vue d'ensemble et contrôle budgétaire — Norme SYSCOHADA Révisé
+          </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-100 text-blue-900 border border-blue-200">
-            Période : 01.01.2026 - 31.12.2026
+        <div className="flex items-center gap-2">
+          <span
+            className="text-xs font-semibold px-3 py-1.5 rounded-full"
+            style={{ background: '#F3F0FF', color: '#6B4EFF', border: '1.5px solid #DDD6FE' }}
+          >
+            Période : 01.01.2026 — 31.12.2026
           </span>
         </div>
       </div>
 
-      {/* 4 Top KPI Cards Row (Identical to Red, Blue, Teal, Gray Cards in Image) */}
+      {/* 4 KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Card 1: Bright Crimson Red Card */}
-        <div className="bg-red-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
-              <Calculator className="w-5 h-5 text-white" />
+        {kpis.map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <div
+              key={kpi.label}
+              className="rounded-2xl p-5 flex flex-col gap-3"
+              style={{
+                background: '#ffffff',
+                border: `1.5px solid ${kpi.border}`,
+                boxShadow: '0 2px 12px rgba(107,78,255,0.06)',
+                borderLeft: `4px solid ${kpi.color}`,
+              }}
+            >
+              <div className="flex items-center justify-between">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ background: kpi.bg }}
+                >
+                  <Icon className="w-5 h-5" style={{ color: kpi.color }} />
+                </div>
+                <span
+                  className="text-[11px] font-bold px-2 py-0.5 rounded-full"
+                  style={{
+                    background: kpi.trendUp ? '#DCFCE7' : '#FEE2E2',
+                    color: kpi.trendUp ? '#15803D' : '#B91C1C',
+                  }}
+                >
+                  {kpi.trend}
+                </span>
+              </div>
+              <div>
+                <div className="text-2xl font-extrabold font-mono" style={{ color: '#1E1060' }}>
+                  {kpi.value}
+                </div>
+                <div className="text-xs font-bold mt-1" style={{ color: '#374151' }}>
+                  {kpi.label}
+                </div>
+                <div className="text-[10px] mt-0.5" style={{ color: '#9CA3AF' }}>
+                  {kpi.sublabel}
+                </div>
+              </div>
             </div>
-            <span className="text-[10px] text-white/80 font-mono">Au 01.01.2026</span>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{formatMoney(metrics.tresorerieNetteTotal)}</div>
-            <div className="text-xs text-white/90 font-medium mt-1">Trésorerie Nette Disponible (Comptes 521/541)</div>
-          </div>
-        </div>
-
-        {/* Card 2: Deep Blue Card */}
-        <div className="bg-[#0f2d5e] text-white rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
-              <Network className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-[10px] text-blue-200/80 font-mono">Mensuel</span>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{formatMoney(metrics.chiffreAffairesMois)}</div>
-            <div className="text-xs text-blue-200 font-medium mt-1">Chiffre d'Affaires Mensuel (Compte 701)</div>
-          </div>
-        </div>
-
-        {/* Card 3: Teal / Cyan Card */}
-        <div className="bg-teal-600 text-white rounded-2xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-md">
-              <RefreshCw className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-[10px] text-teal-100/80 font-mono">En cours</span>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{formatMoney(metrics.creancesClientsTotal)}</div>
-            <div className="text-xs text-teal-100 font-medium mt-1">Créances Clients à Recouvrer (Compte 411)</div>
-          </div>
-        </div>
-
-        {/* Card 4: Soft Gray Metallic Card */}
-        <div className="bg-slate-200 text-slate-900 border border-slate-300 rounded-2xl p-5 shadow-sm relative overflow-hidden flex flex-col justify-between">
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-xl bg-slate-300 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-slate-700" />
-            </div>
-            <span className="text-[10px] text-slate-500 font-mono">À régler</span>
-          </div>
-          <div className="mt-4">
-            <div className="text-2xl sm:text-3xl font-extrabold tracking-tight">{formatMoney(metrics.dettesFournisseursTotal)}</div>
-            <div className="text-xs text-slate-600 font-medium mt-1">Dettes Fournisseurs à Régler (Compte 401)</div>
-          </div>
-        </div>
-
+          );
+        })}
       </div>
 
-      {/* Middle Progress Bar Section (DATA IN NUMBERS / Readiness 62%) */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold">
-          <span className="text-slate-900 tracking-wider">DONNÉES CHIFFRÉES AU 01.01.2026 — CONFORMITÉ SYSCOHADA</span>
-          <span className="text-blue-900 font-extrabold">Taux de conformité - 62%</span>
+      {/* Barre de conformité */}
+      <div
+        className="rounded-2xl p-4"
+        style={{ background: '#ffffff', border: '1.5px solid #EDE9FE', boxShadow: '0 1px 6px rgba(107,78,255,0.05)' }}
+      >
+        <div className="flex items-center justify-between text-xs font-bold mb-2">
+          <span style={{ color: '#1E1060' }}>CONFORMITÉ SYSCOHADA — Exercice 2026</span>
+          <span style={{ color: '#6B4EFF' }}>62% — En bonne voie</span>
         </div>
-        <div className="w-full bg-slate-100 rounded-full h-3 overflow-hidden border border-slate-200">
-          <div className="bg-gradient-to-r from-blue-900 via-teal-500 to-emerald-500 h-full w-[62%] rounded-full"></div>
+        <div className="w-full rounded-full h-2.5 overflow-hidden" style={{ background: '#F3F0FF' }}>
+          <div
+            className="h-full rounded-full transition-all"
+            style={{ width: '62%', background: 'linear-gradient(90deg, #6B4EFF, #8B72FF)' }}
+          />
         </div>
       </div>
 
-      {/* Middle 3 Panel Grid (Identical to Image Layout) */}
+      {/* Grille centrale 3 colonnes */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-        {/* Left Panel: DEPOSIT PARAMETER / Employee & Partner Table */}
-        <div className="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+        {/* Colonne gauche : Collaborateurs & Flux */}
+        <div
+          className="lg:col-span-5 rounded-2xl p-5"
+          style={{ background: '#ffffff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}
+        >
+          <div className="flex items-center justify-between pb-3 border-b mb-4" style={{ borderColor: '#F3F0FF' }}>
             <div>
-              <h3 className="text-xs font-extrabold uppercase text-slate-900">PARAMÈTRES DE FLUX</h3>
-              <p className="text-[10px] text-slate-400">Flux d'écritures & collaborateurs</p>
+              <h3 className="text-xs font-extrabold uppercase tracking-wider" style={{ color: '#1E1060' }}>
+                PARAMÈTRES DE FLUX
+              </h3>
+              <p className="text-[10px]" style={{ color: '#9CA3AF' }}>Écritures & collaborateurs actifs</p>
             </div>
-            <div className="text-[10px] text-right text-slate-500 font-mono">
-              <div>Montant paramètre : 99 000 XAF</div>
-              <div>Pourcentage param. : 33%</div>
+            <div className="text-[10px] text-right font-mono" style={{ color: '#6B7280' }}>
+              <div>Montant : 99 000 XAF</div>
+              <div>Taux : 33%</div>
             </div>
           </div>
 
-          {/* Table Rows */}
-          <div className="space-y-3 font-mono text-xs">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-900 flex items-center justify-center font-bold text-[10px]">E1</div>
-                <div>
-                  <div className="font-bold text-slate-900 font-sans">Alain KOUASSI (Comptable)</div>
-                  <div className="text-[10px] text-slate-400">15 documents traités</div>
+          <div className="space-y-3">
+            {[
+              { code: 'E1', name: 'Alain KOUASSI', role: 'Comptable', docs: 15, amount: '120 000 XAF', color: '#6B4EFF', bg: '#F3F0FF' },
+              { code: 'E2', name: 'Fatou DIOP', role: 'Gestionnaire', docs: 12, amount: '95 000 XAF', color: '#10B981', bg: '#ECFDF5' },
+              { code: 'E3', name: 'Marc KOFFI', role: 'Auditeur', docs: 8, amount: '80 000 XAF', color: '#F59E0B', bg: '#FFFBEB' },
+            ].map((e) => (
+              <div
+                key={e.code}
+                className="flex items-center justify-between p-3 rounded-xl"
+                style={{ background: '#F8F7FF', border: '1px solid #EDE9FE' }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-extrabold"
+                    style={{ background: e.bg, color: e.color }}
+                  >
+                    {e.code}
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold" style={{ color: '#1E1060' }}>{e.name}</div>
+                    <div className="text-[10px]" style={{ color: '#9CA3AF' }}>{e.docs} documents traités</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-extrabold font-mono" style={{ color: e.color }}>{e.amount}</div>
+                  <div className="text-[10px]" style={{ color: '#9CA3AF' }}>{e.role}</div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-blue-900">120 000 XAF</div>
-                <div className="text-[10px] text-red-600 font-bold">-3%</div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-teal-100 text-teal-900 flex items-center justify-center font-bold text-[10px]">E2</div>
-                <div>
-                  <div className="font-bold text-slate-900 font-sans">Fatou DIOP (Gestionnaire)</div>
-                  <div className="text-[10px] text-slate-400">15 documents traités</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-bold text-teal-900">120 000 XAF</div>
-                <div className="text-[10px] text-red-600 font-bold">-3%</div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-indigo-100 text-indigo-900 flex items-center justify-center font-bold text-[10px]">E3</div>
-                <div>
-                  <div className="font-bold text-slate-900 font-sans">Marc KOFFI (Auditeur)</div>
-                  <div className="text-[10px] text-slate-400">15 documents traités</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="font-bold text-indigo-900">120 000 XAF</div>
-                <div className="text-[10px] text-red-600 font-bold">-3%</div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
-        {/* Center Panel: OVERALL EFFICIENCY / Dual Donut Charts */}
-        <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-          <div className="pb-2 border-b border-slate-100">
-            <h3 className="text-xs font-extrabold uppercase text-slate-900">EFFICACITÉ GLOBALE</h3>
-            <p className="text-[10px] text-slate-400">Efficacité globale & Ratios financiers</p>
+        {/* Colonne centre : Efficacité & Ratios */}
+        <div
+          className="lg:col-span-4 rounded-2xl p-5 flex flex-col"
+          style={{ background: '#ffffff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}
+        >
+          <div className="pb-3 border-b mb-4" style={{ borderColor: '#F3F0FF' }}>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider" style={{ color: '#1E1060' }}>
+              EFFICACITÉ GLOBALE
+            </h3>
+            <p className="text-[10px]" style={{ color: '#9CA3AF' }}>Ratios financiers OHADA</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 py-4 text-center">
-            {/* Donut Meter 1 */}
-            <div className="flex flex-col items-center justify-center">
-              <div className="relative w-24 h-24 rounded-full border-8 border-blue-900 border-t-teal-400 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-base font-extrabold text-slate-900">97,7%</div>
-                  <div className="text-[9px] text-slate-400">Ratio BFR/FDR</div>
+          <div className="grid grid-cols-2 gap-4 py-2 flex-1">
+            {[
+              { label: 'Ratio BFR/FDR', value: '97,7%', sub: 'Efficacité', color: '#6B4EFF' },
+              { label: 'EBE Brut', value: '6,88M', sub: 'Montant Brut', color: '#10B981' },
+            ].map((m) => (
+              <div key={m.label} className="flex flex-col items-center justify-center gap-2">
+                <div
+                  className="w-24 h-24 rounded-full flex items-center justify-center"
+                  style={{
+                    border: `8px solid ${m.color}`,
+                    borderTopColor: m.color === '#6B4EFF' ? '#10B981' : '#6B4EFF',
+                  }}
+                >
+                  <div className="text-center">
+                    <div className="text-base font-extrabold" style={{ color: '#1E1060' }}>{m.value}</div>
+                    <div className="text-[9px]" style={{ color: '#9CA3AF' }}>{m.label}</div>
+                  </div>
                 </div>
+                <div className="text-xs font-bold" style={{ color: '#374151' }}>{m.sub}</div>
               </div>
-              <div className="text-xs font-bold text-slate-800 mt-2">Efficacité</div>
-            </div>
-
-            {/* Donut Meter 2 */}
-            <div className="flex flex-col items-center justify-center">
-              <div className="relative w-24 h-24 rounded-full border-8 border-red-600 border-l-blue-900 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-xs font-extrabold text-slate-900">6.88M</div>
-                  <div className="text-[9px] text-slate-400">EBE Brut</div>
-                </div>
-              </div>
-              <div className="text-xs font-bold text-slate-800 mt-2">Montant Brut</div>
-            </div>
+            ))}
           </div>
 
-          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-center text-[10px] text-slate-600 font-medium">
-            Tous les ratios de solvabilité sont conformes aux exigences financières OHADA.
+          <div
+            className="rounded-xl p-2.5 text-center text-[10px] font-medium mt-2"
+            style={{ background: '#F3F0FF', color: '#5B21B6' }}
+          >
+            Tous les ratios de solvabilité sont conformes aux exigences OHADA.
           </div>
         </div>
 
-        {/* Right Panel: General Indicators (4 Circular Cost Meters matching image) */}
-        <div className="lg:col-span-3 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="pb-2 border-b border-slate-100">
-            <h3 className="text-xs font-extrabold text-slate-900">Indicateurs Généraux</h3>
-            <p className="text-[10px] text-slate-400">Indicateurs de coûts journaliers</p>
+        {/* Colonne droite : Indicateurs généraux */}
+        <div
+          className="lg:col-span-3 rounded-2xl p-5"
+          style={{ background: '#ffffff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}
+        >
+          <div className="pb-3 border-b mb-4" style={{ borderColor: '#F3F0FF' }}>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider" style={{ color: '#1E1060' }}>
+              INDICATEURS GÉNÉRAUX
+            </h3>
+            <p className="text-[10px]" style={{ color: '#9CA3AF' }}>Coûts & scores journaliers</p>
           </div>
 
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold text-slate-600">Coût journalier</span>
-              <span className="text-xs font-bold bg-blue-900 text-white px-2 py-0.5 rounded-full">28 000 XAF</span>
-              <span className="text-[9px] text-slate-400">par jour</span>
-            </div>
-
-            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold text-slate-600">Coût mensuel</span>
-              <span className="text-xs font-bold bg-blue-900 text-white px-2 py-0.5 rounded-full">555 000 XAF</span>
-              <span className="text-[9px] text-slate-400">par mois</span>
-            </div>
-
-            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold text-slate-600">Score Qualité</span>
-              <span className="text-xs font-bold bg-emerald-600 text-white px-2 py-0.5 rounded-full">94,6 / 100</span>
-            </div>
-
-            <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="text-[10px] font-semibold text-slate-600">Score Audit</span>
-              <span className="text-xs font-bold bg-amber-600 text-white px-2 py-0.5 rounded-full">48 / 100</span>
-            </div>
+            {[
+              { label: 'Coût journalier', value: '28 000 XAF', sub: 'par jour', color: '#6B4EFF', bg: '#F3F0FF' },
+              { label: 'Coût mensuel', value: '555 000 XAF', sub: 'par mois', color: '#10B981', bg: '#ECFDF5' },
+              { label: 'Score Qualité', value: '94,6 / 100', sub: '', color: '#10B981', bg: '#ECFDF5' },
+              { label: 'Score Audit', value: '48 / 100', sub: '', color: '#F59E0B', bg: '#FFFBEB' },
+            ].map((ind) => (
+              <div
+                key={ind.label}
+                className="flex items-center justify-between p-2.5 rounded-xl"
+                style={{ background: '#F8F7FF', border: '1px solid #EDE9FE' }}
+              >
+                <span className="text-[10px] font-semibold" style={{ color: '#6B7280' }}>{ind.label}</span>
+                <span
+                  className="text-xs font-extrabold px-2 py-0.5 rounded-full"
+                  style={{ background: ind.bg, color: ind.color }}
+                >
+                  {ind.value}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-
       </div>
 
-      {/* Bottom Section: Employees Flow Table + Effectivity 5 Action Pill Cards + Accounts Callout */}
+      {/* Section basse */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
-        {/* Bottom Left & Center: Employee Rating & 5 Action Cards */}
+
+        {/* Collaborateurs — Classement */}
         <div className="lg:col-span-8 space-y-6">
-
-          {/* Employee Rating Table */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="text-xs font-extrabold uppercase text-slate-900 mb-3">COLLABORATEURS / ÉVALUATION & FLUX</h3>
+          <div
+            className="rounded-2xl p-5"
+            style={{ background: '#ffffff', border: '1.5px solid #EDE9FE', boxShadow: '0 1px 8px rgba(107,78,255,0.05)' }}
+          >
+            <h3 className="text-xs font-extrabold uppercase tracking-wider mb-3" style={{ color: '#1E1060' }}>
+              COLLABORATEURS — CLASSEMENT & FLUX
+            </h3>
             <div className="grid grid-cols-3 gap-4 text-xs font-mono">
-              <div className="space-y-1">
-                <div className="text-[10px] font-bold text-slate-400 uppercase">Classement</div>
-                <div className="text-slate-800">1. Janbiev Ivan (8.8)</div>
-                <div className="text-slate-800">2. Bychkov Sergey (7.8)</div>
-                <div className="text-slate-800">3. Mal'kov Evgeniy (5.0)</div>
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold uppercase" style={{ color: '#9CA3AF' }}>Classement</div>
+                <div style={{ color: '#374151' }}>1. Alain KOUASSI (8.8)</div>
+                <div style={{ color: '#374151' }}>2. Fatou DIOP (7.8)</div>
+                <div style={{ color: '#374151' }}>3. Marc KOFFI (5.0)</div>
               </div>
-              <div className="space-y-1">
-                <div className="text-[10px] font-bold text-slate-400 uppercase">Flux maximal</div>
-                <div className="text-blue-900 font-bold">41 validés : 4999</div>
-                <div className="text-blue-900 font-bold">32 validés : 5556</div>
-                <div className="text-blue-900 font-bold">20 validés : 3589</div>
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold uppercase" style={{ color: '#9CA3AF' }}>Flux maximal</div>
+                <div style={{ color: '#6B4EFF', fontWeight: 700 }}>41 validés : 4 999</div>
+                <div style={{ color: '#6B4EFF', fontWeight: 700 }}>32 validés : 5 556</div>
+                <div style={{ color: '#6B4EFF', fontWeight: 700 }}>20 validés : 3 589</div>
               </div>
-              <div className="space-y-1">
-                <div className="text-[10px] font-bold text-slate-400 uppercase">Flux minimal</div>
-                <div className="text-slate-600">20 validés : 4999</div>
-                <div className="text-slate-600">15 validés : 5556</div>
-                <div className="text-slate-600">10 validés : 3589</div>
+              <div className="space-y-1.5">
+                <div className="text-[10px] font-bold uppercase" style={{ color: '#9CA3AF' }}>Flux minimal</div>
+                <div style={{ color: '#6B7280' }}>20 validés : 4 999</div>
+                <div style={{ color: '#6B7280' }}>15 validés : 5 556</div>
+                <div style={{ color: '#6B7280' }}>10 validés : 3 589</div>
               </div>
             </div>
           </div>
 
-          {/* Effectivity Indicators 5 Pill Cards Bar */}
+          {/* Indicateurs d'efficacité */}
           <div>
-            <h3 className="text-xs font-extrabold uppercase text-slate-900 mb-3">Indicateurs d'efficacité</h3>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider mb-3" style={{ color: '#1E1060' }}>
+              INDICATEURS D'EFFICACITÉ
+            </h3>
             <div className="grid grid-cols-5 gap-3">
-              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
-                <Calculator className="w-5 h-5 text-blue-900 mx-auto mb-1" />
-                <div className="text-base font-extrabold text-slate-900">11</div>
-                <div className="text-[9px] text-slate-400">en opération</div>
-              </div>
-
-              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
-                <FileText className="w-5 h-5 text-red-600 mx-auto mb-1" />
-                <div className="text-base font-extrabold text-slate-900">3</div>
-                <div className="text-[9px] text-slate-400">en déchargement</div>
-              </div>
-
-              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
-                <Network className="w-5 h-5 text-teal-600 mx-auto mb-1" />
-                <div className="text-base font-extrabold text-slate-900">1</div>
-                <div className="text-[9px] text-slate-400">en attente</div>
-              </div>
-
-              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
-                <Settings className="w-5 h-5 text-amber-600 mx-auto mb-1" />
-                <div className="text-base font-extrabold text-slate-900">0</div>
-                <div className="text-[9px] text-slate-400">en maintenance</div>
-              </div>
-
-              <div className="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm text-center">
-                <Users className="w-5 h-5 text-indigo-600 mx-auto mb-1" />
-                <div className="text-base font-extrabold text-slate-900">7</div>
-                <div className="text-[9px] text-slate-400">en transit</div>
-              </div>
+              {[
+                { icon: Calculator, label: 'En opération', value: '11', color: '#6B4EFF' },
+                { icon: FileText, label: 'En déchargement', value: '3', color: '#EF4444' },
+                { icon: Network, label: 'En attente', value: '1', color: '#10B981' },
+                { icon: BarChart3, label: 'En maintenance', value: '0', color: '#F59E0B' },
+                { icon: Users, label: 'En transit', value: '7', color: '#8B72FF' },
+              ].map((ind) => {
+                const Icon = ind.icon;
+                return (
+                  <div
+                    key={ind.label}
+                    className="rounded-2xl p-3 text-center"
+                    style={{ background: '#ffffff', border: '1.5px solid #EDE9FE', boxShadow: '0 1px 6px rgba(107,78,255,0.05)' }}
+                  >
+                    <Icon className="w-5 h-5 mx-auto mb-1.5" style={{ color: ind.color }} />
+                    <div className="text-base font-extrabold" style={{ color: '#1E1060' }}>{ind.value}</div>
+                    <div className="text-[9px] leading-tight mt-0.5" style={{ color: '#9CA3AF' }}>{ind.label}</div>
+                  </div>
+                );
+              })}
             </div>
           </div>
-
         </div>
 
-        {/* Bottom Right: Accounts Callout Floating Card (Identical to Red Payment Card in Image) */}
-        <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-lg space-y-4">
-          <div className="border-b border-slate-100 pb-2">
-            <h3 className="text-base font-extrabold text-slate-900">Comptes & Règlements</h3>
-            <p className="text-xs text-slate-500 font-medium">Synthèse des comptes auxiliaires</p>
+        {/* Comptes & Règlements */}
+        <div
+          className="lg:col-span-4 rounded-2xl p-6"
+          style={{ background: '#ffffff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.07)' }}
+        >
+          <div className="border-b pb-3 mb-4" style={{ borderColor: '#F3F0FF' }}>
+            <h3 className="text-base font-extrabold" style={{ color: '#1E1060' }}>Comptes & Règlements</h3>
+            <p className="text-xs mt-0.5" style={{ color: '#9CA3AF' }}>Synthèse des comptes auxiliaires</p>
           </div>
 
-          <div className="space-y-2 font-mono text-xs">
-            <div className="flex justify-between items-center p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="font-bold text-slate-700">99 Comptes</span>
-              <span className="font-extrabold text-red-600">9 999 999 XAF</span>
+          <div className="space-y-2 font-mono text-xs mb-4">
+            <div
+              className="flex justify-between items-center p-2.5 rounded-xl"
+              style={{ background: '#F8F7FF', border: '1px solid #EDE9FE' }}
+            >
+              <span className="font-bold" style={{ color: '#374151' }}>99 Comptes</span>
+              <span className="font-extrabold" style={{ color: '#EF4444' }}>9 999 999 XAF</span>
             </div>
-            <div className="flex justify-between items-center p-2.5 rounded-xl bg-slate-50 border border-slate-200">
-              <span className="font-bold text-slate-700">VENTES 88 Comptes</span>
-              <span className="font-extrabold text-blue-900">8 888 888 XAF</span>
+            <div
+              className="flex justify-between items-center p-2.5 rounded-xl"
+              style={{ background: '#F8F7FF', border: '1px solid #EDE9FE' }}
+            >
+              <span className="font-bold" style={{ color: '#374151' }}>VENTES 88 Comptes</span>
+              <span className="font-extrabold" style={{ color: '#6B4EFF' }}>8 888 888 XAF</span>
             </div>
           </div>
 
-          <div className="pt-2">
-            <button className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition-colors flex items-center justify-center gap-2">
-              <span>Effectuer un règlement</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          <button
+            className="w-full py-3 rounded-xl font-bold text-xs text-white flex items-center justify-center gap-2 transition-all"
+            style={{ background: 'linear-gradient(90deg, #6B4EFF, #8B72FF)', boxShadow: '0 4px 14px rgba(107,78,255,0.3)' }}
+          >
+            <span>Effectuer un règlement</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
 
       </div>
-
     </div>
   );
 };

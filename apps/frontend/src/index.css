@@ -2,53 +2,209 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   FINANCEPRO OHADA — THÈME VIOLET / PURPLE
+   Palette: #1E1060 (sidebar), #6B4EFF (primaire), #F8F7FF (fond)
+   ============================================================ */
+
 @layer utilities {
-  .glass-card {
-    background: rgba(15, 23, 42, 0.75);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+
+  /* --- Cartes blanches standard --- */
+  .purple-card {
+    background: #ffffff;
+    border: 1px solid #E5E0FF;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(107, 78, 255, 0.06);
   }
-  
+
+  /* --- En-tête de tableau violet --- */
+  .purple-table-header {
+    background: linear-gradient(90deg, #6B4EFF 0%, #8B72FF 100%);
+    color: #ffffff;
+  }
+
+  /* --- Badges statut --- */
+  .badge-success {
+    background: #DCFCE7;
+    color: #15803D;
+    border: 1px solid #BBF7D0;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+  }
+  .badge-warning {
+    background: #FEF9C3;
+    color: #A16207;
+    border: 1px solid #FDE68A;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+  }
+  .badge-danger {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+  }
+  .badge-info {
+    background: #DBEAFE;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+  }
+  .badge-purple {
+    background: #EDE9FE;
+    color: #5B21B6;
+    border: 1px solid #DDD6FE;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
+  }
+
+  /* --- Inputs style violet --- */
+  .purple-input {
+    background: #F8F7FF;
+    border: 1.5px solid #D4CBFF;
+    border-radius: 10px;
+    color: #1E1060;
+    font-size: 13px;
+    padding: 8px 12px;
+    width: 100%;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .purple-input:focus {
+    border-color: #6B4EFF;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.15);
+  }
+  .purple-input::placeholder {
+    color: #9CA3AF;
+  }
+
+  /* --- Bouton principal violet --- */
+  .btn-purple {
+    background: #6B4EFF;
+    color: #ffffff;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-purple:hover {
+    background: #5538E0;
+    box-shadow: 0 4px 16px rgba(107, 78, 255, 0.3);
+  }
+  .btn-purple:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  /* --- Bouton vert action --- */
+  .btn-green {
+    background: #10B981;
+    color: #ffffff;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 18px;
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-green:hover { background: #059669; }
+
+  /* --- Bouton secondaire --- */
+  .btn-secondary {
+    background: #F3F0FF;
+    color: #5B21B6;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 16px;
+    border: 1.5px solid #DDD6FE;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-secondary:hover { background: #EDE9FE; }
+
+  /* Legacy classes conservées pour compatibilité --- */
+  .glass-card {
+    background: #ffffff;
+    border: 1px solid #E5E0FF;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(107, 78, 255, 0.06);
+  }
   .glass-input {
-    background: rgba(30, 41, 59, 0.6);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #f8fafc;
+    background: #F8F7FF;
+    border: 1.5px solid #D4CBFF;
+    border-radius: 10px;
+    color: #1E1060;
+    padding: 8px 12px;
   }
   .glass-input:focus {
-    border-color: #10b981;
+    border-color: #6B4EFF;
     outline: none;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.15);
   }
 
   .ohada-gradient {
-    background: linear-gradient(135deg, #059669 0%, #0f172a 100%);
+    background: linear-gradient(135deg, #6B4EFF 0%, #1E1060 100%);
   }
 
   .badge-debit {
-    background-color: rgba(239, 68, 68, 0.15);
-    color: #fca5a5;
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background-color: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
   }
 
   .badge-credit {
-    background-color: rgba(16, 185, 129, 0.15);
-    color: #6ee7b7;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    background-color: #DCFCE7;
+    color: #15803D;
+    border: 1px solid #BBF7D0;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 10px;
   }
 }
 
-/* Custom Scrollbars */
+/* ---- Scrollbar violet ---- */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: #F3F0FF;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #C4B5FD;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #8B5CF6;
 }

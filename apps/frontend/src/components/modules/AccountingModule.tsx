@@ -138,13 +138,14 @@ export const AccountingModule: React.FC = () => {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
-      <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center gap-2 bg-white p-4 rounded-2xl" style={{ border: '1.5px solid #EDE9FE', boxShadow: '0 1px 6px rgba(107,78,255,0.05)' }}>
         <button
           onClick={() => setTab('saisie')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            tab === 'saisie' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            tab === 'saisie' ? 'text-white shadow-md' : 'text-slate-700 hover:bg-slate-100'
           }`}
+          style={tab === 'saisie' ? { background: '#6B4EFF' } : {}}
         >
           <PlusCircle className="w-4 h-4" />
           <span>Saisie Écriture Double Entrée</span>
@@ -153,8 +154,9 @@ export const AccountingModule: React.FC = () => {
         <button
           onClick={() => setTab('journal')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            tab === 'journal' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            tab === 'journal' ? 'text-white shadow-md' : 'text-slate-700 hover:bg-slate-100'
           }`}
+          style={tab === 'journal' ? { background: '#6B4EFF' } : {}}
         >
           <FileSpreadsheet className="w-4 h-4" />
           <span>Journal Général ({entries.length})</span>
@@ -163,8 +165,9 @@ export const AccountingModule: React.FC = () => {
         <button
           onClick={() => setTab('grand-livre')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            tab === 'grand-livre' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            tab === 'grand-livre' ? 'text-white shadow-md' : 'text-slate-700 hover:bg-slate-100'
           }`}
+          style={tab === 'grand-livre' ? { background: '#6B4EFF' } : {}}
         >
           <Layers className="w-4 h-4" />
           <span>Grand Livre des Comptes</span>
@@ -173,8 +176,9 @@ export const AccountingModule: React.FC = () => {
         <button
           onClick={() => setTab('balance')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            tab === 'balance' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            tab === 'balance' ? 'text-white shadow-md' : 'text-slate-700 hover:bg-slate-100'
           }`}
+          style={tab === 'balance' ? { background: '#6B4EFF' } : {}}
         >
           <Scale className="w-4 h-4" />
           <span>Balance Générale</span>
@@ -183,8 +187,9 @@ export const AccountingModule: React.FC = () => {
         <button
           onClick={() => setTab('plan')}
           className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            tab === 'plan' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            tab === 'plan' ? 'text-white shadow-md' : 'text-slate-700 hover:bg-slate-100'
           }`}
+          style={tab === 'plan' ? { background: '#6B4EFF' } : {}}
         >
           <BookOpen className="w-4 h-4" />
           <span>Plan Comptable SYSCOHADA</span>
@@ -192,28 +197,28 @@ export const AccountingModule: React.FC = () => {
       </div>
 
       {tab === 'saisie' && (
-        <form onSubmit={handleSubmitEntry} className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-6">
+        <form onSubmit={handleSubmitEntry} className="bg-white rounded-2xl p-6 space-y-6" style={{ border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}>
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-sm font-extrabold text-slate-900">Nouvelle Écriture Comptable SYSCOHADA</h3>
-              <p className="text-xs text-slate-500">Le système vérifie automatiquement le principe d'équivalence Débit = Crédit</p>
+              <h3 className="text-sm font-extrabold" style={{ color: '#1E1060' }}>Nouvelle Écriture Comptable SYSCOHADA</h3>
+              <p className="text-xs" style={{ color: '#9CA3AF' }}>Le système vérifie automatiquement le principe d'équivalence Débit = Crédit</p>
             </div>
 
             <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border text-xs font-bold font-mono ${
-              isBalanced ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800' : 'bg-rose-950/80 text-rose-400 border-rose-800'
+              isBalanced ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'
             }`}>
-              {isBalanced ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-rose-400" />}
+              {isBalanced ? <CheckCircle2 className="w-4 h-4" style={{ color: '#10B981' }} /> : <AlertTriangle className="w-4 h-4" style={{ color: '#EF4444' }} />}
               <span>{isBalanced ? 'ÉCRITURE ÉQUILIBRÉE' : `DÉSÉQUILIBRE: ${formatMoney(Math.abs(totalDebit - totalCredit))}`}</span>
             </div>
           </div>
 
           {errorMessage && (
-            <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>
+            <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Journal Comptable</label>
+              <label className="block text-xs font-medium mb-1" style={{ color: '#6B7280' }}>Journal Comptable</label>
               <select
                 value={journalType}
                 onChange={(e) => setJournalType(e.target.value as any)}
@@ -276,7 +281,7 @@ export const AccountingModule: React.FC = () => {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px]">
+              <thead className="text-white uppercase font-semibold text-[10px]" style={{ background: 'linear-gradient(90deg, #6B4EFF 0%, #8B72FF 100%)' }}>
                 <tr>
                   <th className="p-3 w-36">Code Compte SYSCOHADA</th>
                   <th className="p-3">Intitulé du Compte</th>
@@ -284,7 +289,7 @@ export const AccountingModule: React.FC = () => {
                   <th className="p-3 w-40 text-right">Crédit (XAF)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y divide-purple-50">
                 {lines.map((line, idx) => (
                   <tr key={idx}>
                     <td className="p-2">
@@ -300,7 +305,7 @@ export const AccountingModule: React.FC = () => {
                         ))}
                       </select>
                     </td>
-                    <td className="p-2 text-slate-300 font-medium">{line.accountLabel}</td>
+                    <td className="p-2" style={{ color: '#374151' }}>{line.accountLabel}</td>
                     <td className="p-2">
                       <input
                         type="number"
@@ -308,7 +313,7 @@ export const AccountingModule: React.FC = () => {
                         value={line.debit || ''}
                         onChange={(e) => handleLineChange(idx, 'debit', Number(e.target.value))}
                         placeholder="0"
-                        className="w-full glass-input rounded px-2 py-1 text-xs text-right font-mono text-emerald-400 font-bold"
+                        className="w-full glass-input rounded px-2 py-1 text-xs text-right font-mono font-bold" style={{ color: '#10B981' }}
                       />
                     </td>
                     <td className="p-2">
@@ -318,15 +323,15 @@ export const AccountingModule: React.FC = () => {
                         value={line.credit || ''}
                         onChange={(e) => handleLineChange(idx, 'credit', Number(e.target.value))}
                         placeholder="0"
-                        className="w-full glass-input rounded px-2 py-1 text-xs text-right font-mono text-rose-400 font-bold"
+                        className="w-full glass-input rounded px-2 py-1 text-xs text-right font-mono font-bold" style={{ color: '#EF4444' }}
                       />
                     </td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-slate-900 border-t border-slate-700 font-bold text-xs">
+              <tfoot className="font-bold text-xs" style={{ background: '#F3F0FF', borderTop: '1.5px solid #DDD6FE' }}>
                 <tr>
-                  <td colSpan={2} className="p-3 text-right text-slate-300">TOTAL ÉCRITURE :</td>
+                  <td colSpan={2} className="p-3 text-right font-sans" style={{ color: '#1E1060' }}>TOTAL ÉCRITURE :</td>
                   <td className="p-3 text-right font-mono text-emerald-400">{formatMoney(totalDebit)}</td>
                   <td className="p-3 text-right font-mono text-rose-400">{formatMoney(totalCredit)}</td>
                 </tr>
@@ -338,7 +343,7 @@ export const AccountingModule: React.FC = () => {
             <button
               type="button"
               onClick={handleAddLine}
-              className="px-3 py-1.5 bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-lg text-xs font-medium"
+              className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ background: '#F3F0FF', color: '#6B4EFF', border: '1px solid #DDD6FE' }}
             >
               + Ajouter une ligne de compte
             </button>
@@ -357,30 +362,30 @@ export const AccountingModule: React.FC = () => {
       )}
 
       {tab === 'journal' && (
-        <div className="glass-card rounded-xl p-6 space-y-4">
-          <h3 className="text-sm font-bold text-white">Journal Général des Écritures Validées</h3>
+        <div className="rounded-xl p-6 space-y-4" style={{ background: '#fff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}>
+          <h3 className="text-sm font-bold" style={{ color: '#1E1060' }}>Journal Général des Écritures Validées</h3>
           <div className="space-y-4">
             {entries.map((entry) => (
-              <div key={entry.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs border-b border-slate-800 pb-2">
+              <div key={entry.id} className="rounded-xl p-4 space-y-3" style={{ background: '#F8F7FF', border: '1.5px solid #EDE9FE' }}>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs border-b pb-2" style={{ borderColor: '#EDE9FE' }}>
                   <div className="flex items-center space-x-3">
-                    <span className="font-mono font-bold text-emerald-400">{entry.entryNumber}</span>
-                    <span className="px-2 py-0.5 bg-slate-800 text-slate-300 rounded font-semibold">{entry.journalType}</span>
-                    <span className="text-slate-400">Pièce: {entry.pieceNumber}</span>
+                    <span className="font-mono font-bold" style={{ color: '#6B4EFF' }}>{entry.entryNumber}</span>
+                    <span className="px-2 py-0.5 rounded font-semibold" style={{ background: '#F3F0FF', color: '#5B21B6' }}>{entry.journalType}</span>
+                    <span style={{ color: '#9CA3AF' }}>Pièce: {entry.pieceNumber}</span>
                   </div>
-                  <div className="text-slate-400 mt-1 sm:mt-0">Date: {entry.date}</div>
+                  <div style={{ color: '#9CA3AF' }}>Date: {entry.date}</div>
                 </div>
 
-                <div className="text-xs font-semibold text-white">{entry.wording}</div>
+                <div className="text-xs font-semibold" style={{ color: '#1E1060' }}>{entry.wording}</div>
 
                 <table className="w-full text-left text-xs font-mono">
-                  <tbody className="divide-y divide-slate-800/40">
+                  <tbody className="divide-y" style={{ borderColor: '#EDE9FE' }}>
                     {entry.lines.map((l, i) => (
                       <tr key={l.id || i}>
-                        <td className="py-1 text-slate-400 w-24">{l.accountCode}</td>
-                        <td className="py-1 text-slate-200">{l.accountLabel}</td>
-                        <td className="py-1 text-right text-emerald-400 w-32">{l.debit > 0 ? formatMoney(l.debit) : '-'}</td>
-                        <td className="py-1 text-right text-rose-400 w-32">{l.credit > 0 ? formatMoney(l.credit) : '-'}</td>
+                        <td className="py-1" style={{ color: '#9CA3AF', width: '6rem' }}>{l.accountCode}</td>
+                        <td className="py-1" style={{ color: '#374151' }}>{l.accountLabel}</td>
+                        <td className="py-1 text-right w-32" style={{ color: '#10B981' }}>{l.debit > 0 ? formatMoney(l.debit) : '-'}</td>
+                        <td className="py-1 text-right w-32" style={{ color: '#EF4444' }}>{l.credit > 0 ? formatMoney(l.credit) : '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -392,15 +397,15 @@ export const AccountingModule: React.FC = () => {
       )}
 
       {tab === 'grand-livre' && (
-        <div className="glass-card rounded-xl p-6 space-y-4">
+        <div className="rounded-xl p-6 space-y-4" style={{ background: '#fff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Grand Livre Général des Comptes</h3>
-              <p className="text-xs text-slate-400">Historique chronologique et mouvements par compte comptable</p>
+              <h3 className="text-sm font-bold" style={{ color: '#1E1060' }}>Grand Livre Général des Comptes</h3>
+              <p className="text-xs" style={{ color: '#9CA3AF' }}>Historique chronologique et mouvements par compte comptable</p>
             </div>
 
             <div className="flex items-center space-x-2">
-              <label className="text-xs text-slate-300">Filtre Compte:</label>
+              <label className="text-xs" style={{ color: '#6B7280' }}>Filtre Compte :</label>
               <select
                 value={grandLivreFilter}
                 onChange={(e) => setGrandLivreFilter(e.target.value)}
@@ -420,7 +425,7 @@ export const AccountingModule: React.FC = () => {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px]">
+              <thead className="text-white uppercase font-semibold text-[10px]" style={{ background: 'linear-gradient(90deg, #6B4EFF 0%, #8B72FF 100%)' }}>
                 <tr>
                   <th className="p-3">Date</th>
                   <th className="p-3">N° Pièce</th>
@@ -431,16 +436,16 @@ export const AccountingModule: React.FC = () => {
                   <th className="p-3 text-right">Crédit</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y" style={{ borderColor: '#EDE9FE' }}>
                 {grandLivreLines.map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-800/40 font-mono">
-                    <td className="p-3 text-slate-300">{row.date}</td>
-                    <td className="p-3 text-emerald-400">{row.pieceNumber}</td>
-                    <td className="p-3 font-bold text-white">{row.accountCode}</td>
-                    <td className="p-3 text-slate-300">{row.accountLabel}</td>
-                    <td className="p-3 text-slate-200">{row.wording}</td>
-                    <td className="p-3 text-right text-emerald-400">{Number(row.debit) > 0 ? formatMoney(Number(row.debit)) : '-'}</td>
-                    <td className="p-3 text-right text-rose-400">{Number(row.credit) > 0 ? formatMoney(Number(row.credit)) : '-'}</td>
+                  <tr key={i} className="hover:bg-purple-50 font-mono transition-colors">
+                    <td className="p-3" style={{ color: '#6B7280' }}>{row.date}</td>
+                    <td className="p-3" style={{ color: '#6B4EFF' }}>{row.pieceNumber}</td>
+                    <td className="p-3 font-bold" style={{ color: '#1E1060' }}>{row.accountCode}</td>
+                    <td className="p-3" style={{ color: '#374151' }}>{row.accountLabel}</td>
+                    <td className="p-3" style={{ color: '#374151' }}>{row.wording}</td>
+                    <td className="p-3 text-right" style={{ color: '#10B981' }}>{Number(row.debit) > 0 ? formatMoney(Number(row.debit)) : '-'}</td>
+                    <td className="p-3 text-right" style={{ color: '#EF4444' }}>{Number(row.credit) > 0 ? formatMoney(Number(row.credit)) : '-'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -450,17 +455,17 @@ export const AccountingModule: React.FC = () => {
       )}
 
       {tab === 'balance' && (
-        <div className="glass-card rounded-xl p-6 space-y-4">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div className="rounded-xl p-6 space-y-4" style={{ background: '#fff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}>
+          <div className="flex justify-between items-center border-b pb-3" style={{ borderColor: '#EDE9FE' }}>
             <div>
-              <h3 className="text-sm font-bold text-white">Balance Générale des Comptes</h3>
-              <p className="text-xs text-slate-400">Vérification de l'égalité globale Débits = Crédits</p>
+              <h3 className="text-sm font-bold" style={{ color: '#1E1060' }}>Balance Générale des Comptes</h3>
+              <p className="text-xs" style={{ color: '#9CA3AF' }}>Vérification de l'égalité globale Débits = Crédits</p>
             </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px]">
+              <thead className="text-white uppercase font-semibold text-[10px]" style={{ background: 'linear-gradient(90deg, #6B4EFF 0%, #8B72FF 100%)' }}>
                 <tr>
                   <th className="p-3">N° Compte</th>
                   <th className="p-3">Intitulé du Compte</th>
@@ -470,21 +475,21 @@ export const AccountingModule: React.FC = () => {
                   <th className="p-3 text-right">Solde Créditeur</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y" style={{ borderColor: '#EDE9FE' }}>
                 {balanceRows.map((row) => (
-                  <tr key={row.code} className="hover:bg-slate-800/40">
-                    <td className="p-3 font-bold text-emerald-400">{row.code}</td>
-                    <td className="p-3 font-sans text-slate-200">{row.label}</td>
-                    <td className="p-3 text-right text-slate-300">{formatMoney(row.debit)}</td>
-                    <td className="p-3 text-right text-slate-300">{formatMoney(row.credit)}</td>
-                    <td className="p-3 text-right font-bold text-emerald-400">{row.soldeDebiteur > 0 ? formatMoney(row.soldeDebiteur) : '-'}</td>
-                    <td className="p-3 text-right font-bold text-rose-400">{row.soldeCrediteur > 0 ? formatMoney(row.soldeCrediteur) : '-'}</td>
+                  <tr key={row.code} className="hover:bg-purple-50 transition-colors">
+                    <td className="p-3 font-bold font-mono" style={{ color: '#6B4EFF' }}>{row.code}</td>
+                    <td className="p-3 font-sans" style={{ color: '#374151' }}>{row.label}</td>
+                    <td className="p-3 text-right" style={{ color: '#6B7280' }}>{formatMoney(row.debit)}</td>
+                    <td className="p-3 text-right" style={{ color: '#6B7280' }}>{formatMoney(row.credit)}</td>
+                    <td className="p-3 text-right font-bold" style={{ color: '#10B981' }}>{row.soldeDebiteur > 0 ? formatMoney(row.soldeDebiteur) : '-'}</td>
+                    <td className="p-3 text-right font-bold" style={{ color: '#EF4444' }}>{row.soldeCrediteur > 0 ? formatMoney(row.soldeCrediteur) : '-'}</td>
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-slate-900 font-extrabold border-t-2 border-slate-700">
+              <tfoot className="font-extrabold" style={{ background: '#F3F0FF', borderTop: '2px solid #DDD6FE' }}>
                 <tr>
-                  <td colSpan={2} className="p-3 text-right text-white font-sans">TOTAUX BALANCE GÉNÉRALE :</td>
+                  <td colSpan={2} className="p-3 text-right font-sans" style={{ color: '#1E1060' }}>TOTAUX BALANCE GÉNÉRALE :</td>
                   <td className="p-3 text-right text-emerald-400">{formatMoney(totalBalanceDebit)}</td>
                   <td className="p-3 text-right text-rose-400">{formatMoney(totalBalanceCredit)}</td>
                   <td className="p-3 text-right text-emerald-400">{formatMoney(Math.max(totalBalanceDebit - totalBalanceCredit, 0))}</td>
@@ -497,16 +502,16 @@ export const AccountingModule: React.FC = () => {
       )}
 
       {tab === 'plan' && (
-        <div className="glass-card rounded-xl p-6 space-y-4">
+        <div className="rounded-xl p-6 space-y-4" style={{ background: '#fff', border: '1.5px solid #EDE9FE', boxShadow: '0 2px 12px rgba(107,78,255,0.05)' }}>
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
-              <h3 className="text-sm font-bold text-white">Référentiel des Comptes SYSCOHADA Révisé</h3>
-              <p className="text-xs text-slate-400">Structure normalisée par classe de compte (Classes 1 à 8)</p>
+              <h3 className="text-sm font-bold" style={{ color: '#1E1060' }}>Référentiel des Comptes SYSCOHADA Révisé</h3>
+              <p className="text-xs" style={{ color: '#9CA3AF' }}>Structure normalisée par classe de compte (Classes 1 à 8)</p>
             </div>
 
             <div className="flex items-center space-x-2">
               <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#9CA3AF' }} />
                 <input
                   type="text"
                   placeholder="Rechercher code ou libellé..."
@@ -536,7 +541,7 @@ export const AccountingModule: React.FC = () => {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px]">
+              <thead className="text-white uppercase font-semibold text-[10px]" style={{ background: 'linear-gradient(90deg, #6B4EFF 0%, #8B72FF 100%)' }}>
                 <tr>
                   <th className="p-3 w-28">N° Compte</th>
                   <th className="p-3">Intitulé SYSCOHADA</th>
@@ -544,13 +549,13 @@ export const AccountingModule: React.FC = () => {
                   <th className="p-3 text-right">Sens Normal</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800">
+              <tbody className="divide-y" style={{ borderColor: '#EDE9FE' }}>
                 {filteredAccounts.map((acc) => (
-                  <tr key={acc.code} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="p-3 font-mono font-bold text-emerald-400">{acc.code}</td>
-                    <td className="p-3 font-medium text-white">{acc.label}</td>
+                  <tr key={acc.code} className="hover:bg-purple-50 transition-colors">
+                    <td className="p-3 font-mono font-bold" style={{ color: '#6B4EFF' }}>{acc.code}</td>
+                    <td className="p-3 font-medium" style={{ color: '#1E1060' }}>{acc.label}</td>
                     <td className="p-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-slate-800 text-slate-300">{acc.category}</span>
+                      <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold" style={{ background: '#F3F0FF', color: '#5B21B6' }}>{acc.category}</span>
                     </td>
                     <td className="p-3 text-right">
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${

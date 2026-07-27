@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Download, ScanLine, Loader2 } from 'lucide-react';
 import { Invoice, Customer, Supplier } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -160,10 +160,10 @@ export const InvoicingModule: React.FC = () => {
   const currentTiers = invoiceType === 'VENTE' ? customers : suppliers;
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-6 border border-[#EDE9FE] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">Facturation & Fiscalité (TVA 18% & AIR)</h2>
+          <h2 className="text-base font-extrabold uppercase tracking-wider text-[#1E1060]">Facturation & Fiscalité (TVA 18% & AIR)</h2>
           <div className="text-xs text-slate-500 font-medium mt-1">Conforme aux obligations fiscales des États membres OHADA</div>
         </div>
 
@@ -177,14 +177,14 @@ export const InvoicingModule: React.FC = () => {
         </button>
       </div>
 
-      {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+      {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
 
-      <div className="glass-card rounded-xl p-6 space-y-4">
-        <h3 className="text-sm font-bold text-white">Registre des Factures</h3>
+      <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
+        <h3 className="text-sm font-bold text-[#1E1060]">Registre des Factures</h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px]">
+            <thead className="bg-[#6B4EFF] text-white uppercase font-semibold text-[10px]">
               <tr>
                 <th className="p-3">N° Facture</th>
                 <th className="p-3">Type</th>
@@ -198,9 +198,9 @@ export const InvoicingModule: React.FC = () => {
                 <th className="p-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-[#EDE9FE]">
               {invoices.map((inv) => (
-                <tr key={inv.id} className="hover:bg-slate-800/40 transition-colors">
+                <tr key={inv.id} className="hover:bg-purple-50 transition-colors">
                   <td className="p-3 font-mono font-bold text-emerald-400">{inv.invoiceNumber}</td>
                   <td className="p-3">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${inv.type === 'VENTE' ? 'bg-emerald-950 text-emerald-400' : 'bg-indigo-950 text-indigo-300'}`}>
@@ -372,22 +372,22 @@ export const InvoicingModule: React.FC = () => {
                 </div>
               </div>
 
-              <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 space-y-1 text-xs font-mono">
+              <div className="bg-slate-900 border border-[#EDE9FE] rounded-xl p-3 space-y-1 text-xs font-mono">
                 <div className="flex justify-between text-slate-300"><span>Montant Total HT:</span><span>{formatMoney(subtotalHT)}</span></div>
                 <div className="flex justify-between text-emerald-400"><span>TVA:</span><span>+{formatMoney(tvaVal)}</span></div>
                 <div className="flex justify-between text-amber-400"><span>Acompte Impôt (AIR):</span><span>-{formatMoney(airVal)}</span></div>
-                <div className="flex justify-between text-white font-extrabold border-t border-slate-800 pt-1 text-sm">
+                <div className="flex justify-between text-white font-extrabold border-t border-[#EDE9FE] pt-1 text-sm">
                   <span>Net à Payer (TTC):</span><span>{formatMoney(totalTTC)}</span>
                 </div>
               </div>
 
-              {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+              {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
 
               <div className="flex justify-end space-x-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 bg-[#F3F0FF] text-[#6B4EFF] rounded-lg text-xs font-semibold border border-[#DDD6FE]"
                 >
                   Annuler
                 </button>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Target, Plus, TrendingUp, TrendingDown, Sparkles, AlertTriangle } from 'lucide-react';
 import { AccountSYSCOHADA, BudgetComparisonRow } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -69,10 +69,10 @@ export const BudgetModule: React.FC = () => {
   const totalActual = comparison.reduce((s, r) => s + r.actual, 0);
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-6 border border-[#EDE9FE] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">Budget prévisionnel vs Réel</h2>
+          <h2 className="text-base font-extrabold uppercase tracking-wider text-[#1E1060]">Budget prévisionnel vs Réel</h2>
           <div className="flex items-center gap-3 mt-1">
             <span className="text-xs text-blue-900 font-bold font-mono">Budget: {formatMoney(totalBudgeted)}</span>
             <span className="text-xs text-slate-500 font-medium font-mono">Réalisé: {formatMoney(totalActual)}</span>
@@ -91,7 +91,7 @@ export const BudgetModule: React.FC = () => {
           </select>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center space-x-2 px-5 py-2.5 bg-[#0f2d5e] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-[#6B4EFF] hover:bg-[#5538E0] text-white rounded-xl text-xs font-bold transition-all shadow-md"
           >
             <Plus className="w-4 h-4" />
             <span>Nouvelle ligne budgétaire</span>
@@ -99,7 +99,7 @@ export const BudgetModule: React.FC = () => {
         </div>
       </div>
 
-      {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+      {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
 
       {budgetAnalyseIA && (
         <div className="flex items-start gap-2 bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs rounded-xl p-4">
@@ -108,15 +108,15 @@ export const BudgetModule: React.FC = () => {
         </div>
       )}
 
-      <div className="glass-card rounded-xl p-6 space-y-4">
+      <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
         <div className="flex items-center space-x-2">
           <Target className="w-4 h-4 text-emerald-400" />
-          <h3 className="text-sm font-bold text-white">Comparatif Budget / Réalisé par Compte</h3>
+          <h3 className="text-sm font-bold text-[#1E1060]">Comparatif Budget / Réalisé par Compte</h3>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs font-mono">
-            <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px]">
+            <thead className="bg-[#6B4EFF] text-white uppercase font-semibold text-[10px]">
               <tr>
                 <th className="p-3">Compte</th>
                 <th className="p-3 font-sans">Intitulé</th>
@@ -126,14 +126,14 @@ export const BudgetModule: React.FC = () => {
                 <th className="p-3 text-right">Écart %</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-[#EDE9FE]">
               {comparison.length === 0 && (
                 <tr><td colSpan={6} className="p-4 text-center text-slate-500 italic font-sans">Aucune donnée budgétaire pour {exercice}</td></tr>
               )}
               {comparison.map((row) => {
                 const isAlert = row.variancePercent !== null && Math.abs(row.variancePercent) > VARIANCE_ALERT_THRESHOLD;
                 return (
-                  <tr key={row.accountCode} className="hover:bg-slate-800/40">
+                  <tr key={row.accountCode} className="hover:bg-purple-50">
                     <td className="p-3 font-bold text-emerald-400">{row.accountCode}</td>
                     <td className="p-3 font-sans text-slate-200">{row.label}</td>
                     <td className="p-3 text-right text-slate-300">{formatMoney(row.budgeted)}</td>
@@ -208,10 +208,10 @@ export const BudgetModule: React.FC = () => {
                 />
               </div>
 
-              {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+              {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
 
               <div className="flex justify-end space-x-3 pt-2">
-                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold">
+                <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 bg-[#F3F0FF] text-[#6B4EFF] rounded-lg text-xs font-semibold border border-[#DDD6FE]">
                   Annuler
                 </button>
                 <button type="submit" className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold">

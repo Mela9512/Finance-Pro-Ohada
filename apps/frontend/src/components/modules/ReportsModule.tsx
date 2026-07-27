@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { Download, Sparkles } from 'lucide-react';
 import { FinancialReportBilan, CompteDeResultat, FiscalDeclaration, FinancialVariationExplanation } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -51,19 +51,19 @@ export const ReportsModule: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-6 border border-[#EDE9FE] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">États Financiers Annuels (Système Normal SYSCOHADA)</h2>
+          <h2 className="text-base font-extrabold uppercase tracking-wider text-[#1E1060]">États Financiers Annuels (Système Normal SYSCOHADA)</h2>
           <div className="text-xs text-slate-500 font-medium mt-1">Calculés en temps réel à partir des écritures validées du Grand Livre</div>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-2xl border border-[#EDE9FE] shadow-sm">
         <button
           onClick={() => setReportType('bilan')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            reportType === 'bilan' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            reportType === 'bilan' ? 'bg-[#6B4EFF] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           Bilan Synthétique (Actif / Passif)
@@ -72,7 +72,7 @@ export const ReportsModule: React.FC = () => {
         <button
           onClick={() => setReportType('compte-resultat')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            reportType === 'compte-resultat' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            reportType === 'compte-resultat' ? 'bg-[#6B4EFF] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           Compte de Résultat (SIG)
@@ -81,7 +81,7 @@ export const ReportsModule: React.FC = () => {
         <button
           onClick={() => setReportType('fiscal')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            reportType === 'fiscal' ? 'bg-[#0f2d5e] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            reportType === 'fiscal' ? 'bg-[#6B4EFF] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
           }`}
         >
           Déclaration Fiscale (TVA / AIR)
@@ -122,13 +122,13 @@ export const ReportsModule: React.FC = () => {
 
       {reportType === 'bilan' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="glass-card rounded-xl p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+          <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
+            <div className="flex justify-between items-center border-b border-[#EDE9FE] pb-3">
               <h3 className="text-sm font-extrabold text-emerald-400 uppercase tracking-wider">ACTIF</h3>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-slate-800 pb-1">I. ACTIF IMMOBILISÉ</div>
+              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1">I. ACTIF IMMOBILISÉ</div>
               {bilanData.actif.immobilise.length === 0 && <div className="text-slate-500 italic">Aucun mouvement</div>}
               {bilanData.actif.immobilise.map((item) => (
                 <div key={item.codeRef} className="flex justify-between items-center font-mono">
@@ -137,7 +137,7 @@ export const ReportsModule: React.FC = () => {
                 </div>
               ))}
 
-              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-slate-800 pb-1 pt-2">II. ACTIF CIRCULANT</div>
+              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1 pt-2">II. ACTIF CIRCULANT</div>
               {bilanData.actif.circulant.length === 0 && <div className="text-slate-500 italic">Aucun mouvement</div>}
               {bilanData.actif.circulant.map((item) => (
                 <div key={item.codeRef} className="flex justify-between items-center font-mono">
@@ -146,7 +146,7 @@ export const ReportsModule: React.FC = () => {
                 </div>
               ))}
 
-              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-slate-800 pb-1 pt-2">III. TRÉSORERIE ACTIF</div>
+              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1 pt-2">III. TRÉSORERIE ACTIF</div>
               {bilanData.actif.tresorerie.length === 0 && <div className="text-slate-500 italic">Aucun mouvement</div>}
               {bilanData.actif.tresorerie.map((item) => (
                 <div key={item.codeRef} className="flex justify-between items-center font-mono">
@@ -162,13 +162,13 @@ export const ReportsModule: React.FC = () => {
             </div>
           </div>
 
-          <div className="glass-card rounded-xl p-6 space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+          <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
+            <div className="flex justify-between items-center border-b border-[#EDE9FE] pb-3">
               <h3 className="text-sm font-extrabold text-indigo-400 uppercase tracking-wider">PASSIF</h3>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-slate-800 pb-1">I. CAPITAUX PROPRES & RESSOURCES</div>
+              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1">I. CAPITAUX PROPRES & RESSOURCES</div>
               {bilanData.passif.capitauxPropres.map((item) => (
                 <div key={item.codeRef} className="flex justify-between items-center font-mono">
                   <span className="text-slate-300">{item.codeRef} - {item.label}</span>
@@ -176,7 +176,7 @@ export const ReportsModule: React.FC = () => {
                 </div>
               ))}
 
-              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-slate-800 pb-1 pt-2">II. DETTES FINANCIÈRES</div>
+              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1 pt-2">II. DETTES FINANCIÈRES</div>
               {bilanData.passif.dettesFinancieres.length === 0 && <div className="text-slate-500 italic">Aucune dette financière</div>}
               {bilanData.passif.dettesFinancieres.map((item) => (
                 <div key={item.codeRef} className="flex justify-between items-center font-mono">
@@ -185,7 +185,7 @@ export const ReportsModule: React.FC = () => {
                 </div>
               ))}
 
-              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-slate-800 pb-1 pt-2">III. PASSIF CIRCULANT (Dettes Tiers)</div>
+              <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1 pt-2">III. PASSIF CIRCULANT (Dettes Tiers)</div>
               {bilanData.passif.passifCirculant.length === 0 && <div className="text-slate-500 italic">Aucune dette d'exploitation</div>}
               {bilanData.passif.passifCirculant.map((item) => (
                 <div key={item.codeRef} className="flex justify-between items-center font-mono">
@@ -204,9 +204,9 @@ export const ReportsModule: React.FC = () => {
       )}
 
       {reportType === 'compte-resultat' && (
-        <div className="glass-card rounded-xl p-6 space-y-4">
+        <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Soldes Intermédiaires de Gestion (SIG) - Compte de Résultat</h3>
+            <h3 className="text-sm font-bold text-[#1E1060] uppercase tracking-wider">Soldes Intermédiaires de Gestion (SIG) - Compte de Résultat</h3>
             <button
               onClick={handleExplainVariation}
               disabled={variationLoading}
@@ -240,7 +240,7 @@ export const ReportsModule: React.FC = () => {
           )}
 
           <div className="space-y-3 font-mono text-xs max-w-3xl">
-            <div className="flex justify-between p-2.5 bg-slate-900 rounded border border-slate-800">
+            <div className="flex justify-between p-2.5 bg-slate-900 rounded border border-[#EDE9FE]">
               <span className="text-slate-300 font-bold">Chiffre d'Affaires (Ventes)</span>
               <span className="font-bold text-emerald-400">{formatMoney(crData.chiffreAffaires)}</span>
             </div>
@@ -260,7 +260,7 @@ export const ReportsModule: React.FC = () => {
               <span className="text-rose-400">-{formatMoney(crData.consommationsIntermediaires)}</span>
             </div>
 
-            <div className="flex justify-between p-2.5 bg-slate-900/60 rounded border border-slate-800 font-bold">
+            <div className="flex justify-between p-2.5 bg-slate-900/60 rounded border border-[#EDE9FE] font-bold">
               <span className="text-slate-200">= VALEUR AJOUTÉE</span>
               <span className="text-slate-200">{formatMoney(crData.valeurAjoutee)}</span>
             </div>
@@ -280,7 +280,7 @@ export const ReportsModule: React.FC = () => {
               <span className="text-rose-400">-{formatMoney(crData.dotationsAmortissements)}</span>
             </div>
 
-            <div className="flex justify-between p-2.5 bg-slate-900/60 rounded border border-slate-800 font-bold">
+            <div className="flex justify-between p-2.5 bg-slate-900/60 rounded border border-[#EDE9FE] font-bold">
               <span className="text-slate-200">= RÉSULTAT D'EXPLOITATION</span>
               <span className="text-slate-200">{formatMoney(crData.resultatExploitation)}</span>
             </div>
@@ -304,9 +304,9 @@ export const ReportsModule: React.FC = () => {
       )}
 
       {reportType === 'fiscal' && (
-        <div className="glass-card rounded-xl p-6 space-y-4">
+        <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">Déclaration Fiscale Mensuelle Indicative</h3>
+            <h3 className="text-sm font-bold text-[#1E1060] uppercase tracking-wider">Déclaration Fiscale Mensuelle Indicative</h3>
             <div className="flex items-center space-x-2">
               <select
                 value={fiscalMonth}
@@ -336,7 +336,7 @@ export const ReportsModule: React.FC = () => {
           ) : (
             <div className="space-y-4 max-w-2xl">
               <div>
-                <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-slate-800 pb-1 mb-2">
+                <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1 mb-2">
                   TVA — {fiscalData.periodLabel}
                 </div>
                 <div className="space-y-2 font-mono text-xs">
@@ -350,7 +350,7 @@ export const ReportsModule: React.FC = () => {
               </div>
 
               <div>
-                <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-slate-800 pb-1 mb-2">
+                <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1 mb-2">
                   AIR (Retenue à la Source)
                 </div>
                 <div className="space-y-2 font-mono text-xs">

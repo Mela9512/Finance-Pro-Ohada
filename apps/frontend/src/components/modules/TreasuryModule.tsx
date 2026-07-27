@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { Wallet, Landmark, Smartphone, Plus, CheckCircle, Upload, TrendingUp } from 'lucide-react';
 import { TreasuryAccount, TreasuryTransaction, CashflowForecast } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -95,10 +95,10 @@ export const TreasuryModule: React.FC = () => {
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
   return (
-    <div className="space-y-6 bg-[#f4f7fc] min-h-screen p-4 sm:p-6 text-slate-900 rounded-2xl">
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-6 border border-[#EDE9FE] shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-base font-extrabold text-slate-900 uppercase tracking-wider">Trésorerie Globale (Comptes 521, 541, 571)</h2>
+          <h2 className="text-base font-extrabold uppercase tracking-wider text-[#1E1060]">Trésorerie Globale (Comptes 521, 541, 571)</h2>
           <div className="text-3xl font-extrabold text-blue-900 mt-1">{formatMoney(totalTresorerie)}</div>
           <div className="text-xs text-slate-500 font-medium mt-1">{accounts.length} comptes actifs (Banques locales, Caisse principale, Mobile Money)</div>
         </div>
@@ -117,7 +117,7 @@ export const TreasuryModule: React.FC = () => {
           </button>
           <button
             onClick={() => setShowModal(true)}
-            className="flex items-center space-x-2 px-5 py-2.5 bg-[#0f2d5e] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-[#6B4EFF] hover:bg-[#5538E0] text-white rounded-xl text-xs font-bold transition-all shadow-md"
           >
             <Plus className="w-4 h-4" />
             <span>Saisir Mouvement de Trésorerie</span>
@@ -135,7 +135,7 @@ export const TreasuryModule: React.FC = () => {
               <span className="font-mono text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-bold">{acc.code}</span>
             </div>
 
-            <h3 className="mt-3 text-sm font-bold text-white">{acc.name}</h3>
+            <h3 className="mt-3 text-sm font-bold text-[#1E1060]">{acc.name}</h3>
             {acc.accountNumber && <div className="text-[11px] text-slate-400 font-mono mt-0.5">{acc.accountNumber}</div>}
 
             <div className="mt-4 text-xl font-extrabold text-white font-mono">{formatMoney(Number(acc.balance))}</div>
@@ -145,7 +145,7 @@ export const TreasuryModule: React.FC = () => {
 
       {forecast && (
         <div className="glass-card rounded-xl p-6 space-y-3">
-          <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <h3 className="text-sm font-bold text-[#1E1060] flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-emerald-400" /> Prévision de Trésorerie IA (30/60/90 jours)
           </h3>
           <div className="grid grid-cols-3 gap-2 font-mono text-[11px]">
@@ -154,28 +154,28 @@ export const TreasuryModule: React.FC = () => {
               { label: '60 jours', h: forecast.horizon60 },
               { label: '90 jours', h: forecast.horizon90 },
             ].map((x) => (
-              <div key={x.label} className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-1">
+              <div key={x.label} className="bg-slate-900 border border-[#EDE9FE] rounded-lg p-3 space-y-1">
                 <div className="text-slate-400 font-bold">{x.label}</div>
                 <div className="text-emerald-400">Entrées : +{formatMoney(x.h.entrees)}</div>
                 <div className="text-rose-400">Sorties : -{formatMoney(x.h.sorties)}</div>
-                <div className="text-white font-bold border-t border-slate-800 pt-1">Solde projeté : {formatMoney(x.h.soldeProjete)}</div>
+                <div className="text-white font-bold border-t border-[#EDE9FE] pt-1">Solde projeté : {formatMoney(x.h.soldeProjete)}</div>
               </div>
             ))}
           </div>
           {forecast.analyseIA && <div className="text-xs text-indigo-300 bg-indigo-950/40 border border-indigo-900 rounded-lg p-3">{forecast.analyseIA}</div>}
         </div>
       )}
-      {forecastError && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{forecastError}</div>}
+      {forecastError && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{forecastError}</div>}
 
-      <div className="glass-card rounded-xl p-6 space-y-4">
+      <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-white">Derniers Mouvements & Flux de Trésorerie</h3>
-          <span className="text-xs text-slate-400">Comptabilité auxiliaire de trésorerie</span>
+          <h3 className="text-sm font-bold text-[#1E1060]">Derniers Mouvements & Flux de Trésorerie</h3>
+          <span className="text-xs text-[#9CA3AF]">Comptabilité auxiliaire de trésorerie</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-900 text-slate-400 uppercase font-semibold text-[10px]">
+            <thead className="bg-[#6B4EFF] text-white uppercase font-semibold text-[10px]">
               <tr>
                 <th className="p-3">Date</th>
                 <th className="p-3">Compte de Trésorerie</th>
@@ -186,9 +186,9 @@ export const TreasuryModule: React.FC = () => {
                 <th className="p-3 text-right">Rapprochement</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-[#EDE9FE]">
               {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-slate-800/40 transition-colors">
+                <tr key={tx.id} className="hover:bg-purple-50 transition-colors">
                   <td className="p-3 font-mono text-slate-300">{tx.date}</td>
                   <td className="p-3 font-semibold text-white">{tx.treasuryAccountName}</td>
                   <td className="p-3 text-slate-200">{tx.tierName}</td>
@@ -215,7 +215,7 @@ export const TreasuryModule: React.FC = () => {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-card rounded-2xl p-6 w-full max-w-md space-y-4 border border-slate-700">
             <h3 className="text-base font-bold text-white">Nouveau Mouvement de Trésorerie</h3>
-            {errorMessage && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{errorMessage}</div>}
+            {errorMessage && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{errorMessage}</div>}
             <form onSubmit={handleCreateTx} className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">Type d'opération</label>
@@ -290,7 +290,7 @@ export const TreasuryModule: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 bg-[#F3F0FF] text-[#6B4EFF] rounded-lg text-xs font-semibold border border-[#DDD6FE]"
                 >
                   Annuler
                 </button>
@@ -313,7 +313,7 @@ export const TreasuryModule: React.FC = () => {
               manuellement sont automatiquement rapprochés par montant, sens et date (±5 jours).
             </p>
 
-            {importError && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{importError}</div>}
+            {importError && <div className="bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg p-3">{importError}</div>}
             {importResult && (
               <div className="bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs rounded-lg p-3 space-y-1">
                 <div>{importResult.imported} ligne(s) importée(s)</div>
@@ -355,7 +355,7 @@ export const TreasuryModule: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowImportModal(false)}
-                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold"
+                className="px-4 py-2 bg-[#F3F0FF] text-[#6B4EFF] rounded-lg text-xs font-semibold border border-[#DDD6FE]"
               >
                 Fermer
               </button>
