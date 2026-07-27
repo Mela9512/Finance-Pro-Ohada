@@ -1,7 +1,7 @@
 import {
   User, Company, JournalEntry, AccountSYSCOHADA, Customer, Supplier, Invoice,
   TreasuryAccount, TreasuryTransaction, FinancialReportBilan, CompteDeResultat, DashboardMetrics,
-  Budget, BudgetComparisonRow,
+  Budget, BudgetComparisonRow, FiscalDeclaration, ImportBankStatementResult,
 } from '@financepro/shared';
 
 const API_BASE = '/api';
@@ -46,6 +46,21 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     return undefined as T;
   }
   return res.json() as Promise<T>;
+}
+
+async function downloadFile(path: string, filename: string): Promise<void> {
+  const res = await fetch(`${API_BASE}${path}`, { credentials: 'include' });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ message: res.statusText }));
+    throw new ApiError(res.status, body.message || res.statusText);
+  }
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 export const api = {
@@ -103,6 +118,13 @@ export const api = {
   getBilan: () => request<FinancialReportBilan>('/reports/bilan'),
   getCompteResultat: () => request<CompteDeResultat>('/reports/compte-resultat'),
   getTFT: () => request<any>('/reports/tft'),
+  downloadBilanPdf: () => downloadFile('/reports/bilan/pdf', 'bilan.pdf'),
+  downloadCompteResultatPdf: () => downloadFile('/reports/compte-resultat/pdf', 'compte-resultat.pdf'),
+
+  getFiscalDeclaration: (year: number, month: number) =>
+    request<FiscalDeclaration>(`/reports/declaration-fiscale?year=${year}&month=${month}`),
+  downloadFiscalDeclarationPdf: (year: number, month: number) =>
+    downloadFile(`/reports/declaration-fiscale/pdf?year=${year}&month=${month}`, `declaration-fiscale-${year}-${month}.pdf`),
 
   getClients: () => request<Customer[]>('/clients'),
   createClient: (dto: { name: string; nif?: string; phone: string; email: string; address: string; creditLimit: number }) =>
@@ -116,11 +138,17 @@ export const api = {
   getTreasuryTransactions: () => request<TreasuryTransaction[]>('/treasury/transactions'),
   createTreasuryTransaction: (dto: Omit<TreasuryTransaction, 'id' | 'status'>) =>
     request<TreasuryTransaction>('/treasury/transactions', { method: 'POST', body: JSON.stringify(dto) }),
+  importBankStatement: (treasuryAccountId: string, csvContent: string) =>
+    request<ImportBankStatementResult>(`/treasury/accounts/${treasuryAccountId}/import-statement`, {
+      method: 'POST',
+      body: JSON.stringify({ csvContent }),
+    }),
 
   getInvoices: () => request<Invoice[]>('/invoices'),
   createInvoice: (dto: Omit<Invoice, 'id' | 'invoiceNumber' | 'status' | 'amountPaid'>) =>
     request<Invoice>('/invoices', { method: 'POST', body: JSON.stringify(dto) }),
   validateInvoice: (id: string) => request<Invoice>(`/invoices/${id}/validate`, { method: 'PUT' }),
+  downloadInvoicePdf: (id: string, invoiceNumber: string) => downloadFile(`/invoices/${id}/pdf`, `${invoiceNumber}.pdf`),
 
   getCompany: () => request<Company>('/admin/company'),
   updateCompany: (dto: Partial<Company>) => request<Company>('/admin/company', { method: 'PUT', body: JSON.stringify(dto) }),

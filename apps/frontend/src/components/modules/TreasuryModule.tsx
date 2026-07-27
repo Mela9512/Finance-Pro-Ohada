@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Wallet, Landmark, Smartphone, Plus, CheckCircle } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Wallet, Landmark, Smartphone, Plus, CheckCircle, Upload } from 'lucide-react';
 import { TreasuryAccount, TreasuryTransaction } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 
@@ -14,13 +14,38 @@ export const TreasuryModule: React.FC = () => {
   const [tierName, setTierName] = useState('');
   const [description, setDescription] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importAccId, setImportAccId] = useState('');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<{ imported: number; matched: number; created: number } | null>(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadData = () => {
     api.getTreasuryAccounts().then((accs) => {
       setAccounts(accs);
       if (accs.length > 0 && !selectedAccId) setSelectedAccId(accs[0].id);
+      if (accs.length > 0 && !importAccId) setImportAccId(accs[0].id);
     });
     api.getTreasuryTransactions().then(setTransactions);
+  };
+
+  const handleImportFile = async (file: File) => {
+    if (!importAccId) return;
+    setImporting(true);
+    setImportError(null);
+    setImportResult(null);
+    try {
+      const csvContent = await file.text();
+      const result = await api.importBankStatement(importAccId, csvContent);
+      setImportResult(result);
+      loadData();
+    } catch (err) {
+      setImportError(err instanceof ApiError ? err.message : "Erreur lors de l'import du relevé bancaire");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   useEffect(() => {
@@ -72,13 +97,26 @@ export const TreasuryModule: React.FC = () => {
           <div className="text-xs text-slate-500 font-medium mt-1">{accounts.length} comptes actifs (Banques locales, Caisse principale, Mobile Money)</div>
         </div>
 
-        <button
-          onClick={() => setShowModal(true)}
-          className="flex items-center space-x-2 px-5 py-2.5 bg-[#0f2d5e] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all shadow-md"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Saisir Mouvement de Trésorerie</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              setShowImportModal(true);
+              setImportError(null);
+              setImportResult(null);
+            }}
+            className="flex items-center space-x-2 px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+          >
+            <Upload className="w-4 h-4" />
+            <span>Importer un Relevé Bancaire (CSV)</span>
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="flex items-center space-x-2 px-5 py-2.5 bg-[#0f2d5e] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Saisir Mouvement de Trésorerie</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -231,6 +269,67 @@ export const TreasuryModule: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showImportModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md space-y-4 border border-slate-700">
+            <h3 className="text-base font-bold text-white">Importer un Relevé Bancaire (CSV)</h3>
+            <p className="text-[11px] text-slate-400">
+              Colonnes attendues : <code>date</code>, <code>description</code>, <code>montant</code> (signé) ou{' '}
+              <code>debit</code>/<code>credit</code>, <code>reference</code> (optionnel). Les mouvements déjà saisis
+              manuellement sont automatiquement rapprochés par montant, sens et date (±5 jours).
+            </p>
+
+            {importError && <div className="bg-rose-950/60 border border-rose-800 text-rose-300 text-xs rounded-lg p-3">{importError}</div>}
+            {importResult && (
+              <div className="bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs rounded-lg p-3 space-y-1">
+                <div>{importResult.imported} ligne(s) importée(s)</div>
+                <div>{importResult.matched} rapprochée(s) avec un mouvement déjà saisi</div>
+                <div>{importResult.created} nouveau(x) mouvement(s) créé(s) depuis le relevé</div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Compte de Trésorerie</label>
+              <select
+                value={importAccId}
+                onChange={(e) => setImportAccId(e.target.value)}
+                className="w-full glass-input rounded-lg px-3 py-2 text-xs"
+              >
+                {accounts.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name} ({a.code})</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-300 mb-1">Fichier CSV</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv,text/csv"
+                disabled={importing}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleImportFile(file);
+                }}
+                className="w-full glass-input rounded-lg px-3 py-2 text-xs"
+              />
+              {importing && <div className="text-xs text-slate-400 mt-1">Import en cours...</div>}
+            </div>
+
+            <div className="flex justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowImportModal(false)}
+                className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold"
+              >
+                Fermer
+              </button>
+            </div>
           </div>
         </div>
       )}

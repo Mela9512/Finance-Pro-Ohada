@@ -11,13 +11,25 @@ function balance(partial: Partial<AccountBalance> & Pick<AccountBalance, 'code' 
   };
 }
 
+function mockInvoiceQueryBuilder(invoices: { type: string; totalAIR: number }[]) {
+  const qb: any = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    getMany: jest.fn().mockResolvedValue(invoices),
+  };
+  return qb;
+}
+
 describe('ReportsService', () => {
-  let accountingService: { getAccountBalances: jest.Mock };
+  let accountingService: { getAccountBalances: jest.Mock; getAccountBalancesForPeriod: jest.Mock };
+  let invoiceRepo: { createQueryBuilder: jest.Mock };
   let service: ReportsService;
 
   beforeEach(() => {
-    accountingService = { getAccountBalances: jest.fn() };
-    service = new ReportsService(accountingService as any);
+    accountingService = { getAccountBalances: jest.fn(), getAccountBalancesForPeriod: jest.fn() };
+    invoiceRepo = { createQueryBuilder: jest.fn() };
+    const companyRepo = { findOne: jest.fn() };
+    service = new ReportsService(accountingService as any, invoiceRepo as any, companyRepo as any);
   });
 
   describe('getCompteDeResultat', () => {
@@ -84,6 +96,52 @@ describe('ReportsService', () => {
       expect(bilan.passif.dettesFinancieres).toHaveLength(1);
       expect(bilan.passif.dettesFinancieres[0].codeRef).toBe('162');
       expect(bilan.passif.capitauxPropres.find((i) => i.codeRef === '162')).toBeUndefined();
+    });
+  });
+
+  describe('getFiscalDeclaration', () => {
+    it('calcule la TVA à payer et sépare AIR ventes / AIR achats', async () => {
+      accountingService.getAccountBalancesForPeriod.mockResolvedValue([
+        balance({ code: '443', classNum: 4, type: 'credit', soldeCrediteur: 18000 }), // TVA collectée
+        balance({ code: '445', classNum: 4, type: 'debit', soldeDebiteur: 7000 }), // TVA récupérable
+      ] as AccountBalance[]);
+      invoiceRepo.createQueryBuilder.mockReturnValue(
+        mockInvoiceQueryBuilder([
+          { type: 'VENTE', totalAIR: 2000 },
+          { type: 'ACHAT', totalAIR: 500 },
+        ]),
+      );
+
+      const declaration = await service.getFiscalDeclaration('company-1', 2026, 7);
+
+      expect(declaration.periodLabel).toBe('Juillet 2026');
+      expect(declaration.tvaCollectee).toBe(18000);
+      expect(declaration.tvaRecuperable).toBe(7000);
+      expect(declaration.tvaAPayer).toBe(11000);
+      expect(declaration.airSurVentes).toBe(2000);
+      expect(declaration.airSurAchats).toBe(500);
+      expect(declaration.airTotal).toBe(500);
+    });
+
+    it('renvoie un crédit de TVA à reporter quand la TVA récupérable dépasse la TVA collectée', async () => {
+      accountingService.getAccountBalancesForPeriod.mockResolvedValue([
+        balance({ code: '443', classNum: 4, type: 'credit', soldeCrediteur: 5000 }),
+        balance({ code: '445', classNum: 4, type: 'debit', soldeDebiteur: 12000 }),
+      ] as AccountBalance[]);
+      invoiceRepo.createQueryBuilder.mockReturnValue(mockInvoiceQueryBuilder([]));
+
+      const declaration = await service.getFiscalDeclaration('company-1', 2026, 7);
+
+      expect(declaration.tvaAPayer).toBe(-7000);
+    });
+
+    it('interroge le mois complet (du 1er au dernier jour, y compris les mois de 31 jours)', async () => {
+      accountingService.getAccountBalancesForPeriod.mockResolvedValue([]);
+      invoiceRepo.createQueryBuilder.mockReturnValue(mockInvoiceQueryBuilder([]));
+
+      await service.getFiscalDeclaration('company-1', 2026, 7);
+
+      expect(accountingService.getAccountBalancesForPeriod).toHaveBeenCalledWith('company-1', '2026-07-01', '2026-07-31');
     });
   });
 });

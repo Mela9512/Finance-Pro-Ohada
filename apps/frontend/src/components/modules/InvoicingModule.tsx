@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { Invoice, Customer } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 
@@ -85,6 +85,14 @@ export const InvoicingModule: React.FC = () => {
     }
   };
 
+  const handleDownloadPdf = async (inv: Invoice) => {
+    try {
+      await api.downloadInvoicePdf(inv.id, inv.invoiceNumber);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Erreur lors du téléchargement du PDF');
+    }
+  };
+
   const formatMoney = (val: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
@@ -146,14 +154,23 @@ export const InvoicingModule: React.FC = () => {
                     </span>
                   </td>
                   <td className="p-3 text-right">
-                    {inv.status === 'BROUILLON' && (
+                    <div className="flex items-center justify-end gap-2">
+                      {inv.status === 'BROUILLON' && (
+                        <button
+                          onClick={() => handleValidate(inv.id)}
+                          className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold"
+                        >
+                          Valider
+                        </button>
+                      )}
                       <button
-                        onClick={() => handleValidate(inv.id)}
-                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[10px] font-bold"
+                        onClick={() => handleDownloadPdf(inv)}
+                        title="Télécharger en PDF"
+                        className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded"
                       >
-                        Valider
+                        <Download className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -161,6 +161,39 @@ export class AccountingService {
     });
   }
 
+  async getAccountBalancesForPeriod(companyId: string, dateFrom: string, dateTo: string): Promise<AccountBalance[]> {
+    const rows = await this.lineRepo
+      .createQueryBuilder('line')
+      .innerJoin('line.entry', 'entry')
+      .select('line.accountCode', 'code')
+      .addSelect('SUM(line.debit)', 'debit')
+      .addSelect('SUM(line.credit)', 'credit')
+      .where('entry.companyId = :companyId', { companyId })
+      .andWhere('entry.date >= :dateFrom', { dateFrom })
+      .andWhere('entry.date <= :dateTo', { dateTo })
+      .groupBy('line.accountCode')
+      .getRawMany<{ code: string; debit: string; credit: string }>();
+
+    const accounts = await this.accountRepo.find();
+    const accountMap = new Map(accounts.map((a) => [a.code, a]));
+
+    return rows.map((row) => {
+      const debit = Number(row.debit) || 0;
+      const credit = Number(row.credit) || 0;
+      const account = accountMap.get(row.code);
+      const solde = debit - credit;
+      return {
+        code: row.code,
+        label: account?.label || row.code,
+        category: account?.category || 'tiers',
+        type: account?.type || 'debit',
+        classNum: account?.classNum || Number(row.code[0]) || 0,
+        soldeDebiteur: solde > 0 ? solde : 0,
+        soldeCrediteur: solde < 0 ? Math.abs(solde) : 0,
+      };
+    });
+  }
+
   async getGrandLivre(companyId: string, accountCode?: string) {
     const qb = this.lineRepo
       .createQueryBuilder('line')

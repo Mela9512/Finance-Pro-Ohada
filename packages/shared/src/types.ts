@@ -192,6 +192,24 @@ export interface BudgetComparisonRow {
   variancePercent: number | null;
 }
 
+export interface FiscalDeclaration {
+  year: number;
+  month: number;
+  periodLabel: string;
+  tvaCollectee: number;
+  tvaRecuperable: number;
+  tvaAPayer: number;
+  airSurVentes: number;
+  airSurAchats: number;
+  airTotal: number;
+}
+
+export interface ImportBankStatementResult {
+  imported: number;
+  matched: number;
+  created: number;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;

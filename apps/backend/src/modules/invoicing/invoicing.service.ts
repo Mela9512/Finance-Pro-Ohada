@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { InvoiceEntity } from '../../entities/invoice.entity';
 import { InvoiceItemEntity } from '../../entities/invoice-item.entity';
 import { JournalEntryEntity } from '../../entities/journal-entry.entity';
+import { CompanyEntity } from '../../entities/company.entity';
 import { SequenceService } from '../../common/services/sequence.service';
 import { AuditLogService } from '../../common/services/audit-log.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
@@ -14,12 +15,22 @@ export class InvoicingService {
     @InjectRepository(InvoiceEntity) private readonly invoiceRepo: Repository<InvoiceEntity>,
     @InjectRepository(InvoiceItemEntity) private readonly itemRepo: Repository<InvoiceItemEntity>,
     @InjectRepository(JournalEntryEntity) private readonly entryRepo: Repository<JournalEntryEntity>,
+    @InjectRepository(CompanyEntity) private readonly companyRepo: Repository<CompanyEntity>,
     private readonly sequenceService: SequenceService,
     private readonly auditLogService: AuditLogService,
   ) {}
 
   getInvoices(companyId: string): Promise<InvoiceEntity[]> {
     return this.invoiceRepo.find({ where: { companyId }, relations: ['items'], order: { createdAt: 'DESC' } });
+  }
+
+  async getInvoiceForPdf(companyId: string, id: string): Promise<{ invoice: InvoiceEntity; company: CompanyEntity }> {
+    const invoice = await this.invoiceRepo.findOne({ where: { id, companyId }, relations: ['items'] });
+    if (!invoice) {
+      throw new NotFoundException('Facture introuvable');
+    }
+    const company = await this.companyRepo.findOne({ where: { id: companyId } });
+    return { invoice, company };
   }
 
   async createInvoice(companyId: string, dto: CreateInvoiceDto): Promise<InvoiceEntity> {

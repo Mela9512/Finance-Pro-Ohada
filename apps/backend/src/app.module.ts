@@ -23,10 +23,12 @@ import { SequenceEntity } from './entities/sequence.entity';
 import { AuditLogEntity } from './entities/audit-log.entity';
 import { BudgetEntity } from './entities/budget.entity';
 import { InviteTokenEntity } from './entities/invite-token.entity';
+import { BankStatementLineEntity } from './entities/bank-statement-line.entity';
 
 import { SequenceService } from './common/services/sequence.service';
 import { AuditLogService } from './common/services/audit-log.service';
 import { EmailService } from './common/services/email.service';
+import { PdfService } from './common/services/pdf.service';
 
 import { DashboardController } from './modules/dashboard/dashboard.controller';
 import { DashboardService } from './modules/dashboard/dashboard.service';
@@ -68,6 +70,7 @@ import { BudgetService } from './modules/budget/budget.service';
       AuditLogEntity,
       BudgetEntity,
       InviteTokenEntity,
+      BankStatementLineEntity,
     ]),
     AuthModule,
   ],
@@ -86,6 +89,7 @@ import { BudgetService } from './modules/budget/budget.service';
     SequenceService,
     AuditLogService,
     EmailService,
+    PdfService,
     DashboardService,
     AccountingService,
     TreasuryService,

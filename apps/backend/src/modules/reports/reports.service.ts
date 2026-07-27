@@ -1,9 +1,30 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import { FinancialReportBilan, CompteDeResultat, BilanItem } from '@financepro/shared';
 import { AccountingService, AccountBalance } from '../accounting/accounting.service';
+import { InvoiceEntity } from '../../entities/invoice.entity';
+import { CompanyEntity } from '../../entities/company.entity';
 
 const AMORTISSEMENT_PREFIXES = ['28', '29', '39', '49', '59'];
 const EMPRUNT_PREFIXES = ['161', '162'];
+
+export interface FiscalDeclaration {
+  year: number;
+  month: number;
+  periodLabel: string;
+  tvaCollectee: number;
+  tvaRecuperable: number;
+  tvaAPayer: number;
+  airSurVentes: number;
+  airSurAchats: number;
+  airTotal: number;
+}
+
+const MONTH_LABELS = [
+  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
+];
 
 function toBilanItem(b: AccountBalance, net: number): BilanItem {
   const isContra = AMORTISSEMENT_PREFIXES.some((p) => b.code.startsWith(p));
@@ -19,7 +40,15 @@ function toBilanItem(b: AccountBalance, net: number): BilanItem {
 
 @Injectable()
 export class ReportsService {
-  constructor(private readonly accountingService: AccountingService) {}
+  constructor(
+    private readonly accountingService: AccountingService,
+    @InjectRepository(InvoiceEntity) private readonly invoiceRepo: Repository<InvoiceEntity>,
+    @InjectRepository(CompanyEntity) private readonly companyRepo: Repository<CompanyEntity>,
+  ) {}
+
+  getCompany(companyId: string): Promise<CompanyEntity | null> {
+    return this.companyRepo.findOne({ where: { id: companyId } });
+  }
 
   private computeCompteDeResultatFromBalances(balances: AccountBalance[]): CompteDeResultat {
     const sumCharges = (predicate: (b: AccountBalance) => boolean) =>
@@ -163,6 +192,48 @@ export class ReportsService {
       variationTresorerie: tresorerieFin,
       tresorerieDebut: 0,
       tresorerieFin,
+    };
+  }
+
+  /**
+   * Déclaration TVA calculée depuis le Grand Livre (comptes 443/445, seules écritures fiables).
+   * L'AIR n'est jamais posté en comptabilité générale (aucune ligne 447 dans le code actuel) ;
+   * elle est donc reconstituée depuis les factures validées, seule source fiable disponible.
+   */
+  async getFiscalDeclaration(companyId: string, year: number, month: number): Promise<FiscalDeclaration> {
+    const dateFrom = `${year}-${String(month).padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const dateTo = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    const balances = await this.accountingService.getAccountBalancesForPeriod(companyId, dateFrom, dateTo);
+    const tvaCollectee = balances
+      .filter((b) => b.code.startsWith('443'))
+      .reduce((s, b) => s + (b.soldeCrediteur - b.soldeDebiteur), 0);
+    const tvaRecuperable = balances
+      .filter((b) => b.code.startsWith('445'))
+      .reduce((s, b) => s + (b.soldeDebiteur - b.soldeCrediteur), 0);
+
+    const invoices = await this.invoiceRepo
+      .createQueryBuilder('invoice')
+      .where('invoice.companyId = :companyId', { companyId })
+      .andWhere('invoice.status IN (:...statuses)', { statuses: ['VALIDE', 'PAYE', 'PARTIEL'] })
+      .andWhere('invoice.date >= :dateFrom', { dateFrom })
+      .andWhere('invoice.date <= :dateTo', { dateTo })
+      .getMany();
+
+    const airSurVentes = invoices.filter((i) => i.type === 'VENTE').reduce((s, i) => s + Number(i.totalAIR), 0);
+    const airSurAchats = invoices.filter((i) => i.type === 'ACHAT').reduce((s, i) => s + Number(i.totalAIR), 0);
+
+    return {
+      year,
+      month,
+      periodLabel: `${MONTH_LABELS[month - 1]} ${year}`,
+      tvaCollectee,
+      tvaRecuperable,
+      tvaAPayer: tvaCollectee - tvaRecuperable,
+      airSurVentes,
+      airSurAchats,
+      airTotal: airSurAchats,
     };
   }
 }
