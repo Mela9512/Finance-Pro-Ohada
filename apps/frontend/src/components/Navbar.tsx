@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {currentModule}
         </h1>
         <div className="text-xs text-slate-500 font-medium">
-          Analytics & métriques comptables SYSCOHADA Révisé — <span className="text-blue-900 font-semibold">{company.name}</span>
+          Statistiques & métriques comptables SYSCOHADA Révisé — <span className="text-blue-900 font-semibold">{company.name}</span>
         </div>
       </div>
 
@@ -74,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             title="Se déconnecter"
           >
             <LogOut className="w-3.5 h-3.5" />
-            <span>Sortir</span>
+            <span>Déconnexion</span>
           </button>
         </div>
       </div>
