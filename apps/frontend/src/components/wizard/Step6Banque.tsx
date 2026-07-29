@@ -2,6 +2,14 @@ import React, { useState } from 'react';
 import { ArrowRight, ArrowLeft, Banknote } from 'lucide-react';
 import { StepProps, BANQUES_CEMAC, MODES_PAIEMENT_OPTIONS, DEVISES } from './types';
 
+const Field: React.FC<{ label: string; children: React.ReactNode; error?: string }> = ({ label, children, error }) => (
+  <div>
+    <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">{label}</label>
+    {children}
+    {error && <p className="text-red-500 text-xs mt-1 font-semibold">{error}</p>}
+  </div>
+);
+
 export const Step6Banque: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
   const { step6 } = data;
   const [errors, setErrors] = useState<Partial<Record<keyof typeof step6, string>>>({});
@@ -26,14 +34,6 @@ export const Step6Banque: React.FC<StepProps> = ({ data, onChange, onNext, onPre
 
   const inputCls = (hasError?: boolean) =>
     `w-full bg-[#f8fafc] border ${hasError ? 'border-red-300 bg-red-50' : 'border-slate-200'} focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-3 text-sm text-slate-900 font-bold outline-none transition-all`;
-
-  const Field = ({ label, children, error }: { label: string; children: React.ReactNode; error?: string }) => (
-    <div>
-      <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">{label}</label>
-      {children}
-      {error && <p className="text-red-500 text-xs mt-1 font-semibold">{error}</p>}
-    </div>
-  );
 
   return (
     <form onSubmit={handleNext} className="space-y-7">

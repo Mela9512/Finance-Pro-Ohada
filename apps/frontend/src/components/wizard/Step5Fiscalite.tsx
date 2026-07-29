@@ -15,6 +15,16 @@ const Toggle: React.FC<{ checked: boolean; onChange: (v: boolean) => void; label
   </div>
 );
 
+const Field: React.FC<{ label: string; required?: boolean; children: React.ReactNode; error?: string }> = ({ label, required, children, error }) => (
+  <div>
+    <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">
+      {required && <span className="text-red-500 mr-1">*</span>}{label}
+    </label>
+    {children}
+    {error && <p className="text-red-500 text-xs mt-1 font-semibold">{error}</p>}
+  </div>
+);
+
 export const Step5Fiscalite: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
   const { step5 } = data;
   const [errors, setErrors] = useState<Partial<Record<keyof typeof step5, string>>>({});
@@ -34,16 +44,6 @@ export const Step5Fiscalite: React.FC<StepProps> = ({ data, onChange, onNext, on
 
   const inputCls = (hasError?: boolean) =>
     `w-full bg-[#f8fafc] border ${hasError ? 'border-red-300 bg-red-50' : 'border-slate-200'} focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-3 text-sm text-slate-900 font-bold outline-none transition-all`;
-
-  const Field = ({ label, required, children, error }: { label: string; required?: boolean; children: React.ReactNode; error?: string }) => (
-    <div>
-      <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">
-        {required && <span className="text-red-500 mr-1">*</span>}{label}
-      </label>
-      {children}
-      {error && <p className="text-red-500 text-xs mt-1 font-semibold">{error}</p>}
-    </div>
-  );
 
   return (
     <form onSubmit={handleNext} className="space-y-7">
