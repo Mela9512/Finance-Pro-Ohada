@@ -1,214 +1,209 @@
-import React, { useState } from 'react';
-import { Building2, AlertCircle, Loader2, ArrowRight, ShieldCheck, Globe, MapPin, Hash, DollarSign } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { api, ApiError } from '../services/api';
+import { WizardLayout } from './wizard/WizardLayout';
+import { Step1Welcome } from './wizard/Step1Welcome';
+import { Step2Identification } from './wizard/Step2Identification';
+import { Step3Coordonnees } from './wizard/Step3Coordonnees';
+import { Step4Comptabilite } from './wizard/Step4Comptabilite';
+import { Step5Fiscalite } from './wizard/Step5Fiscalite';
+import { Step6Banque } from './wizard/Step6Banque';
+import { Step7Organisation } from './wizard/Step7Organisation';
+import { Step8Utilisateurs } from './wizard/Step8Utilisateurs';
+import { Step9Modules } from './wizard/Step9Modules';
+import { Step10Validation } from './wizard/Step10Validation';
+import { WizardData, DEFAULT_WIZARD_DATA } from './wizard/types';
 
-const COUNTRIES = [
-  'Bénin', 'Burkina Faso', 'Cameroun', 'Congo', 'Côte d\'Ivoire', 'Gabon',
-  'Guinée', 'Guinée-Bissau', 'Guinée Équatoriale', 'Mali', 'Niger', 'RDC',
-  'Sénégal', 'Tchad', 'Togo', 'Comores',
-];
+const STORAGE_KEY = 'financepro_wizard_data';
+const STORAGE_STEP_KEY = 'financepro_wizard_step';
 
 export const OnboardingWizard: React.FC = () => {
   const { company, refreshCompany } = useAuth();
-  const [rccm, setRccm] = useState('');
-  const [nif, setNif] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [country, setCountry] = useState('Congo');
-  const [currency, setCurrency] = useState('XAF');
-  const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsSubmitting(true);
+  // Restore from localStorage if available
+  const loadSaved = (): WizardData => {
     try {
-      await api.completeOnboarding({ rccm, nif, address, city, country, currency });
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as WizardData;
+        return { ...DEFAULT_WIZARD_DATA, ...parsed };
+      }
+    } catch {}
+    // Pre-fill companyName from existing company data
+    return {
+      ...DEFAULT_WIZARD_DATA,
+      step1: {
+        ...DEFAULT_WIZARD_DATA.step1,
+        companyName: company?.name || '',
+      },
+    };
+  };
+
+  const loadSavedStep = (): number => {
+    try {
+      const saved = localStorage.getItem(STORAGE_STEP_KEY);
+      if (saved) return Math.max(1, Math.min(10, parseInt(saved, 10)));
+    } catch {}
+    return 1;
+  };
+
+  const [currentStep, setCurrentStep] = useState<number>(loadSavedStep);
+  const [wizardData, setWizardData] = useState<WizardData>(loadSaved);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(wizardData));
+      localStorage.setItem(STORAGE_STEP_KEY, String(currentStep));
+    } catch {}
+  }, [wizardData, currentStep]);
+
+  const handleChange = useCallback(<K extends keyof WizardData>(
+    key: K,
+    value: Partial<WizardData[K]>
+  ) => {
+    setWizardData(prev => ({
+      ...prev,
+      [key]: { ...prev[key], ...value },
+    }));
+  }, []);
+
+  const goToStep = (step: number) => {
+    setCurrentStep(step);
+  };
+
+  const handleNext = () => {
+    setCompletedSteps(prev => new Set([...prev, currentStep]));
+    if (currentStep < 10) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Final submission — map wizard data to Company fields for API
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitError(null);
+    try {
+      const { step1, step2, step3, step4, step5, step6, step7, step9 } = wizardData;
+
+      const payload = {
+        // Basic info
+        name: step1.companyName || company?.name,
+        logo: step1.logo || undefined,
+        country: step1.pays,
+        currency: step1.devise,
+        language: step1.langue,
+
+        // Identification
+        legalName: step2.raisonSociale || step1.companyName,
+        legalForm: step2.formeJuridique,
+        rccm: step2.rccm || undefined,
+        nif: step2.nif || undefined,
+        capital: step2.capital ? Number(step2.capital) : undefined,
+        sector: step2.secteur || undefined,
+        incorporationDate: step2.dateCreation || undefined,
+
+        // Address
+        address: step3.adresse || undefined,
+        city: step3.ville || undefined,
+        region: step3.region || undefined,
+        phone: step3.telephone || undefined,
+        email: step3.email || undefined,
+        website: step3.siteWeb || undefined,
+
+        // Accounting
+        fiscalYear: step4.exercice ? Number(step4.exercice) : new Date().getFullYear(),
+        fiscalYearStart: step4.dateOuverture || undefined,
+        fiscalYearEnd: step4.dateCloture || undefined,
+        accountLength: step4.longueurComptes,
+        decimals: step4.decimales,
+
+        // Tax
+        taxRegime: step5.regimeFiscal || undefined,
+        taxCenter: step5.centreImpots || undefined,
+        taxNumber: step5.numContribuable || undefined,
+        vatEnabled: step5.assujettTVA,
+        vatRate: step5.assujettTVA ? Number(step5.tauxTVA) : undefined,
+        withholdingTax: step5.retenueSource,
+        corporateTax: step5.is,
+
+        // Bank
+        bankName: step6.banquePrincipale || undefined,
+        bankAccount: step6.numCompte || undefined,
+        bankCode: step6.codeBanque || undefined,
+        cashName: step6.caissePrincipale || undefined,
+        paymentMethods: step6.modesPaiement,
+        bankCurrency: step6.deviseCompte || step1.devise,
+
+        // Org
+        departments: step7.departements,
+        directions: step7.directions,
+        branches: step7.agences,
+        costCenters: step7.centresCouts,
+        profitCenters: step7.centresProfits,
+        projects: step7.projets,
+
+        // Modules
+        enabledModules: step9.modules,
+      };
+
+      await api.completeOnboarding(payload);
+
+      // Clear localStorage after successful submission
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(STORAGE_STEP_KEY);
+
       await refreshCompany();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Erreur lors de l'enregistrement des informations");
-    } finally {
+      setSubmitError(err instanceof ApiError ? err.message : 'Erreur lors de la création de l\'entreprise. Veuillez réessayer.');
       setIsSubmitting(false);
     }
   };
 
+  const stepProps = {
+    data: wizardData,
+    onChange: handleChange,
+    onNext: handleNext,
+    onPrev: handlePrev,
+  };
+
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-[#f3f4f6] p-4 font-sans select-none">
-      <div className="bg-white rounded-[32px] border border-slate-200/80 shadow-2xl shadow-slate-300/40 w-full max-w-4xl overflow-hidden grid grid-cols-1 lg:grid-cols-12">
-        {/* Left Info Banner Panel */}
-        <div className="lg:col-span-5 bg-gradient-to-br from-[#2563eb] via-[#1d4ed8] to-[#1e40af] p-8 text-white flex flex-col justify-between relative overflow-hidden">
-          <div className="space-y-6 relative z-10">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-              <Building2 className="w-6 h-6 text-white" />
-            </div>
-
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white px-2.5 py-1 rounded-full border border-white/20">
-                Étape Finale 2/2
-              </span>
-              <h2 className="text-xl font-extrabold text-white mt-3 leading-tight">
-                Configuration de votre société
-              </h2>
-              <p className="text-xs text-blue-100/90 leading-relaxed mt-2">
-                Ces informations serviront à générer vos factures, déclarations fiscales et états financiers aux normes SYSCOHADA.
-              </p>
-            </div>
-
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center gap-2.5 text-xs text-blue-100">
-                <ShieldCheck className="w-4 h-4 text-emerald-300 flex-shrink-0" />
-                <span>Conformité juridique &amp; fiscale OHADA</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-xs text-blue-100">
-                <ShieldCheck className="w-4 h-4 text-emerald-300 flex-shrink-0" />
-                <span>Plan comptable 8 classes prêt à l'emploi</span>
-              </div>
-              <div className="flex items-center gap-2.5 text-xs text-blue-100">
-                <ShieldCheck className="w-4 h-4 text-emerald-300 flex-shrink-0" />
-                <span>Multi-devises (XAF, XOF, EUR, USD)</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="relative z-10 pt-8 text-[11px] text-blue-200/80">
-            Besoin d'aide ? Vous pourrez modifier ces paramètres ultérieurement dans l'onglet Administration.
-          </div>
+    <WizardLayout currentStep={currentStep} completedSteps={completedSteps}>
+      {submitError && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-2xl text-xs text-red-700 font-semibold">
+          ⚠️ {submitError}
         </div>
+      )}
 
-        {/* Right Form Panel */}
-        <div className="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-between">
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
-                Bienvenue{company ? `, ${company.name}` : ''} 👋
-              </h1>
-              <p className="text-xs text-slate-500 font-medium mt-1">
-                Complétez les informations fiscales et administratives de l'entreprise.
-              </p>
-            </div>
-
-            {error && (
-              <div className="flex items-center space-x-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl p-3.5 font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    RCCM <span className="text-slate-400 font-normal">(Registre du Commerce)</span>
-                  </label>
-                  <div className="relative">
-                    <Hash className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={rccm}
-                      onChange={(e) => setRccm(e.target.value)}
-                      placeholder="Ex: CG-BZV-01-2026-B14"
-                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-900 font-mono font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    NIF <span className="text-slate-400 font-normal">(Numéro Fiscale)</span>
-                  </label>
-                  <div className="relative">
-                    <Hash className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="text"
-                      value={nif}
-                      onChange={(e) => setNif(e.target.value)}
-                      placeholder="Ex: M20260000001"
-                      className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-900 font-mono font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Adresse du siège social</label>
-                <div className="relative">
-                  <MapPin className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Ex: 142 Avenue de l'Indépendance"
-                    className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Ville</label>
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="Ex: Brazzaville"
-                    className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl px-4 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all placeholder:text-slate-400 placeholder:font-normal"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Pays d'implantation</label>
-                  <select
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl px-4 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all cursor-pointer"
-                  >
-                    {COUNTRIES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Devise de tenue de compte</label>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#2563eb] rounded-2xl px-4 py-2.5 text-xs text-slate-900 font-semibold outline-none transition-all cursor-pointer"
-                >
-                  <option value="XAF">XAF - Franc CFA (Afrique Centrale / CEMAC)</option>
-                  <option value="XOF">XOF - Franc CFA (Afrique de l'Ouest / UEMOA)</option>
-                  <option value="EUR">EUR - Euro</option>
-                  <option value="USD">USD - Dollar Américain</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3.5 px-6 rounded-full bg-[#2563eb] hover:bg-[#1d4ed8] active:bg-[#1e40af] text-white font-bold text-xs shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center space-x-2 mt-4 disabled:opacity-60"
-              >
-                {isSubmitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <>
-                    <span>Accéder à mon espace comptable</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-
-          <div className="pt-6 border-t border-slate-100 text-center text-[11px] text-slate-400">
-            © FinancePro OHADA 2026 — Plateforme de gestion comptable certifiée
-          </div>
-        </div>
-
-      </div>
-    </div>
+      {currentStep === 1 && <Step1Welcome {...stepProps} isFirst />}
+      {currentStep === 2 && <Step2Identification {...stepProps} />}
+      {currentStep === 3 && <Step3Coordonnees {...stepProps} />}
+      {currentStep === 4 && <Step4Comptabilite {...stepProps} />}
+      {currentStep === 5 && <Step5Fiscalite {...stepProps} />}
+      {currentStep === 6 && <Step6Banque {...stepProps} />}
+      {currentStep === 7 && <Step7Organisation {...stepProps} />}
+      {currentStep === 8 && <Step8Utilisateurs {...stepProps} />}
+      {currentStep === 9 && <Step9Modules {...stepProps} />}
+      {currentStep === 10 && (
+        <Step10Validation
+          {...stepProps}
+          onGoToStep={goToStep}
+          onNext={handleSubmit}
+          isSubmitting={isSubmitting}
+        />
+      )}
+    </WizardLayout>
   );
 };
 
