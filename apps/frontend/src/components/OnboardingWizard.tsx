@@ -53,13 +53,27 @@ export const OnboardingWizard: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Auto-save to localStorage
+  // Auto-save to localStorage (debounced to avoid main thread lag on keypress)
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(wizardData));
-      localStorage.setItem(STORAGE_STEP_KEY, String(currentStep));
-    } catch {}
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(wizardData));
+        localStorage.setItem(STORAGE_STEP_KEY, String(currentStep));
+      } catch {}
+    }, 500);
+    return () => clearTimeout(timer);
   }, [wizardData, currentStep]);
+
+  // Clean legacy large logo from localStorage/state if any exists
+  useEffect(() => {
+    if (wizardData.step1.logo && wizardData.step1.logo.length > 40000) {
+      compressBase64Image(wizardData.step1.logo, 300, 300, 0.75).then((compressed) => {
+        if (compressed !== wizardData.step1.logo) {
+          handleChange('step1', { logo: compressed });
+        }
+      });
+    }
+  }, []);
 
   const handleChange = useCallback(<K extends keyof WizardData>(
     key: K,
