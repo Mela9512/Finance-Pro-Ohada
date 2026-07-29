@@ -12,7 +12,7 @@ import { Step7Organisation } from './wizard/Step7Organisation';
 import { Step8Utilisateurs } from './wizard/Step8Utilisateurs';
 import { Step9Modules } from './wizard/Step9Modules';
 import { Step10Validation } from './wizard/Step10Validation';
-import { WizardData, DEFAULT_WIZARD_DATA } from './wizard/types';
+import { WizardData, DEFAULT_WIZARD_DATA, compressBase64Image } from './wizard/types';
 
 const STORAGE_KEY = 'financepro_wizard_data';
 const STORAGE_STEP_KEY = 'financepro_wizard_step';
@@ -97,10 +97,13 @@ export const OnboardingWizard: React.FC = () => {
     try {
       const { step1, step2, step3, step4, step5, step6, step7, step9 } = wizardData;
 
+      // Compress logo if it's base64 to ensure payload stays under 50KB
+      const logoCompressed = step1.logo ? await compressBase64Image(step1.logo, 300, 300, 0.75) : undefined;
+
       const payload = {
         // Basic info
         name: step1.companyName || company?.name,
-        logo: step1.logo || undefined,
+        logo: logoCompressed,
         country: step1.pays,
         currency: step1.devise,
         language: step1.langue,
