@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -33,20 +33,42 @@ export class AdminService {
   }
 
   async updateCompany(companyId: string, userId: string, dto: UpdateCompanyDto): Promise<CompanyEntity> {
-    await this.companyRepo.update({ id: companyId }, dto);
+    const company = await this.companyRepo.findOne({ where: { id: companyId } });
+    if (!company) {
+      throw new NotFoundException('Entreprise introuvable');
+    }
+
+    const cleanDto = { ...dto };
+    if (cleanDto.rccm === '') delete cleanDto.rccm;
+    if (cleanDto.nif === '') delete cleanDto.nif;
+
+    Object.assign(company, cleanDto);
+    const updated = await this.companyRepo.save(company);
+
     await this.auditLogService.log({
       companyId,
       userId,
       action: 'COMPANY_UPDATED',
       entityType: 'Company',
       entityId: companyId,
-      metadata: dto as Record<string, unknown>,
+      metadata: cleanDto as Record<string, unknown>,
     });
-    return this.companyRepo.findOne({ where: { id: companyId } });
+    return updated;
   }
 
   async completeOnboarding(companyId: string, userId: string, dto: UpdateCompanyDto): Promise<CompanyEntity> {
-    await this.companyRepo.update({ id: companyId }, { ...dto, isOnboarded: true });
+    const company = await this.companyRepo.findOne({ where: { id: companyId } });
+    if (!company) {
+      throw new NotFoundException('Entreprise introuvable');
+    }
+
+    const cleanDto = { ...dto };
+    if (cleanDto.rccm === '') delete cleanDto.rccm;
+    if (cleanDto.nif === '') delete cleanDto.nif;
+
+    Object.assign(company, cleanDto, { isOnboarded: true });
+    const updated = await this.companyRepo.save(company);
+
     await this.auditLogService.log({
       companyId,
       userId,
@@ -54,7 +76,7 @@ export class AdminService {
       entityType: 'Company',
       entityId: companyId,
     });
-    return this.companyRepo.findOne({ where: { id: companyId } });
+    return updated;
   }
 
   async setExerciceClosed(companyId: string, userId: string, closed: boolean): Promise<CompanyEntity> {
