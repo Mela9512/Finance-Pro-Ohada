@@ -14,20 +14,22 @@ const Field: React.FC<{ label: string; required?: boolean; sublabel?: string; ch
 );
 
 export const Step4Comptabilite: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
-  const { step4 } = data;
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof step4, string>>>({});
+  const [form, setForm] = useState(data.step4);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
-  const update = (field: keyof typeof step4, value: string | number) => {
-    onChange('step4', { ...step4, [field]: value });
+  const update = (field: keyof typeof form, value: string | number) => {
+    const updated = { ...form, [field]: value };
+    setForm(updated);
+    onChange('step4', updated);
     if (errors[field as string]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
-    const err: Partial<Record<keyof typeof step4, string>> = {};
-    if (!step4.exercice) err.exercice = 'L\'exercice est requis';
-    if (!step4.dateOuverture) err.dateOuverture = 'La date d\'ouverture est requise';
-    if (!step4.dateCloture) err.dateCloture = 'La date de clôture est requise';
+    const err: Partial<Record<keyof typeof form, string>> = {};
+    if (!form.exercice) err.exercice = 'L\'exercice est requis';
+    if (!form.dateOuverture) err.dateOuverture = 'La date d\'ouverture est requise';
+    if (!form.dateCloture) err.dateCloture = 'La date de clôture est requise';
     if (Object.keys(err).length > 0) { setErrors(err); return; }
     onNext();
   };
@@ -70,23 +72,23 @@ export const Step4Comptabilite: React.FC<StepProps> = ({ data, onChange, onNext,
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         <Field label="Exercice comptable" required sublabel="Année fiscale principale" error={errors.exercice}>
-          <input type="number" value={step4.exercice} onChange={e => update('exercice', e.target.value)}
+          <input type="number" value={form.exercice} onChange={e => update('exercice', e.target.value)}
             min="2000" max="2050" placeholder={new Date().getFullYear().toString()}
             className={inputCls(!!errors.exercice)} />
         </Field>
 
         <Field label="Date d'ouverture" required error={errors.dateOuverture}>
-          <input type="date" value={step4.dateOuverture} onChange={e => update('dateOuverture', e.target.value)}
+          <input type="date" value={form.dateOuverture} onChange={e => update('dateOuverture', e.target.value)}
             className={inputCls(!!errors.dateOuverture)} />
         </Field>
 
         <Field label="Date de clôture" required error={errors.dateCloture}>
-          <input type="date" value={step4.dateCloture} onChange={e => update('dateCloture', e.target.value)}
+          <input type="date" value={form.dateCloture} onChange={e => update('dateCloture', e.target.value)}
             className={inputCls(!!errors.dateCloture)} />
         </Field>
 
         <Field label="Longueur des comptes" sublabel="Nombre de chiffres (6 à 8)">
-          <select value={step4.longueurComptes} onChange={e => update('longueurComptes', Number(e.target.value))}
+          <select value={form.longueurComptes} onChange={e => update('longueurComptes', Number(e.target.value))}
             className={`${inputCls()} cursor-pointer`}>
             <option value={6}>6 chiffres (standard OHADA)</option>
             <option value={7}>7 chiffres</option>
@@ -95,7 +97,7 @@ export const Step4Comptabilite: React.FC<StepProps> = ({ data, onChange, onNext,
         </Field>
 
         <Field label="Nombre de décimales" sublabel="Précision des montants">
-          <select value={step4.decimales} onChange={e => update('decimales', Number(e.target.value))}
+          <select value={form.decimales} onChange={e => update('decimales', Number(e.target.value))}
             className={`${inputCls()} cursor-pointer`}>
             <option value={0}>0 décimale (entiers)</option>
             <option value={2}>2 décimales (recommandé)</option>

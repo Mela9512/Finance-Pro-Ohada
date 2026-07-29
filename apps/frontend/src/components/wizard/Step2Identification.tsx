@@ -13,20 +13,22 @@ const Field: React.FC<{ label: string; required?: boolean; children: React.React
 );
 
 export const Step2Identification: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
-  const { step2 } = data;
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof step2, string>>>({});
+  const [form, setForm] = useState(data.step2);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
-  const update = (field: keyof typeof step2, value: string) => {
-    onChange('step2', { ...step2, [field]: value });
+  const update = (field: keyof typeof form, value: string) => {
+    const updated = { ...form, [field]: value };
+    setForm(updated);
+    onChange('step2', updated);
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
-    const err: Partial<Record<keyof typeof step2, string>> = {};
-    if (!step2.raisonSociale.trim()) err.raisonSociale = 'La raison sociale est requise';
-    if (!step2.formeJuridique) err.formeJuridique = 'La forme juridique est requise';
-    if (!step2.secteur) err.secteur = 'Le secteur d\'activité est requis';
+    const err: Partial<Record<keyof typeof form, string>> = {};
+    if (!form.raisonSociale.trim()) err.raisonSociale = 'La raison sociale est requise';
+    if (!form.formeJuridique) err.formeJuridique = 'La forme juridique est requise';
+    if (!form.secteur) err.secteur = 'Le secteur d\'activité est requis';
     if (Object.keys(err).length > 0) { setErrors(err); return; }
     onNext();
   };
@@ -49,19 +51,19 @@ export const Step2Identification: React.FC<StepProps> = ({ data, onChange, onNex
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="md:col-span-2">
           <Field label="Raison sociale" required error={errors.raisonSociale}>
-            <input type="text" value={step2.raisonSociale} onChange={e => update('raisonSociale', e.target.value)}
+            <input type="text" value={form.raisonSociale} onChange={e => update('raisonSociale', e.target.value)}
               placeholder="Ex: CONGO TRADING SOCIÉTÉ À RESPONSABILITÉ LIMITÉE"
               className={inputCls(!!errors.raisonSociale)} />
           </Field>
         </div>
 
         <Field label="Sigle / Acronyme">
-          <input type="text" value={step2.sigle} onChange={e => update('sigle', e.target.value)}
+          <input type="text" value={form.sigle} onChange={e => update('sigle', e.target.value)}
             placeholder="Ex: CT SARL" className={inputCls()} />
         </Field>
 
         <Field label="Forme juridique" required error={errors.formeJuridique}>
-          <select value={step2.formeJuridique} onChange={e => update('formeJuridique', e.target.value)}
+          <select value={form.formeJuridique} onChange={e => update('formeJuridique', e.target.value)}
             className={`${inputCls(!!errors.formeJuridique)} cursor-pointer`}>
             {FORMES_JURIDIQUES.map(f => <option key={f} value={f}>{f}</option>)}
           </select>
@@ -70,7 +72,7 @@ export const Step2Identification: React.FC<StepProps> = ({ data, onChange, onNex
         <Field label="RCCM">
           <div className="relative">
             <Hash className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-            <input type="text" value={step2.rccm} onChange={e => update('rccm', e.target.value)}
+            <input type="text" value={form.rccm} onChange={e => update('rccm', e.target.value)}
               placeholder="Ex: CG-BZV-01-2026-B14-00001"
               className={`${inputCls()} pl-10 font-mono`} />
           </div>
@@ -79,20 +81,20 @@ export const Step2Identification: React.FC<StepProps> = ({ data, onChange, onNex
         <Field label="NIU / NIF (Numéro d'Identification Fiscale)">
           <div className="relative">
             <Hash className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-            <input type="text" value={step2.nif} onChange={e => update('nif', e.target.value)}
+            <input type="text" value={form.nif} onChange={e => update('nif', e.target.value)}
               placeholder="Ex: M20260000001"
               className={`${inputCls()} pl-10 font-mono`} />
           </div>
         </Field>
 
         <Field label="Capital social (en devise de référence)">
-          <input type="number" value={step2.capital} onChange={e => update('capital', e.target.value)}
+          <input type="number" value={form.capital} onChange={e => update('capital', e.target.value)}
             placeholder="Ex: 1000000" min="0"
             className={inputCls()} />
         </Field>
 
         <Field label="Secteur d'activité" required error={errors.secteur}>
-          <select value={step2.secteur} onChange={e => update('secteur', e.target.value)}
+          <select value={form.secteur} onChange={e => update('secteur', e.target.value)}
             className={`${inputCls(!!errors.secteur)} cursor-pointer`}>
             <option value="">— Sélectionner un secteur —</option>
             {SECTEURS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -100,7 +102,7 @@ export const Step2Identification: React.FC<StepProps> = ({ data, onChange, onNex
         </Field>
 
         <Field label="Date de création">
-          <input type="date" value={step2.dateCreation} onChange={e => update('dateCreation', e.target.value)}
+          <input type="date" value={form.dateCreation} onChange={e => update('dateCreation', e.target.value)}
             className={inputCls()} />
         </Field>
       </div>

@@ -11,16 +11,18 @@ const Field: React.FC<{ label: string; children: React.ReactNode; error?: string
 );
 
 export const Step6Banque: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
-  const { step6 } = data;
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof step6, string>>>({});
+  const [form, setForm] = useState(data.step6);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
-  const update = (field: keyof typeof step6, value: string | string[]) => {
-    onChange('step6', { ...step6, [field]: value });
+  const update = (field: keyof typeof form, value: string | string[]) => {
+    const updated = { ...form, [field]: value };
+    setForm(updated);
+    onChange('step6', updated);
     if (errors[field as string]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
   const toggleModePaiement = (mode: string) => {
-    const current = step6.modesPaiement;
+    const current = form.modesPaiement;
     const updated = current.includes(mode)
       ? current.filter(m => m !== mode)
       : [...current, mode];
@@ -49,7 +51,7 @@ export const Step6Banque: React.FC<StepProps> = ({ data, onChange, onNext, onPre
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Field label="Banque principale">
-          <select value={step6.banquePrincipale} onChange={e => update('banquePrincipale', e.target.value)}
+          <select value={form.banquePrincipale} onChange={e => update('banquePrincipale', e.target.value)}
             className={`${inputCls()} cursor-pointer`}>
             <option value="">— Sélectionner une banque —</option>
             {BANQUES_CEMAC.map(b => <option key={b} value={b}>{b}</option>)}
@@ -57,27 +59,27 @@ export const Step6Banque: React.FC<StepProps> = ({ data, onChange, onNext, onPre
         </Field>
 
         <Field label="Devise du compte bancaire">
-          <select value={step6.deviseCompte} onChange={e => update('deviseCompte', e.target.value)}
+          <select value={form.deviseCompte} onChange={e => update('deviseCompte', e.target.value)}
             className={`${inputCls()} cursor-pointer`}>
             {DEVISES.map(d => <option key={d.code} value={d.code}>{d.label}</option>)}
           </select>
         </Field>
 
         <Field label="Numéro de compte bancaire">
-          <input type="text" value={step6.numCompte} onChange={e => update('numCompte', e.target.value)}
+          <input type="text" value={form.numCompte} onChange={e => update('numCompte', e.target.value)}
             placeholder="Ex: 01234567890 01"
             className={`${inputCls()} font-mono`} />
         </Field>
 
         <Field label="Code banque / Agence">
-          <input type="text" value={step6.codeBanque} onChange={e => update('codeBanque', e.target.value)}
+          <input type="text" value={form.codeBanque} onChange={e => update('codeBanque', e.target.value)}
             placeholder="Ex: 00023 / Code BIC/SWIFT"
             className={`${inputCls()} font-mono`} />
         </Field>
 
         <div className="md:col-span-2">
           <Field label="Nom de la caisse principale">
-            <input type="text" value={step6.caissePrincipale} onChange={e => update('caissePrincipale', e.target.value)}
+            <input type="text" value={form.caissePrincipale} onChange={e => update('caissePrincipale', e.target.value)}
               placeholder="Ex: Caisse principale siège"
               className={inputCls()} />
           </Field>
@@ -88,7 +90,7 @@ export const Step6Banque: React.FC<StepProps> = ({ data, onChange, onNext, onPre
           <label className="block text-xs font-extrabold text-slate-700 mb-3 uppercase tracking-wider">Modes de paiement acceptés</label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {MODES_PAIEMENT_OPTIONS.map(mode => {
-              const isSelected = step6.modesPaiement.includes(mode);
+              const isSelected = form.modesPaiement.includes(mode);
               return (
                 <button
                   key={mode}

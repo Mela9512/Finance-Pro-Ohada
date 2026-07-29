@@ -26,18 +26,20 @@ const Field: React.FC<{ label: string; required?: boolean; children: React.React
 );
 
 export const Step5Fiscalite: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
-  const { step5 } = data;
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof step5, string>>>({});
+  const [form, setForm] = useState(data.step5);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
-  const update = (field: keyof typeof step5, value: string | boolean) => {
-    onChange('step5', { ...step5, [field]: value });
+  const update = (field: keyof typeof form, value: string | boolean) => {
+    const updated = { ...form, [field]: value };
+    setForm(updated);
+    onChange('step5', updated);
     if (errors[field as string]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
-    const err: Partial<Record<keyof typeof step5, string>> = {};
-    if (!step5.regimeFiscal) err.regimeFiscal = 'Le régime fiscal est requis';
+    const err: Partial<Record<keyof typeof form, string>> = {};
+    if (!form.regimeFiscal) err.regimeFiscal = 'Le régime fiscal est requis';
     if (Object.keys(err).length > 0) { setErrors(err); return; }
     onNext();
   };
@@ -59,21 +61,21 @@ export const Step5Fiscalite: React.FC<StepProps> = ({ data, onChange, onNext, on
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <Field label="Régime fiscal" required error={errors.regimeFiscal}>
-          <select value={step5.regimeFiscal} onChange={e => update('regimeFiscal', e.target.value)}
+          <select value={form.regimeFiscal} onChange={e => update('regimeFiscal', e.target.value)}
             className={`${inputCls(!!errors.regimeFiscal)} cursor-pointer`}>
             {REGIMES_FISCAUX.map(r => <option key={r} value={r}>{r}</option>)}
           </select>
         </Field>
 
         <Field label="Centre des impôts compétent">
-          <input type="text" value={step5.centreImpots} onChange={e => update('centreImpots', e.target.value)}
+          <input type="text" value={form.centreImpots} onChange={e => update('centreImpots', e.target.value)}
             placeholder="Ex: Centre des Impôts de Brazzaville Centre"
             className={inputCls()} />
         </Field>
 
         <div className="md:col-span-2">
           <Field label="Numéro de contribuable">
-            <input type="text" value={step5.numContribuable} onChange={e => update('numContribuable', e.target.value)}
+            <input type="text" value={form.numContribuable} onChange={e => update('numContribuable', e.target.value)}
               placeholder="Ex: CG-BZV-2024-12345 (si différent du NIU)"
               className={`${inputCls()} font-mono`} />
           </Field>
@@ -82,17 +84,17 @@ export const Step5Fiscalite: React.FC<StepProps> = ({ data, onChange, onNext, on
         {/* TVA Section */}
         <div className="md:col-span-2">
           <Toggle
-            checked={step5.assujettTVA}
+            checked={form.assujettTVA}
             onChange={v => update('assujettTVA', v)}
             label="Assujetti à la TVA"
             description="Activez si votre entreprise est redevable de la Taxe sur la Valeur Ajoutée"
           />
         </div>
 
-        {step5.assujettTVA && (
+        {form.assujettTVA && (
           <div className="md:col-span-2">
             <Field label="Taux de TVA applicable">
-              <select value={step5.tauxTVA} onChange={e => update('tauxTVA', e.target.value)}
+              <select value={form.tauxTVA} onChange={e => update('tauxTVA', e.target.value)}
                 className={`${inputCls()} cursor-pointer`}>
                 {TAUX_TVA.map(t => (
                   <option key={t.valeur + t.label} value={t.valeur}>{t.label}</option>
@@ -103,14 +105,14 @@ export const Step5Fiscalite: React.FC<StepProps> = ({ data, onChange, onNext, on
         )}
 
         <Toggle
-          checked={step5.retenueSource}
+          checked={form.retenueSource}
           onChange={v => update('retenueSource', v)}
           label="Retenue à la Source (RAS)"
           description="Retenue sur les paiements aux prestataires et fournisseurs"
         />
 
         <Toggle
-          checked={step5.is}
+          checked={form.is}
           onChange={v => update('is', v)}
           label="Impôt sur les Sociétés (IS)"
           description="Applicable aux sociétés de capitaux (SA, SARL, SAS...)"

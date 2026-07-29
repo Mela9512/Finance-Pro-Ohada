@@ -3,12 +3,14 @@ import { ArrowRight, Globe, DollarSign, MapPin, Upload, Building2 } from 'lucide
 import { StepProps, PAYS_OHADA, DEVISES, LANGUES } from './types';
 
 export const Step1Welcome: React.FC<StepProps> = ({ data, onChange, onNext }) => {
-  const { step1 } = data;
-  const [errors, setErrors] = useState<Partial<typeof step1>>({});
+  const [form, setForm] = useState(data.step1);
+  const [errors, setErrors] = useState<Partial<typeof form>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const update = (field: keyof typeof step1, value: string) => {
-    onChange('step1', { ...step1, [field]: value });
+  const update = (field: keyof typeof form, value: string) => {
+    const updated = { ...form, [field]: value };
+    setForm(updated);
+    onChange('step1', updated);
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
@@ -59,10 +61,10 @@ export const Step1Welcome: React.FC<StepProps> = ({ data, onChange, onNext }) =>
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
-    const newErrors: Partial<typeof step1> = {};
-    if (!step1.companyName.trim()) newErrors.companyName = 'Le nom de l\'entreprise est requis';
-    if (!step1.pays) newErrors.pays = 'Veuillez sélectionner un pays';
-    if (!step1.devise) newErrors.devise = 'Veuillez sélectionner une devise';
+    const newErrors: Partial<typeof form> = {};
+    if (!form.companyName.trim()) newErrors.companyName = 'Le nom de l\'entreprise est requis';
+    if (!form.pays) newErrors.pays = 'Veuillez sélectionner un pays';
+    if (!form.devise) newErrors.devise = 'Veuillez sélectionner une devise';
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     onNext();
   };
@@ -88,7 +90,7 @@ export const Step1Welcome: React.FC<StepProps> = ({ data, onChange, onNext }) =>
           </label>
           <input
             type="text"
-            value={step1.companyName}
+            value={form.companyName}
             onChange={e => update('companyName', e.target.value)}
             placeholder="Ex: CONGO TRADING SARL"
             className={`w-full bg-[#f8fafc] border ${errors.companyName ? 'border-red-300 bg-red-50' : 'border-slate-200'} focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-3.5 text-sm text-slate-900 font-bold outline-none transition-all`}
@@ -103,8 +105,8 @@ export const Step1Welcome: React.FC<StepProps> = ({ data, onChange, onNext }) =>
             onClick={() => fileRef.current?.click()}
             className="flex items-center gap-3 border-2 border-dashed border-slate-200 hover:border-[#2563eb] rounded-2xl p-4 cursor-pointer transition-all group"
           >
-            {step1.logo ? (
-              <img src={step1.logo} alt="Logo" className="w-12 h-12 object-contain rounded-xl border border-slate-200" />
+            {form.logo ? (
+              <img src={form.logo} alt="Logo" className="w-12 h-12 object-contain rounded-xl border border-slate-200" />
             ) : (
               <div className="w-12 h-12 rounded-xl bg-slate-100 group-hover:bg-blue-50 flex items-center justify-center transition-colors">
                 <Upload className="w-5 h-5 text-slate-400 group-hover:text-[#2563eb]" />
@@ -112,7 +114,7 @@ export const Step1Welcome: React.FC<StepProps> = ({ data, onChange, onNext }) =>
             )}
             <div>
               <div className="text-xs font-bold text-slate-700">
-                {step1.logo ? 'Changer le logo' : 'Importer votre logo'}
+                {form.logo ? 'Changer le logo' : 'Importer votre logo'}
               </div>
               <div className="text-[11px] text-slate-400">PNG, JPG ou SVG — optimisé auto</div>
             </div>
@@ -126,7 +128,7 @@ export const Step1Welcome: React.FC<StepProps> = ({ data, onChange, onNext }) =>
             <Globe className="w-3.5 h-3.5 inline mr-1" />Langue de travail
           </label>
           <select
-            value={step1.langue}
+            value={form.langue}
             onChange={e => update('langue', e.target.value)}
             className="w-full bg-[#f8fafc] border border-slate-200 focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-3.5 text-sm text-slate-900 font-bold outline-none transition-all cursor-pointer"
           >
@@ -143,7 +145,7 @@ export const Step1Welcome: React.FC<StepProps> = ({ data, onChange, onNext }) =>
             <DollarSign className="w-3.5 h-3.5 inline mr-1" />Devise de référence
           </label>
           <select
-            value={step1.devise}
+            value={form.devise}
             onChange={e => update('devise', e.target.value)}
             className={`w-full bg-[#f8fafc] border ${errors.devise ? 'border-red-300' : 'border-slate-200'} focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-3.5 text-sm text-slate-900 font-bold outline-none transition-all cursor-pointer`}
           >
@@ -161,7 +163,7 @@ export const Step1Welcome: React.FC<StepProps> = ({ data, onChange, onNext }) =>
             <MapPin className="w-3.5 h-3.5 inline mr-1" />Pays d'implantation principale
           </label>
           <select
-            value={step1.pays}
+            value={form.pays}
             onChange={e => update('pays', e.target.value)}
             className={`w-full bg-[#f8fafc] border ${errors.pays ? 'border-red-300' : 'border-slate-200'} focus:bg-white focus:border-[#2563eb] focus:ring-4 focus:ring-blue-500/10 rounded-2xl px-4 py-3.5 text-sm text-slate-900 font-bold outline-none transition-all cursor-pointer`}
           >

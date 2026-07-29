@@ -13,20 +13,22 @@ const Field: React.FC<{ label: string; required?: boolean; children: React.React
 );
 
 export const Step3Coordonnees: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
-  const { step3 } = data;
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof step3, string>>>({});
+  const [form, setForm] = useState(data.step3);
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
 
-  const update = (field: keyof typeof step3, value: string) => {
-    onChange('step3', { ...step3, [field]: value });
+  const update = (field: keyof typeof form, value: string) => {
+    const updated = { ...form, [field]: value };
+    setForm(updated);
+    onChange('step3', updated);
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
-    const err: Partial<Record<keyof typeof step3, string>> = {};
-    if (!step3.adresse.trim()) err.adresse = 'L\'adresse est requise';
-    if (!step3.ville.trim()) err.ville = 'La ville est requise';
-    if (!step3.telephone.trim()) err.telephone = 'Le téléphone est requis';
+    const err: Partial<Record<keyof typeof form, string>> = {};
+    if (!form.adresse.trim()) err.adresse = 'L\'adresse est requise';
+    if (!form.ville.trim()) err.ville = 'La ville est requise';
+    if (!form.telephone.trim()) err.telephone = 'Le téléphone est requis';
     if (Object.keys(err).length > 0) { setErrors(err); return; }
     onNext();
   };
@@ -51,7 +53,7 @@ export const Step3Coordonnees: React.FC<StepProps> = ({ data, onChange, onNext, 
           <Field label="Adresse du siège social" required error={errors.adresse}>
             <div className="relative">
               <MapPin className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-              <input type="text" value={step3.adresse} onChange={e => update('adresse', e.target.value)}
+              <input type="text" value={form.adresse} onChange={e => update('adresse', e.target.value)}
                 placeholder="Ex: 142 Avenue de l'Indépendance, Zone Industrielle"
                 className={`${inputCls(!!errors.adresse)} pl-10`} />
             </div>
@@ -59,17 +61,17 @@ export const Step3Coordonnees: React.FC<StepProps> = ({ data, onChange, onNext, 
         </div>
 
         <Field label="Ville" required error={errors.ville}>
-          <input type="text" value={step3.ville} onChange={e => update('ville', e.target.value)}
+          <input type="text" value={form.ville} onChange={e => update('ville', e.target.value)}
             placeholder="Ex: Brazzaville" className={inputCls(!!errors.ville)} />
         </Field>
 
         <Field label="Région / Département">
-          <input type="text" value={step3.region} onChange={e => update('region', e.target.value)}
+          <input type="text" value={form.region} onChange={e => update('region', e.target.value)}
             placeholder="Ex: Pool, Kouilou, Niari..." className={inputCls()} />
         </Field>
 
         <Field label="Pays">
-          <select value={step3.pays} onChange={e => update('pays', e.target.value)}
+          <select value={form.pays} onChange={e => update('pays', e.target.value)}
             className={`${inputCls()} cursor-pointer`}>
             {PAYS_OHADA.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
@@ -78,7 +80,7 @@ export const Step3Coordonnees: React.FC<StepProps> = ({ data, onChange, onNext, 
         <Field label="Téléphone principal" required error={errors.telephone}>
           <div className="relative">
             <Phone className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-            <input type="tel" value={step3.telephone} onChange={e => update('telephone', e.target.value)}
+            <input type="tel" value={form.telephone} onChange={e => update('telephone', e.target.value)}
               placeholder="Ex: +242 06 123 45 67"
               className={`${inputCls(!!errors.telephone)} pl-10`} />
           </div>
@@ -87,7 +89,7 @@ export const Step3Coordonnees: React.FC<StepProps> = ({ data, onChange, onNext, 
         <Field label="Adresse e-mail professionnelle">
           <div className="relative">
             <Mail className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-            <input type="email" value={step3.email} onChange={e => update('email', e.target.value)}
+            <input type="email" value={form.email} onChange={e => update('email', e.target.value)}
               placeholder="Ex: contact@entreprise.cg"
               className={`${inputCls()} pl-10`} />
           </div>
@@ -97,7 +99,7 @@ export const Step3Coordonnees: React.FC<StepProps> = ({ data, onChange, onNext, 
           <Field label="Site web">
             <div className="relative">
               <Globe className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
-              <input type="url" value={step3.siteWeb} onChange={e => update('siteWeb', e.target.value)}
+              <input type="url" value={form.siteWeb} onChange={e => update('siteWeb', e.target.value)}
                 placeholder="Ex: https://www.entreprise.cg"
                 className={`${inputCls()} pl-10`} />
             </div>
