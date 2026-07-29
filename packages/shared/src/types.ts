@@ -11,16 +11,68 @@ export interface User {
 
 export interface Company {
   id: string;
+
+  // ─── Informations générales ────────────────────────────────────────────────
   name: string;
-  rccm?: string; // Registre du Commerce et du Crédit Mobilier
-  nif?: string;  // Numéro d'Identification Fiscale
+  logo?: string;
+  language?: string;
+  currency: string; // XAF, XOF, USD, EUR
+  country: string;
+
+  // ─── Identification légale ─────────────────────────────────────────────────
+  legalName?: string;
+  legalForm?: string;
+  rccm?: string;
+  nif?: string;
+  capital?: number;
+  sector?: string;
+  incorporationDate?: string;
+
+  // ─── Coordonnées ──────────────────────────────────────────────────────────
   address: string;
   city: string;
-  country: string;
-  currency: string; // XAF, XOF, USD, EUR
-  fiscalYearStart: string; // Ex: 2026-01-01
-  fiscalYearEnd: string;   // Ex: 2026-12-31
+  region?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+
+  // ─── Paramètres comptables ────────────────────────────────────────────────
+  fiscalYearStart: string;
+  fiscalYearEnd: string;
+  fiscalYear?: number;
+  accountLength?: number;
+  decimals?: number;
   isExerciceClosed?: boolean;
+
+  // ─── Fiscalité ────────────────────────────────────────────────────────────
+  taxRegime?: string;
+  taxCenter?: string;
+  taxNumber?: string;
+  vatEnabled?: boolean;
+  vatRate?: number;
+  withholdingTax?: boolean;
+  corporateTax?: boolean;
+
+  // ─── Banque & Trésorerie ──────────────────────────────────────────────────
+  bankName?: string;
+  bankAccount?: string;
+  bankCode?: string;
+  cashName?: string;
+  paymentMethods?: string[];
+  bankCurrency?: string;
+
+  // ─── Organisation ─────────────────────────────────────────────────────────
+  departments?: string[];
+  directions?: string[];
+  branches?: string[];
+  costCenters?: string[];
+  profitCenters?: string[];
+  projects?: string[];
+
+  // ─── Modules activés ──────────────────────────────────────────────────────
+  enabledModules?: string[];
+
+  // ─── Statut ───────────────────────────────────────────────────────────────
   isOnboarded?: boolean;
 }
 
@@ -344,3 +396,5 @@ export interface DashboardMetrics {
   fluxTrésorerieGraph: { month: string; encaissements: number; decaissements: number }[];
   ecrituresRecent: JournalEntry[];
 }
+
+

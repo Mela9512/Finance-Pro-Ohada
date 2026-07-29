@@ -203,10 +203,9 @@ export const MODULES_LISTE = [
 ];
 
 export const ROLES_UTILISATEURS = [
-  { role: 'accountant', label: 'Comptable', description: 'Saisies, journaux, balance', color: 'blue' },
-  { role: 'treasurer', label: 'Trésorier', description: 'Banque, caisse, flux', color: 'emerald' },
-  { role: 'cfo', label: 'Directeur Financier', description: 'Rapports, validation, accès complet', color: 'violet' },
-  { role: 'auditor', label: 'Auditeur', description: 'Lecture seule, export', color: 'amber' },
+  { role: 'COMPTABLE', label: 'Comptable', description: 'Saisies, journaux, balance SYSCOHADA', color: 'blue' },
+  { role: 'GESTIONNAIRE', label: 'Gestionnaire', description: 'Trésorerie, banque, caisse, flux', color: 'emerald' },
+  { role: 'LECTEUR', label: 'Lecteur / Auditeur', description: 'Lecture seule, export des états', color: 'amber' },
 ];
 
 export const AI_TIPS: Record<number, { titre: string; conseil: string }> = {

@@ -4,10 +4,10 @@ import { StepProps, ROLES_UTILISATEURS } from './types';
 import { api, ApiError } from '../../services/api';
 
 const ROLE_COLORS: Record<string, string> = {
-  accountant: 'bg-blue-50 text-blue-800 border-blue-200',
-  treasurer: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-  cfo: 'bg-violet-50 text-violet-800 border-violet-200',
-  auditor: 'bg-amber-50 text-amber-800 border-amber-200',
+  ADMIN: 'bg-blue-50 text-blue-800 border-blue-200',
+  COMPTABLE: 'bg-blue-50 text-blue-800 border-blue-200',
+  GESTIONNAIRE: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+  LECTEUR: 'bg-amber-50 text-amber-800 border-amber-200',
 };
 
 export const Step8Utilisateurs: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
