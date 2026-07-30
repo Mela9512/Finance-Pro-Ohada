@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard, BookOpenCheck, Wallet, Users, Truck,
   FileSpreadsheet, BarChart3, Settings, ShieldCheck, Target,
-  Bot, Rocket, ChevronRight, Landmark, FileClock, Building2
+  Bot, Rocket, ChevronRight, Landmark, FileClock, Building2, Package
 } from 'lucide-react';
 import { UserRole } from '@financepro/shared';
 
@@ -16,6 +16,7 @@ export type ModuleId =
   | 'reports'
   | 'fiscalite'
   | 'immobilisations'
+  | 'stocks'
   | 'budget'
   | 'ai'
   | 'business-plan'
@@ -44,6 +45,7 @@ const menuGroups = [
       { id: 'reports' as ModuleId, label: 'États Financiers OHADA', icon: BarChart3 },
       { id: 'fiscalite' as ModuleId, label: 'Fiscalité (TVA / AIR)', icon: Landmark },
       { id: 'immobilisations' as ModuleId, label: 'Immobilisations', icon: Building2 },
+      { id: 'stocks' as ModuleId, label: 'Stocks & Inventaire', icon: Package },
       { id: 'budget' as ModuleId, label: 'Budget Prévisionnel', icon: Target },
     ],
   },

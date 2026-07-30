@@ -471,6 +471,68 @@ export interface ImmobilisationSynthese {
   valeurNetteComptable: number;
 }
 
+export type StockMouvementType = 'ENTREE' | 'SORTIE';
+
+export interface StockMouvement {
+  id: string;
+  companyId: string;
+  articleId: string;
+  date: string;
+  type: StockMouvementType;
+  quantite: number;
+  coutUnitaire: number;
+  valeurTotale: number;
+  reference?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface StockState {
+  quantite: number;
+  valeur: number;
+  cump: number;
+}
+
+export interface StockArticle {
+  id: string;
+  companyId: string;
+  code: string;
+  label: string;
+  unite: string;
+  accountCodeStock: string;
+  seuilAlerte?: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  etat: StockState;
+}
+
+export interface StockArticleDetail extends StockArticle {
+  mouvements: StockMouvement[];
+}
+
+export interface CreateArticleDto {
+  label: string;
+  unite: string;
+  accountCodeStock: string;
+  seuilAlerte?: number;
+}
+
+export interface CreateMouvementDto {
+  articleId: string;
+  date: string;
+  type: StockMouvementType;
+  quantite: number;
+  coutUnitaire?: number;
+  reference?: string;
+}
+
+export interface StockSynthese {
+  valeurTotale: number;
+  nbArticles: number;
+  parCompte: { accountCode: string; valeur: number }[];
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;

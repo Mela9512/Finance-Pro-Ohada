@@ -26,6 +26,8 @@ import { InviteTokenEntity } from './entities/invite-token.entity';
 import { BankStatementLineEntity } from './entities/bank-statement-line.entity';
 import { BusinessPlanEntity } from './entities/business-plan.entity';
 import { ImmobilisationEntity } from './entities/immobilisation.entity';
+import { StockArticleEntity } from './entities/stock-article.entity';
+import { StockMouvementEntity } from './entities/stock-mouvement.entity';
 
 import { SequenceService } from './common/services/sequence.service';
 import { AuditLogService } from './common/services/audit-log.service';
@@ -59,6 +61,8 @@ import { BusinessPlanService } from './modules/business-plan/business-plan.servi
 import { AuditController } from './modules/audit/audit.controller';
 import { ImmobilisationsController } from './modules/immobilisations/immobilisations.controller';
 import { ImmobilisationsService } from './modules/immobilisations/immobilisations.service';
+import { StocksController } from './modules/stocks/stocks.controller';
+import { StocksService } from './modules/stocks/stocks.service';
 
 @Module({
   imports: [
@@ -84,6 +88,8 @@ import { ImmobilisationsService } from './modules/immobilisations/immobilisation
       BankStatementLineEntity,
       BusinessPlanEntity,
       ImmobilisationEntity,
+      StockArticleEntity,
+      StockMouvementEntity,
     ]),
     AuthModule,
   ],
@@ -101,6 +107,7 @@ import { ImmobilisationsService } from './modules/immobilisations/immobilisation
     BusinessPlanController,
     AuditController,
     ImmobilisationsController,
+    StocksController,
   ],
   providers: [
     SequenceService,
@@ -119,6 +126,7 @@ import { ImmobilisationsService } from './modules/immobilisations/immobilisation
     AiService,
     BusinessPlanService,
     ImmobilisationsService,
+    StocksService,
     { provide: AI_PROVIDER, useClass: GeminiProvider },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

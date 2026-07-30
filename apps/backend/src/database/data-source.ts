@@ -20,6 +20,8 @@ import { InviteTokenEntity } from '../entities/invite-token.entity';
 import { BankStatementLineEntity } from '../entities/bank-statement-line.entity';
 import { BusinessPlanEntity } from '../entities/business-plan.entity';
 import { ImmobilisationEntity } from '../entities/immobilisation.entity';
+import { StockArticleEntity } from '../entities/stock-article.entity';
+import { StockMouvementEntity } from '../entities/stock-mouvement.entity';
 
 dotenv.config();
 
@@ -61,6 +63,8 @@ export const dataSourceOptions: DataSourceOptions = {
     BankStatementLineEntity,
     BusinessPlanEntity,
     ImmobilisationEntity,
+    StockArticleEntity,
+    StockMouvementEntity,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false,

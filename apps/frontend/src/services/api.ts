@@ -6,6 +6,7 @@ import {
   ClientRiskReport, SupplierAlertReport, FinancialVariationExplanation,
   BusinessPlan, CreateBusinessPlanDto, SuggestedHypotheses, CompanyProfileSuggestion,
   AuditLogPage, Immobilisation, CreateImmobilisationDto, ImmobilisationSynthese,
+  StockArticle, StockArticleDetail, CreateArticleDto, CreateMouvementDto, StockSynthese,
 } from '@financepro/shared';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -220,6 +221,14 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ year }),
     }),
+
+  getStockArticles: () => request<StockArticle[]>('/stocks/articles'),
+  getStockArticle: (id: string) => request<StockArticleDetail>(`/stocks/articles/${id}`),
+  createStockArticle: (dto: CreateArticleDto) =>
+    request<StockArticle>('/stocks/articles', { method: 'POST', body: JSON.stringify(dto) }),
+  createStockMouvement: (dto: CreateMouvementDto) =>
+    request<unknown>('/stocks/mouvements', { method: 'POST', body: JSON.stringify(dto) }),
+  getStockSynthese: () => request<StockSynthese>('/stocks/synthese'),
 
   getBusinessPlans: () => request<BusinessPlan[]>('/business-plan'),
   getBusinessPlan: (id: string) => request<BusinessPlan>(`/business-plan/${id}`),

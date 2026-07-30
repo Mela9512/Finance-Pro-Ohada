@@ -19,6 +19,7 @@ import { InvoicingModule } from './components/modules/InvoicingModule';
 import { ReportsModule } from './components/modules/ReportsModule';
 import { FiscaliteModule } from './components/modules/FiscaliteModule';
 import { ImmobilisationsModule } from './components/modules/ImmobilisationsModule';
+import { StocksModule } from './components/modules/StocksModule';
 import { BudgetModule } from './components/modules/BudgetModule';
 import { AIModule } from './components/modules/AIModule';
 import { BusinessPlanModule } from './components/modules/BusinessPlanModule';
@@ -69,6 +70,7 @@ const AppShell: React.FC = () => {
       case 'reports': return 'États financiers OHADA (Bilan & Compte de Résultat)';
       case 'fiscalite': return 'Fiscalité — Déclarations TVA & AIR';
       case 'immobilisations': return 'Immobilisations & amortissements';
+      case 'stocks': return 'Stocks & inventaire — valorisation CUMP';
       case 'budget': return 'Budget prévisionnel & suivi des écarts';
       case 'ai': return 'Assistant IA — analyses basées sur vos données réelles';
       case 'business-plan': return 'Business Plan & levée de fonds';
@@ -104,6 +106,7 @@ const AppShell: React.FC = () => {
           {activeModule === 'reports' && <ReportsModule />}
           {activeModule === 'fiscalite' && <FiscaliteModule />}
           {activeModule === 'immobilisations' && <ImmobilisationsModule />}
+          {activeModule === 'stocks' && <StocksModule />}
           {activeModule === 'budget' && <BudgetModule />}
           {activeModule === 'ai' && <AIModule />}
           {activeModule === 'business-plan' && <BusinessPlanModule />}
