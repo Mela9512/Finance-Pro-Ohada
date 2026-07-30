@@ -17,11 +17,13 @@ import { ClientsModule } from './components/modules/ClientsModule';
 import { SuppliersModule } from './components/modules/SuppliersModule';
 import { InvoicingModule } from './components/modules/InvoicingModule';
 import { ReportsModule } from './components/modules/ReportsModule';
+import { FiscaliteModule } from './components/modules/FiscaliteModule';
 import { BudgetModule } from './components/modules/BudgetModule';
 import { AIModule } from './components/modules/AIModule';
 import { BusinessPlanModule } from './components/modules/BusinessPlanModule';
 import { AdminModule } from './components/modules/AdminModule';
 import { AuthModule } from './components/modules/AuthModule';
+import { AuditModule } from './components/modules/AuditModule';
 import { LandingPage } from './components/LandingPage';
 import { useAuth } from './context/AuthContext';
 
@@ -64,11 +66,13 @@ const AppShell: React.FC = () => {
       case 'suppliers': return 'Gestion des fournisseurs & dettes';
       case 'invoicing': return 'Facturation & retenues fiscales (TVA/AIR)';
       case 'reports': return 'États financiers OHADA (Bilan & Compte de Résultat)';
+      case 'fiscalite': return 'Fiscalité — Déclarations TVA & AIR';
       case 'budget': return 'Budget prévisionnel & suivi des écarts';
       case 'ai': return 'Assistant IA — analyses basées sur vos données réelles';
       case 'business-plan': return 'Business Plan & levée de fonds';
       case 'admin': return 'Administration & paramètres d\'entreprise';
       case 'auth': return 'Authentification JWT & sécurité RBAC';
+      case 'audit': return "Piste d'audit — historique des actions sensibles";
     }
   };
 
@@ -78,7 +82,7 @@ const AppShell: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8F7FF] text-slate-900">
-      <Sidebar activeModule={activeModule} onSelectModule={setActiveModule} />
+      <Sidebar activeModule={activeModule} onSelectModule={setActiveModule} userRole={user.role} />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <Navbar
@@ -96,11 +100,13 @@ const AppShell: React.FC = () => {
           {activeModule === 'suppliers' && <SuppliersModule />}
           {activeModule === 'invoicing' && <InvoicingModule />}
           {activeModule === 'reports' && <ReportsModule />}
+          {activeModule === 'fiscalite' && <FiscaliteModule />}
           {activeModule === 'budget' && <BudgetModule />}
           {activeModule === 'ai' && <AIModule />}
           {activeModule === 'business-plan' && <BusinessPlanModule />}
           {activeModule === 'admin' && <AdminModule />}
           {activeModule === 'auth' && <AuthModule currentUser={user} />}
+          {activeModule === 'audit' && (user.role === 'ADMIN' || user.role === 'COMPTABLE') && <AuditModule />}
         </main>
       </div>
 

@@ -2,8 +2,9 @@ import React from 'react';
 import {
   LayoutDashboard, BookOpenCheck, Wallet, Users, Truck,
   FileSpreadsheet, BarChart3, Settings, ShieldCheck, Target,
-  Bot, Rocket, ChevronRight
+  Bot, Rocket, ChevronRight, Landmark, FileClock
 } from 'lucide-react';
+import { UserRole } from '@financepro/shared';
 
 export type ModuleId =
   | 'dashboard'
@@ -13,15 +14,18 @@ export type ModuleId =
   | 'suppliers'
   | 'invoicing'
   | 'reports'
+  | 'fiscalite'
   | 'budget'
   | 'ai'
   | 'business-plan'
   | 'admin'
-  | 'auth';
+  | 'auth'
+  | 'audit';
 
 interface SidebarProps {
   activeModule: ModuleId;
   onSelectModule: (module: ModuleId) => void;
+  userRole: UserRole;
 }
 
 const menuGroups = [
@@ -37,6 +41,7 @@ const menuGroups = [
       { id: 'accounting' as ModuleId, label: 'Comptabilité SYSCOHADA', icon: BookOpenCheck },
       { id: 'treasury' as ModuleId, label: 'Trésorerie & Banque', icon: Wallet },
       { id: 'reports' as ModuleId, label: 'États Financiers OHADA', icon: BarChart3 },
+      { id: 'fiscalite' as ModuleId, label: 'Fiscalité (TVA / AIR)', icon: Landmark },
       { id: 'budget' as ModuleId, label: 'Budget Prévisionnel', icon: Target },
     ],
   },
@@ -60,11 +65,19 @@ const menuGroups = [
     items: [
       { id: 'admin' as ModuleId, label: 'Administration & Rôles', icon: Settings },
       { id: 'auth' as ModuleId, label: 'Sécurité & Accès', icon: ShieldCheck },
+      { id: 'audit' as ModuleId, label: "Piste d'audit", icon: FileClock, roles: ['ADMIN', 'COMPTABLE'] as UserRole[] },
     ],
   },
 ];
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule, userRole }) => {
+  const visibleGroups = menuGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !('roles' in item) || (item as { roles: UserRole[] }).roles.includes(userRole)),
+    }))
+    .filter((group) => group.items.length > 0);
+
   return (
     <aside
       className="w-64 flex flex-col select-none shadow-2xl relative z-20"
@@ -90,7 +103,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeModule, onSelectModule }
 
       {/* Navigation groupée */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
-        {menuGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.label}>
             <div
               className="text-[9px] font-bold tracking-widest px-3 mb-2"

@@ -5,6 +5,7 @@ import {
   ExtractedInvoiceDraft, AccountSuggestion, AnomalyReport, CashflowForecast,
   ClientRiskReport, SupplierAlertReport, FinancialVariationExplanation,
   BusinessPlan, CreateBusinessPlanDto, SuggestedHypotheses, CompanyProfileSuggestion,
+  AuditLogPage,
 } from '@financepro/shared';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -196,6 +197,15 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ companyName, sector, legalFormOptions, taxRegimeOptions, moduleOptions }),
     }),
+
+  getAuditLog: (params: { page?: number; limit?: number; action?: string; entityType?: string; userId?: string; from?: string; to?: string } = {}) => {
+    const qs = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== '') qs.set(k, String(v));
+    });
+    return request<AuditLogPage>(`/audit?${qs.toString()}`);
+  },
+  getAuditActions: () => request<string[]>('/audit/actions'),
 
   getBusinessPlans: () => request<BusinessPlan[]>('/business-plan'),
   getBusinessPlan: (id: string) => request<BusinessPlan>(`/business-plan/${id}`),

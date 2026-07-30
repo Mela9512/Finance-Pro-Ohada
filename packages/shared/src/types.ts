@@ -405,6 +405,25 @@ export interface CompanyProfileSuggestion {
   rationale: string;
 }
 
+export interface AuditLogEntry {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  action: string;
+  entityType: string | null;
+  entityId: string | null;
+  metadata: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface AuditLogPage {
+  items: AuditLogEntry[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;

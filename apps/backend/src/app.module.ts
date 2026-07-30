@@ -55,6 +55,7 @@ import { GeminiProvider } from './modules/ai/gemini-provider.service';
 import { AI_PROVIDER } from './modules/ai/ai-provider.interface';
 import { BusinessPlanController } from './modules/business-plan/business-plan.controller';
 import { BusinessPlanService } from './modules/business-plan/business-plan.service';
+import { AuditController } from './modules/audit/audit.controller';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { BusinessPlanService } from './modules/business-plan/business-plan.servi
     BudgetController,
     AiController,
     BusinessPlanController,
+    AuditController,
   ],
   providers: [
     SequenceService,

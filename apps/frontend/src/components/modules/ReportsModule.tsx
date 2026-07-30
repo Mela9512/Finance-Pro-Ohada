@@ -1,17 +1,14 @@
 ﻿import React, { useEffect, useState } from 'react';
 import { Download, Sparkles } from 'lucide-react';
-import { FinancialReportBilan, CompteDeResultat, FiscalDeclaration, FinancialVariationExplanation } from '@financepro/shared';
+import { FinancialReportBilan, CompteDeResultat, FinancialVariationExplanation } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
 
 const now = new Date();
 
 export const ReportsModule: React.FC = () => {
-  const [reportType, setReportType] = useState<'bilan' | 'compte-resultat' | 'fiscal'>('bilan');
+  const [reportType, setReportType] = useState<'bilan' | 'compte-resultat'>('bilan');
   const [bilanData, setBilanData] = useState<FinancialReportBilan | null>(null);
   const [crData, setCrData] = useState<CompteDeResultat | null>(null);
-  const [fiscalYear, setFiscalYear] = useState(now.getFullYear());
-  const [fiscalMonth, setFiscalMonth] = useState(now.getMonth() + 1);
-  const [fiscalData, setFiscalData] = useState<FiscalDeclaration | null>(null);
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [variation, setVariation] = useState<FinancialVariationExplanation | null>(null);
   const [variationLoading, setVariationLoading] = useState(false);
@@ -27,12 +24,6 @@ export const ReportsModule: React.FC = () => {
       .then(setVariation)
       .finally(() => setVariationLoading(false));
   };
-
-  useEffect(() => {
-    if (reportType === 'fiscal') {
-      api.getFiscalDeclaration(fiscalYear, fiscalMonth).then(setFiscalData);
-    }
-  }, [reportType, fiscalYear, fiscalMonth]);
 
   const formatMoney = (val: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
@@ -78,15 +69,6 @@ export const ReportsModule: React.FC = () => {
           Compte de Résultat (SIG)
         </button>
 
-        <button
-          onClick={() => setReportType('fiscal')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-            reportType === 'fiscal' ? 'bg-[#6B4EFF] text-white shadow-md' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-          }`}
-        >
-          Déclaration Fiscale (TVA / AIR)
-        </button>
-
         <div className="flex-1" />
 
         {reportType === 'bilan' && (
@@ -101,15 +83,6 @@ export const ReportsModule: React.FC = () => {
         {reportType === 'compte-resultat' && (
           <button
             onClick={() => handleDownload(() => api.downloadCompteResultatPdf())}
-            className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
-          >
-            <Download className="w-4 h-4" />
-            <span>Télécharger PDF</span>
-          </button>
-        )}
-        {reportType === 'fiscal' && (
-          <button
-            onClick={() => handleDownload(() => api.downloadFiscalDeclarationPdf(fiscalYear, fiscalMonth))}
             className="flex items-center space-x-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
           >
             <Download className="w-4 h-4" />
@@ -303,73 +276,6 @@ export const ReportsModule: React.FC = () => {
         </div>
       )}
 
-      {reportType === 'fiscal' && (
-        <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <h3 className="text-sm font-bold text-[#1E1060] uppercase tracking-wider">Déclaration Fiscale Mensuelle Indicative</h3>
-            <div className="flex items-center space-x-2">
-              <select
-                value={fiscalMonth}
-                onChange={(e) => setFiscalMonth(Number(e.target.value))}
-                className="glass-input rounded-lg px-3 py-1.5 text-xs"
-              >
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                  <option key={m} value={m}>
-                    {new Date(2000, m - 1, 1).toLocaleDateString('fr-FR', { month: 'long' })}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={fiscalYear}
-                onChange={(e) => setFiscalYear(Number(e.target.value))}
-                className="glass-input rounded-lg px-3 py-1.5 text-xs"
-              >
-                {[now.getFullYear() - 1, now.getFullYear(), now.getFullYear() + 1].map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {!fiscalData ? (
-            <div className="text-slate-400 text-xs italic">Chargement...</div>
-          ) : (
-            <div className="space-y-4 max-w-2xl">
-              <div>
-                <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1 mb-2">
-                  TVA — {fiscalData.periodLabel}
-                </div>
-                <div className="space-y-2 font-mono text-xs">
-                  <div className="flex justify-between"><span className="text-slate-400">TVA collectée (compte 443)</span><span className="text-white font-bold">{formatMoney(fiscalData.tvaCollectee)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-400">TVA récupérable (compte 445)</span><span className="text-white font-bold">{formatMoney(fiscalData.tvaRecuperable)}</span></div>
-                  <div className={`flex justify-between p-2.5 rounded border font-bold ${fiscalData.tvaAPayer >= 0 ? 'bg-rose-950/60 border-rose-800 text-rose-300' : 'bg-emerald-950/60 border-emerald-800 text-emerald-300'}`}>
-                    <span>{fiscalData.tvaAPayer >= 0 ? 'TVA à reverser' : 'Crédit de TVA à reporter'}</span>
-                    <span>{formatMoney(Math.abs(fiscalData.tvaAPayer))}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <div className="font-bold text-slate-300 uppercase text-[10px] tracking-wider border-b border-[#EDE9FE] pb-1 mb-2">
-                  AIR (Retenue à la Source)
-                </div>
-                <div className="space-y-2 font-mono text-xs">
-                  <div className="flex justify-between"><span className="text-slate-400">Retenues subies sur ventes (à valoir sur l'IS)</span><span className="text-white font-bold">{formatMoney(fiscalData.airSurVentes)}</span></div>
-                  <div className="flex justify-between"><span className="text-slate-400">Retenues opérées sur achats</span><span className="text-white font-bold">{formatMoney(fiscalData.airSurAchats)}</span></div>
-                  <div className="flex justify-between p-2.5 rounded border bg-indigo-950/60 border-indigo-800 text-indigo-300 font-bold">
-                    <span>AIR à reverser au Trésor</span>
-                    <span>{formatMoney(fiscalData.airTotal)}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-[10px] text-slate-500 italic">
-                Déclaration indicative générée à partir du Grand Livre et des factures validées — à vérifier avant transmission à l'administration fiscale.
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 };
