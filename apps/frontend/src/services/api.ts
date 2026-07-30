@@ -5,7 +5,7 @@ import {
   ExtractedInvoiceDraft, AccountSuggestion, AnomalyReport, CashflowForecast,
   ClientRiskReport, SupplierAlertReport, FinancialVariationExplanation,
   BusinessPlan, CreateBusinessPlanDto, SuggestedHypotheses, CompanyProfileSuggestion,
-  AuditLogPage,
+  AuditLogPage, Immobilisation, CreateImmobilisationDto, ImmobilisationSynthese,
 } from '@financepro/shared';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -206,6 +206,20 @@ export const api = {
     return request<AuditLogPage>(`/audit?${qs.toString()}`);
   },
   getAuditActions: () => request<string[]>('/audit/actions'),
+
+  getImmobilisations: () => request<Immobilisation[]>('/immobilisations'),
+  getImmobilisation: (id: string) => request<Immobilisation>(`/immobilisations/${id}`),
+  createImmobilisation: (dto: CreateImmobilisationDto) =>
+    request<Immobilisation>('/immobilisations', { method: 'POST', body: JSON.stringify(dto) }),
+  cederImmobilisation: (id: string, dto: { dateCession: string; valeurCession: number }) =>
+    request<Immobilisation>(`/immobilisations/${id}/cession`, { method: 'POST', body: JSON.stringify(dto) }),
+  getImmobilisationsSynthese: (year: number) =>
+    request<ImmobilisationSynthese>(`/immobilisations/synthese?year=${year}`),
+  genererDotationImmobilisations: (year: number) =>
+    request<{ entry: unknown; totalDotation: number; nbImmobilisations: number }>('/immobilisations/generer-dotation', {
+      method: 'POST',
+      body: JSON.stringify({ year }),
+    }),
 
   getBusinessPlans: () => request<BusinessPlan[]>('/business-plan'),
   getBusinessPlan: (id: string) => request<BusinessPlan>(`/business-plan/${id}`),

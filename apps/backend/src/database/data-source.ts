@@ -19,6 +19,7 @@ import { PasswordResetTokenEntity } from '../entities/password-reset-token.entit
 import { InviteTokenEntity } from '../entities/invite-token.entity';
 import { BankStatementLineEntity } from '../entities/bank-statement-line.entity';
 import { BusinessPlanEntity } from '../entities/business-plan.entity';
+import { ImmobilisationEntity } from '../entities/immobilisation.entity';
 
 dotenv.config();
 
@@ -59,6 +60,7 @@ export const dataSourceOptions: DataSourceOptions = {
     InviteTokenEntity,
     BankStatementLineEntity,
     BusinessPlanEntity,
+    ImmobilisationEntity,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false,

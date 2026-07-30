@@ -25,6 +25,7 @@ import { BudgetEntity } from './entities/budget.entity';
 import { InviteTokenEntity } from './entities/invite-token.entity';
 import { BankStatementLineEntity } from './entities/bank-statement-line.entity';
 import { BusinessPlanEntity } from './entities/business-plan.entity';
+import { ImmobilisationEntity } from './entities/immobilisation.entity';
 
 import { SequenceService } from './common/services/sequence.service';
 import { AuditLogService } from './common/services/audit-log.service';
@@ -56,6 +57,8 @@ import { AI_PROVIDER } from './modules/ai/ai-provider.interface';
 import { BusinessPlanController } from './modules/business-plan/business-plan.controller';
 import { BusinessPlanService } from './modules/business-plan/business-plan.service';
 import { AuditController } from './modules/audit/audit.controller';
+import { ImmobilisationsController } from './modules/immobilisations/immobilisations.controller';
+import { ImmobilisationsService } from './modules/immobilisations/immobilisations.service';
 
 @Module({
   imports: [
@@ -80,6 +83,7 @@ import { AuditController } from './modules/audit/audit.controller';
       InviteTokenEntity,
       BankStatementLineEntity,
       BusinessPlanEntity,
+      ImmobilisationEntity,
     ]),
     AuthModule,
   ],
@@ -96,6 +100,7 @@ import { AuditController } from './modules/audit/audit.controller';
     AiController,
     BusinessPlanController,
     AuditController,
+    ImmobilisationsController,
   ],
   providers: [
     SequenceService,
@@ -113,6 +118,7 @@ import { AuditController } from './modules/audit/audit.controller';
     BudgetService,
     AiService,
     BusinessPlanService,
+    ImmobilisationsService,
     { provide: AI_PROVIDER, useClass: GeminiProvider },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

@@ -424,6 +424,53 @@ export interface AuditLogPage {
   limit: number;
 }
 
+export type ImmobilisationStatus = 'EN_SERVICE' | 'CEDE' | 'REFORME';
+
+export interface AmortissementRow {
+  year: number;
+  dotation: number;
+  cumulAmortissements: number;
+  valeurNetteComptable: number;
+}
+
+export interface Immobilisation {
+  id: string;
+  companyId: string;
+  code: string;
+  label: string;
+  accountCode: string;
+  dateAcquisition: string;
+  dateMiseEnService: string;
+  valeurAcquisitionHT: number;
+  valeurResiduelle: number;
+  dureeAmortissementAns: number;
+  status: ImmobilisationStatus;
+  dateCession?: string;
+  valeurCession?: number;
+  exercicesDotationGeneres?: number[];
+  createdBy: string;
+  createdAt: string;
+  schedule: AmortissementRow[];
+}
+
+export interface CreateImmobilisationDto {
+  label: string;
+  accountCode: string;
+  dateAcquisition: string;
+  dateMiseEnService: string;
+  valeurAcquisitionHT: number;
+  valeurResiduelle?: number;
+  dureeAmortissementAns: number;
+}
+
+export interface ImmobilisationSynthese {
+  year: number;
+  valeurBrute: number;
+  dotationExercice: number;
+  cumulAmortissements: number;
+  valeurNetteComptable: number;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;
