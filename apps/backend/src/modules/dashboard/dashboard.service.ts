@@ -2,12 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DashboardMetrics } from '@financepro/shared';
-import { CustomerEntity } from '../../entities/customer.entity';
-import { SupplierEntity } from '../../entities/supplier.entity';
 import { TreasuryAccountEntity } from '../../entities/treasury-account.entity';
 import { TreasuryTransactionEntity } from '../../entities/treasury-transaction.entity';
 import { JournalEntryEntity } from '../../entities/journal-entry.entity';
 import { JournalLineEntity } from '../../entities/journal-line.entity';
+import { InvoiceEntity } from '../../entities/invoice.entity';
 import { ReportsService } from '../reports/reports.service';
 
 function monthKey(date: Date): string {
@@ -17,14 +16,25 @@ function monthKey(date: Date): string {
 @Injectable()
 export class DashboardService {
   constructor(
-    @InjectRepository(CustomerEntity) private readonly customerRepo: Repository<CustomerEntity>,
-    @InjectRepository(SupplierEntity) private readonly supplierRepo: Repository<SupplierEntity>,
     @InjectRepository(TreasuryAccountEntity) private readonly treasuryAccountRepo: Repository<TreasuryAccountEntity>,
     @InjectRepository(TreasuryTransactionEntity) private readonly txRepo: Repository<TreasuryTransactionEntity>,
     @InjectRepository(JournalEntryEntity) private readonly entryRepo: Repository<JournalEntryEntity>,
     @InjectRepository(JournalLineEntity) private readonly lineRepo: Repository<JournalLineEntity>,
+    @InjectRepository(InvoiceEntity) private readonly invoiceRepo: Repository<InvoiceEntity>,
     private readonly reportsService: ReportsService,
   ) {}
+
+  /** Encours réel (factures VALIDE/PARTIEL non soldées), pas le champ balance jamais mis à jour. */
+  private async outstandingTotal(companyId: string, type: 'VENTE' | 'ACHAT'): Promise<number> {
+    const { total } = await this.invoiceRepo
+      .createQueryBuilder('invoice')
+      .select('COALESCE(SUM(invoice.totalTTC - invoice.amountPaid), 0)', 'total')
+      .where('invoice.companyId = :companyId', { companyId })
+      .andWhere('invoice.type = :type', { type })
+      .andWhere("invoice.status IN ('VALIDE', 'PARTIEL')")
+      .getRawOne<{ total: string }>();
+    return Number(total) || 0;
+  }
 
   /** Une seule requête groupée par mois au lieu d'une requête par mois de la fenêtre. */
   private async salesByMonth(companyId: string, fromKey: string): Promise<Map<string, number>> {
@@ -66,19 +76,17 @@ export class DashboardService {
     const sixMonthsAgoDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
     const sixMonthsAgoKey = monthKey(sixMonthsAgoDate);
 
-    const [customers, suppliers, treasuryAccounts, recentEntries, { bilan, compteDeResultat }, salesMap, treasuryMap] = await Promise.all([
-      this.customerRepo.find({ where: { companyId } }),
-      this.supplierRepo.find({ where: { companyId } }),
+    const [treasuryAccounts, recentEntries, { bilan, compteDeResultat }, salesMap, treasuryMap, totalCreances, totalDettes] = await Promise.all([
       this.treasuryAccountRepo.find({ where: { companyId } }),
       this.entryRepo.find({ where: { companyId }, relations: ['lines'], order: { createdAt: 'DESC' }, take: 5 }),
       this.reportsService.getBilanAndCompteDeResultat(companyId),
       this.salesByMonth(companyId, previousKey),
       this.treasuryFlowsByMonth(companyId, sixMonthsAgoKey),
+      this.outstandingTotal(companyId, 'VENTE'),
+      this.outstandingTotal(companyId, 'ACHAT'),
     ]);
 
     const totalTresorerie = treasuryAccounts.reduce((s, a) => s + Number(a.balance), 0);
-    const totalCreances = customers.reduce((s, c) => s + Number(c.balance), 0);
-    const totalDettes = suppliers.reduce((s, sup) => s + Number(sup.balance), 0);
 
     const sumNet = (items: { net: number }[]) => items.reduce((s, i) => s + i.net, 0);
     const bfr = sumNet(bilan.actif.circulant) - sumNet(bilan.passif.passifCirculant);
