@@ -4,7 +4,7 @@ import {
   Budget, BudgetComparisonRow, FiscalDeclaration, ImportBankStatementResult,
   ExtractedInvoiceDraft, AccountSuggestion, AnomalyReport, CashflowForecast,
   ClientRiskReport, SupplierAlertReport, FinancialVariationExplanation,
-  BusinessPlan, CreateBusinessPlanDto,
+  BusinessPlan, CreateBusinessPlanDto, SuggestedHypotheses,
 } from '@financepro/shared';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -191,5 +191,7 @@ export const api = {
   createBusinessPlan: (dto: CreateBusinessPlanDto) =>
     request<BusinessPlan>('/business-plan', { method: 'POST', body: JSON.stringify(dto) }),
   deleteBusinessPlan: (id: string) => request<void>(`/business-plan/${id}`, { method: 'DELETE' }),
+  suggestBusinessPlanHypotheses: (title: string, description: string) =>
+    request<SuggestedHypotheses>('/business-plan/suggest-hypotheses', { method: 'POST', body: JSON.stringify({ title, description }) }),
   downloadBusinessPlanPdf: (id: string) => downloadFile(`/business-plan/${id}/pdf`, `business-plan-${id}.pdf`),
 };

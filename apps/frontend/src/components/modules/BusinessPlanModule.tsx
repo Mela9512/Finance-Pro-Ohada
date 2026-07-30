@@ -1,7 +1,29 @@
 ﻿import React, { useEffect, useState } from 'react';
-import { Rocket, Plus, Download, Trash2, ArrowLeft, TrendingUp, Gauge } from 'lucide-react';
+import { Rocket, Plus, Download, Trash2, ArrowLeft, TrendingUp, Gauge, Sparkles } from 'lucide-react';
 import { BusinessPlan, CreateBusinessPlanDto } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
+
+function renderInlineBold(text: string) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') ? (
+      <strong key={i} className="font-bold text-[#1E1060]">{part.slice(2, -2)}</strong>
+    ) : (
+      <React.Fragment key={i}>{part}</React.Fragment>
+    ),
+  );
+}
+
+function renderNarrative(narrative: string) {
+  const lines = narrative.split('\n').map((l) => l.trim()).filter(Boolean);
+  return lines.map((line, i) =>
+    line.startsWith('## ') ? (
+      <h4 key={i} className="text-sm font-extrabold text-[#1E1060] mt-4 first:mt-0">{line.substring(3)}</h4>
+    ) : (
+      <p key={i} className="text-xs text-slate-600 leading-relaxed">{renderInlineBold(line)}</p>
+    ),
+  );
+}
 
 const emptyForm: CreateBusinessPlanDto = {
   title: '',
@@ -28,8 +50,34 @@ export const BusinessPlanModule: React.FC = () => {
   const [form, setForm] = useState<CreateBusinessPlanDto>(emptyForm);
   const [creating, setCreating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestionRationale, setSuggestionRationale] = useState<string | null>(null);
 
   const loadPlans = () => api.getBusinessPlans().then(setPlans);
+
+  const handleSuggestHypotheses = async () => {
+    if (!form.title.trim() || !form.projectDescription.trim()) return;
+    setSuggesting(true);
+    setSuggestionRationale(null);
+    try {
+      const suggestion = await api.suggestBusinessPlanHypotheses(form.title, form.projectDescription);
+      setForm({
+        ...form,
+        investmentAmount: suggestion.investmentAmount,
+        projectionYears: suggestion.projectionYears,
+        year1Revenue: suggestion.year1Revenue,
+        revenueGrowthRatePercent: suggestion.revenueGrowthRatePercent,
+        variableCostPercent: suggestion.variableCostPercent,
+        fixedCostsAnnual: suggestion.fixedCostsAnnual,
+        discountRatePercent: suggestion.discountRatePercent,
+      });
+      setSuggestionRationale(suggestion.rationale);
+    } catch (err) {
+      setErrorMessage(err instanceof ApiError ? err.message : 'Erreur lors de la suggestion IA');
+    } finally {
+      setSuggesting(false);
+    }
+  };
 
   useEffect(() => {
     loadPlans();
@@ -142,10 +190,10 @@ export const BusinessPlanModule: React.FC = () => {
           </div>
         </div>
 
-        <div className="glass-card rounded-xl p-6 space-y-3">
-          <h3 className="text-sm font-bold text-[#1E1060]">Résumé Exécutif (généré par IA)</h3>
-          <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{selected.narrative}</p>
-          <p className="text-[10px] text-slate-500 italic">
+        <div className="bg-white rounded-xl p-6 space-y-2 border border-[#EDE9FE] shadow-sm">
+          <h3 className="text-sm font-bold text-[#1E1060] mb-2">Business Plan Détaillé (généré par IA)</h3>
+          {renderNarrative(selected.narrative)}
+          <p className="text-[10px] text-slate-500 italic pt-2">
             Le score de crédibilité est un indicateur interne calculé à partir de vos données réelles et de vos hypothèses — ce n'est pas une notation bancaire officielle.
           </p>
         </div>
@@ -227,6 +275,22 @@ export const BusinessPlanModule: React.FC = () => {
                 <label className="block text-xs font-medium text-slate-300 mb-1">Description du projet</label>
                 <textarea value={form.projectDescription} onChange={(e) => setForm({ ...form, projectDescription: e.target.value })} required rows={3} className="w-full glass-input rounded-lg px-3 py-2 text-xs" placeholder="Décrivez le projet, le marché visé, la stratégie..." />
               </div>
+
+              <button
+                type="button"
+                onClick={handleSuggestHypotheses}
+                disabled={suggesting || !form.title.trim() || !form.projectDescription.trim()}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#F3F0FF] hover:bg-[#EDE9FE] disabled:opacity-50 text-[#6B4EFF] rounded-lg text-xs font-bold border border-[#DDD6FE]"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                {suggesting ? 'Analyse en cours...' : "Suggérer les hypothèses avec l'IA (depuis le titre et la description)"}
+              </button>
+              {suggestionRationale && (
+                <p className="text-[10px] text-[#6B4EFF] bg-[#F8F7FF] rounded-lg p-2.5 border border-[#EDE9FE]">
+                  {suggestionRationale} — Valeurs pré-remplies ci-dessous, à ajuster selon votre connaissance réelle du projet.
+                </p>
+              )}
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-slate-300 mb-1">Investissement recherché (XAF)</label>

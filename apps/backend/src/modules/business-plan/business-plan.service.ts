@@ -15,6 +15,35 @@ import {
   computeCreditScore,
 } from './financial-calculations';
 
+export interface SuggestedHypotheses {
+  investmentAmount: number;
+  projectionYears: number;
+  year1Revenue: number;
+  revenueGrowthRatePercent: number;
+  variableCostPercent: number;
+  fixedCostsAnnual: number;
+  discountRatePercent: number;
+  rationale: string;
+}
+
+const HYPOTHESES_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    investmentAmount: { type: 'NUMBER', description: 'Investissement initial typique en XAF pour ce type de projet' },
+    projectionYears: { type: 'INTEGER', description: 'Durée de projection raisonnable, entre 3 et 5' },
+    year1Revenue: { type: 'NUMBER', description: "Chiffre d'affaires prévisionnel année 1 en XAF" },
+    revenueGrowthRatePercent: { type: 'NUMBER', description: 'Taux de croissance annuel typique, en %' },
+    variableCostPercent: { type: 'NUMBER', description: 'Charges variables en % du CA, typique pour ce secteur' },
+    fixedCostsAnnual: { type: 'NUMBER', description: 'Charges fixes annuelles typiques en XAF' },
+    discountRatePercent: { type: 'NUMBER', description: "Taux d'actualisation raisonnable pour ce contexte, en %" },
+    rationale: { type: 'STRING', description: 'Justification en 2-3 phrases de ces ordres de grandeur' },
+  },
+  required: [
+    'investmentAmount', 'projectionYears', 'year1Revenue', 'revenueGrowthRatePercent',
+    'variableCostPercent', 'fixedCostsAnnual', 'discountRatePercent', 'rationale',
+  ],
+};
+
 @Injectable()
 export class BusinessPlanService {
   constructor(
@@ -24,6 +53,22 @@ export class BusinessPlanService {
     private readonly aiService: AiService,
     @Inject(AI_PROVIDER) private readonly aiProvider: AiProvider,
   ) {}
+
+  /**
+   * Propose des ordres de grandeur TYPIQUES pour ce type de projet à partir du titre/description
+   * fournis par l'utilisateur. Ce sont des estimations indicatives à ajuster, jamais des données
+   * réelles de l'entreprise — l'IA le précise explicitement dans sa justification.
+   */
+  async suggestHypotheses(title: string, description: string): Promise<SuggestedHypotheses> {
+    const prompt =
+      `Pour un projet intitulé "${title}", décrit ainsi : "${description}", propose des hypothèses ` +
+      "financières RAISONNABLES et TYPIQUES pour ce type d'activité dans un contexte d'Afrique " +
+      "francophone (zone OHADA), en francs CFA (XAF). Ce sont des ordres de grandeur indicatifs " +
+      "à ajuster par le porteur de projet, PAS des données réelles d'une entreprise existante. " +
+      'Réponds uniquement avec les champs demandés par le schéma.';
+
+    return this.aiProvider.generateJson<SuggestedHypotheses>(prompt, HYPOTHESES_SCHEMA);
+  }
 
   getBusinessPlans(companyId: string): Promise<BusinessPlanEntity[]> {
     return this.repo.find({ where: { companyId }, order: { createdAt: 'DESC' } });
@@ -116,20 +161,31 @@ export class BusinessPlanService {
     creditScore: number,
   ): Promise<string> {
     const prompt =
-      `Rédige un résumé exécutif de business plan en français pour "${companyName}", pour le projet suivant : "${dto.projectDescription}".\n\n` +
+      `Rédige un business plan structuré et professionnel en français pour "${companyName}", pour le projet suivant : "${dto.projectDescription}".\n\n` +
       `Hypothèses fournies par le porteur de projet (prospectives, PAS des faits comptables) :\n` +
       `- Investissement recherché : ${dto.investmentAmount.toLocaleString('fr-FR')} XAF\n` +
       `- Chiffre d'affaires prévisionnel année 1 : ${dto.year1Revenue.toLocaleString('fr-FR')} XAF\n` +
       `- Croissance annuelle prévue : ${dto.revenueGrowthRatePercent}%\n` +
       `- Charges variables : ${dto.variableCostPercent}% du CA\n` +
-      `- Charges fixes annuelles : ${dto.fixedCostsAnnual.toLocaleString('fr-FR')} XAF\n\n` +
+      `- Charges fixes annuelles : ${dto.fixedCostsAnnual.toLocaleString('fr-FR')} XAF\n` +
+      `- Durée du projet : ${dto.projectionYears} an(s)\n\n` +
       `Indicateurs financiers déjà calculés (valeurs réelles, ne les recalcule pas, utilise-les telles quelles) :\n` +
       `- VAN (taux d'actualisation ${dto.discountRatePercent}%) : ${van.toLocaleString('fr-FR')} XAF\n` +
       `- TRI : ${tri !== null ? tri.toFixed(1) + '%' : 'non calculable avec ces hypothèses'}\n` +
       `- Seuil de rentabilité : ${Number.isFinite(seuilRentabilite) ? seuilRentabilite.toLocaleString('fr-FR') + ' XAF de CA annuel' : 'non atteignable avec ces hypothèses (charges variables trop élevées)'}\n` +
       `- Score de crédibilité indicatif : ${creditScore}/100\n\n` +
-      "Rédige 4-5 paragraphes : contexte du projet, stratégie financière, analyse des indicateurs ci-dessus (explique ce qu'ils signifient concrètement pour un banquier ou investisseur), et conclusion. " +
-      "N'invente AUCUN chiffre qui ne figure pas ci-dessus. Précise explicitement que le score de crédibilité est un indicateur interne, pas une notation bancaire officielle.";
+      'Structure la réponse EXACTEMENT avec ces 6 sections, chacune précédée d\'un titre commençant par "## " ' +
+      '(deux dièses puis un espace, sur sa propre ligne) suivi de 1 à 3 paragraphes de contenu concret et spécifique ' +
+      "au projet décrit (pas de généralités interchangeables d'un projet à l'autre) :\n" +
+      '## Résumé Exécutif\n' +
+      '## Le Projet et son Marché\n' +
+      '## Stratégie et Utilisation des Fonds\n' +
+      '## Analyse des Risques (Forces, Faiblesses, Opportunités, Menaces)\n' +
+      '## Analyse Financière\n' +
+      '## Conclusion et Recommandation\n\n' +
+      "N'invente AUCUN chiffre financier qui ne figure pas ci-dessus. Précise explicitement dans la conclusion que " +
+      'le score de crédibilité est un indicateur interne, pas une notation bancaire officielle. Sois concret : appuie-toi ' +
+      "sur les détails réels de la description du projet plutôt que sur des formulations génériques.";
 
     try {
       return await this.aiProvider.generateText(prompt);

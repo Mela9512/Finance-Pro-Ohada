@@ -254,8 +254,25 @@ export class PdfService {
     doc.fillColor('#000000');
     doc.moveDown(1);
 
-    doc.font('Helvetica-Bold').fontSize(11).text('Résumé exécutif');
-    doc.font('Helvetica').fontSize(9).text(plan.narrative, { width: 495 });
+    doc.font('Helvetica-Bold').fontSize(13).text('Business Plan Détaillé');
+    doc.moveDown(0.5);
+    const narrativeLines = plan.narrative.split('\n');
+    for (const line of narrativeLines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      if (trimmed.startsWith('## ')) {
+        doc.moveDown(0.5);
+        doc.font('Helvetica-Bold').fontSize(11).fillColor('#0f2d5e').text(trimmed.substring(3), { width: 495 });
+        doc.fillColor('#000000');
+        doc.moveDown(0.2);
+      } else {
+        // Retire les marqueurs markdown **gras** que le modèle ajoute parfois (ex: dans le SWOT) :
+        // pdfkit ne supporte pas le gras inline sans découper le texte en runs, donc on affiche du
+        // texte propre plutôt que des astérisques littéraux.
+        doc.font('Helvetica').fontSize(9).text(trimmed.replace(/\*\*/g, ''), { width: 495 });
+        doc.moveDown(0.2);
+      }
+    }
 
     doc.fontSize(8).fillColor('#888888').text(
       'Document généré automatiquement à partir des données réelles de l\'entreprise et des hypothèses fournies — à faire relire avant transmission à un partenaire financier.',

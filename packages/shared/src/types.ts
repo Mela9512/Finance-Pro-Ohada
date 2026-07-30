@@ -384,6 +384,17 @@ export interface CreateBusinessPlanDto {
   discountRatePercent: number;
 }
 
+export interface SuggestedHypotheses {
+  investmentAmount: number;
+  projectionYears: number;
+  year1Revenue: number;
+  revenueGrowthRatePercent: number;
+  variableCostPercent: number;
+  fixedCostsAnnual: number;
+  discountRatePercent: number;
+  rationale: string;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;

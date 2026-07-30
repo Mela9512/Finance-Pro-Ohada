@@ -6,6 +6,7 @@ import { PdfService } from '../../common/services/pdf.service';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { CreateBusinessPlanDto } from './dto/create-business-plan.dto';
+import { SuggestHypothesesDto } from './dto/suggest-hypotheses.dto';
 
 @Controller('business-plan')
 export class BusinessPlanController {
@@ -29,6 +30,12 @@ export class BusinessPlanController {
   @Post()
   create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateBusinessPlanDto) {
     return this.businessPlanService.createBusinessPlan(user.companyId, user.userId, dto);
+  }
+
+  @Roles('ADMIN', 'COMPTABLE', 'GESTIONNAIRE')
+  @Post('suggest-hypotheses')
+  suggestHypotheses(@Body() dto: SuggestHypothesesDto) {
+    return this.businessPlanService.suggestHypotheses(dto.title, dto.description);
   }
 
   @Roles('ADMIN', 'COMPTABLE')
