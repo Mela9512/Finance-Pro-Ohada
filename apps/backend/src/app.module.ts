@@ -32,6 +32,8 @@ import { CommandeEntity } from './entities/commande.entity';
 import { CommandeItemEntity } from './entities/commande-item.entity';
 import { BonLivraisonEntity } from './entities/bon-livraison.entity';
 import { BonLivraisonItemEntity } from './entities/bon-livraison-item.entity';
+import { EmployeeEntity } from './entities/employee.entity';
+import { BulletinPaieEntity } from './entities/bulletin-paie.entity';
 
 import { SequenceService } from './common/services/sequence.service';
 import { AuditLogService } from './common/services/audit-log.service';
@@ -69,6 +71,8 @@ import { StocksController } from './modules/stocks/stocks.controller';
 import { StocksService } from './modules/stocks/stocks.service';
 import { CommandesController } from './modules/commandes/commandes.controller';
 import { CommandesService } from './modules/commandes/commandes.service';
+import { PaieController } from './modules/paie/paie.controller';
+import { PaieService } from './modules/paie/paie.service';
 
 @Module({
   imports: [
@@ -100,6 +104,8 @@ import { CommandesService } from './modules/commandes/commandes.service';
       CommandeItemEntity,
       BonLivraisonEntity,
       BonLivraisonItemEntity,
+      EmployeeEntity,
+      BulletinPaieEntity,
     ]),
     AuthModule,
   ],
@@ -119,6 +125,7 @@ import { CommandesService } from './modules/commandes/commandes.service';
     ImmobilisationsController,
     StocksController,
     CommandesController,
+    PaieController,
   ],
   providers: [
     SequenceService,
@@ -139,6 +146,7 @@ import { CommandesService } from './modules/commandes/commandes.service';
     ImmobilisationsService,
     StocksService,
     CommandesService,
+    PaieService,
     { provide: AI_PROVIDER, useClass: GeminiProvider },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

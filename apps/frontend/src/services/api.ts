@@ -8,6 +8,7 @@ import {
   AuditLogPage, Immobilisation, CreateImmobilisationDto, ImmobilisationSynthese,
   StockArticle, StockArticleDetail, CreateArticleDto, CreateMouvementDto, StockSynthese,
   Commande, BonLivraison, CreateCommandeDto,
+  Employee, CreateEmployeeDto, BulletinPaie, CreateBulletinDto,
 } from '@financepro/shared';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -240,6 +241,14 @@ export const api = {
   livrerCommande: (id: string) => request<BonLivraison>(`/commandes/${id}/livrer`, { method: 'POST' }),
   facturerBonLivraison: (id: string, dueDate: string) =>
     request<Invoice>(`/commandes/bons-livraison/${id}/facturer`, { method: 'POST', body: JSON.stringify({ dueDate }) }),
+
+  getEmployees: () => request<Employee[]>('/paie/employees'),
+  createEmployee: (dto: CreateEmployeeDto) =>
+    request<Employee>('/paie/employees', { method: 'POST', body: JSON.stringify(dto) }),
+  getBulletins: () => request<BulletinPaie[]>('/paie/bulletins'),
+  createBulletin: (dto: CreateBulletinDto) =>
+    request<BulletinPaie>('/paie/bulletins', { method: 'POST', body: JSON.stringify(dto) }),
+  validerBulletin: (id: string) => request<BulletinPaie>(`/paie/bulletins/${id}/valider`, { method: 'POST' }),
 
   getBusinessPlans: () => request<BusinessPlan[]>('/business-plan'),
   getBusinessPlan: (id: string) => request<BusinessPlan>(`/business-plan/${id}`),

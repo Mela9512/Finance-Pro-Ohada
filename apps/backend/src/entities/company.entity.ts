@@ -145,6 +145,20 @@ export class CompanyEntity {
   @Column({ type: 'simple-json', default: '["comptabilite","tresorerie","etats","dashboard"]' })
   enabledModules: string[];
 
+  // ─── Paramètres de paie (aucune valeur par défaut : chaque entreprise saisit
+  // ses propres taux réels — CNSS/CNPS, IRPP/IUTS, SMIG diffèrent par pays OHADA) ──
+  @Column({ nullable: true, type: 'float' })
+  payrollSmig?: number;
+
+  @Column({ type: 'simple-json', nullable: true })
+  payrollTaxBrackets?: { min: number; max: number | null; rate: number }[];
+
+  @Column({ type: 'simple-json', nullable: true })
+  payrollEmployeeContributions?: { label: string; rate: number; ceiling?: number }[];
+
+  @Column({ type: 'simple-json', nullable: true })
+  payrollEmployerContributions?: { label: string; rate: number; ceiling?: number }[];
+
   // ─── Statut ───────────────────────────────────────────────────────────────
   @Column({ default: false })
   isOnboarded: boolean;

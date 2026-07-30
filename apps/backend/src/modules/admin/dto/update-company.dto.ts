@@ -1,5 +1,29 @@
-import { IsOptional, IsString, IsBoolean, IsNumber, IsArray } from 'class-validator';
+import { IsOptional, IsString, IsBoolean, IsNumber, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
+
+class PayrollTaxBracketDto {
+  @IsNumber()
+  min: number;
+
+  @IsOptional()
+  @IsNumber()
+  max?: number | null;
+
+  @IsNumber()
+  rate: number;
+}
+
+class PayrollContributionDto {
+  @IsString()
+  label: string;
+
+  @IsNumber()
+  rate: number;
+
+  @IsOptional()
+  @IsNumber()
+  ceiling?: number;
+}
 
 export class UpdateCompanyDto {
   // ─── Informations générales ────────────────────────────────────────────────
@@ -194,4 +218,28 @@ export class UpdateCompanyDto {
   @IsArray()
   @IsString({ each: true })
   enabledModules?: string[];
+
+  // ─── Paramètres de paie ───────────────────────────────────────────────────
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  payrollSmig?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PayrollTaxBracketDto)
+  payrollTaxBrackets?: PayrollTaxBracketDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PayrollContributionDto)
+  payrollEmployeeContributions?: PayrollContributionDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PayrollContributionDto)
+  payrollEmployerContributions?: PayrollContributionDto[];
 }

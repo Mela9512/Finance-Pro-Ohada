@@ -72,8 +72,26 @@ export interface Company {
   // ─── Modules activés ──────────────────────────────────────────────────────
   enabledModules?: string[];
 
+  // ─── Paramètres de paie ───────────────────────────────────────────────────
+  payrollSmig?: number;
+  payrollTaxBrackets?: PayrollTaxBracket[];
+  payrollEmployeeContributions?: PayrollContribution[];
+  payrollEmployerContributions?: PayrollContribution[];
+
   // ─── Statut ───────────────────────────────────────────────────────────────
   isOnboarded?: boolean;
+}
+
+export interface PayrollTaxBracket {
+  min: number;
+  max: number | null;
+  rate: number;
+}
+
+export interface PayrollContribution {
+  label: string;
+  rate: number;
+  ceiling?: number;
 }
 
 export type JournalType = 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD';
@@ -594,6 +612,120 @@ export interface CreateCommandeDto {
   totalTTC: number;
   notes?: string;
 }
+
+export type EmployeeStatus = 'ACTIF' | 'INACTIF';
+
+export interface Employee {
+  id: string;
+  companyId: string;
+  matricule: string;
+  nom: string;
+  poste: string;
+  dateEmbauche: string;
+  salaireBase: number;
+  numeroCNSS?: string;
+  statut: EmployeeStatus;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateEmployeeDto {
+  nom: string;
+  poste: string;
+  dateEmbauche: string;
+  salaireBase: number;
+  numeroCNSS?: string;
+}
+
+export type BulletinPaieStatus = 'BROUILLON' | 'VALIDE';
+
+export interface ContributionLine {
+  label: string;
+  montant: number;
+}
+
+export interface BulletinPaie {
+  id: string;
+  companyId: string;
+  employeeId: string;
+  employeeName: string;
+  periodYear: number;
+  periodMonth: number;
+  salaireBase: number;
+  primesImposables: number;
+  primesNonImposables: number;
+  brut: number;
+  detailCotisationsSalariales: ContributionLine[];
+  totalCotisationsSalariales: number;
+  detailCotisationsPatronales: ContributionLine[];
+  totalCotisationsPatronales: number;
+  salaireImposable: number;
+  irpp: number;
+  net: number;
+  status: BulletinPaieStatus;
+  journalEntryId?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CreateBulletinDto {
+  employeeId: string;
+  periodYear: number;
+  periodMonth: number;
+  primesImposables?: number;
+  primesNonImposables?: number;
+}
+
+export interface PayrollTemplate {
+  countryLabel: string;
+  smig: number;
+  taxBrackets: PayrollTaxBracket[];
+  employeeContributions: PayrollContribution[];
+  employerContributions: PayrollContribution[];
+}
+
+/**
+ * Modèles INDICATIFS pour pré-remplir les paramètres de paie — approximations basées
+ * sur les structures publiques CNSS/CNPS et barèmes IRPP/IUTS généralement documentées
+ * en zone CEMAC. À VÉRIFIER et ajuster avec un expert-comptable local avant toute
+ * première paie réelle : les taux exacts évoluent et varient encore par catégorie de
+ * risque professionnel, convention collective, etc.
+ */
+export const PAYROLL_TEMPLATES: Record<string, PayrollTemplate> = {
+  CONGO: {
+    countryLabel: 'Congo-Brazzaville (indicatif)',
+    smig: 90_000,
+    taxBrackets: [
+      { min: 0, max: 464_000, rate: 1 },
+      { min: 464_000, max: 1_000_000, rate: 10 },
+      { min: 1_000_000, max: 3_000_000, rate: 25 },
+      { min: 3_000_000, max: null, rate: 40 },
+    ],
+    employeeContributions: [{ label: 'CNSS — assurance vieillesse (salarié)', rate: 4, ceiling: 1_200_000 }],
+    employerContributions: [
+      { label: 'CNSS — assurance vieillesse (patronal)', rate: 8, ceiling: 1_200_000 },
+      { label: 'CNSS — allocations familiales', rate: 10.03, ceiling: 600_000 },
+      { label: 'CNSS — accidents du travail', rate: 2.25, ceiling: 600_000 },
+    ],
+  },
+  CAMEROUN: {
+    countryLabel: 'Cameroun (indicatif)',
+    smig: 41_875,
+    taxBrackets: [
+      { min: 0, max: 2_000_000, rate: 10 },
+      { min: 2_000_000, max: 3_000_000, rate: 15 },
+      { min: 3_000_000, max: 5_000_000, rate: 25 },
+      { min: 5_000_000, max: null, rate: 35 },
+    ],
+    employeeContributions: [{ label: 'CNPS — assurance pension (salarié)', rate: 4.2, ceiling: 750_000 }],
+    employerContributions: [
+      { label: 'CNPS — assurance pension (patronal)', rate: 4.2, ceiling: 750_000 },
+      { label: 'CNPS — allocations familiales', rate: 7, ceiling: 750_000 },
+      { label: 'CNPS — accidents du travail', rate: 1.75, ceiling: 750_000 },
+    ],
+  },
+};
 
 export interface DashboardMetrics {
   chiffreAffairesMois: number;

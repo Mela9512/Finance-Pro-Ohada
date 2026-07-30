@@ -26,6 +26,8 @@ import { CommandeEntity } from '../entities/commande.entity';
 import { CommandeItemEntity } from '../entities/commande-item.entity';
 import { BonLivraisonEntity } from '../entities/bon-livraison.entity';
 import { BonLivraisonItemEntity } from '../entities/bon-livraison-item.entity';
+import { EmployeeEntity } from '../entities/employee.entity';
+import { BulletinPaieEntity } from '../entities/bulletin-paie.entity';
 
 dotenv.config();
 
@@ -73,6 +75,8 @@ export const dataSourceOptions: DataSourceOptions = {
     CommandeItemEntity,
     BonLivraisonEntity,
     BonLivraisonItemEntity,
+    EmployeeEntity,
+    BulletinPaieEntity,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false,
