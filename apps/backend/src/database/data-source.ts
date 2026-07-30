@@ -22,6 +22,10 @@ import { BusinessPlanEntity } from '../entities/business-plan.entity';
 import { ImmobilisationEntity } from '../entities/immobilisation.entity';
 import { StockArticleEntity } from '../entities/stock-article.entity';
 import { StockMouvementEntity } from '../entities/stock-mouvement.entity';
+import { CommandeEntity } from '../entities/commande.entity';
+import { CommandeItemEntity } from '../entities/commande-item.entity';
+import { BonLivraisonEntity } from '../entities/bon-livraison.entity';
+import { BonLivraisonItemEntity } from '../entities/bon-livraison-item.entity';
 
 dotenv.config();
 
@@ -65,6 +69,10 @@ export const dataSourceOptions: DataSourceOptions = {
     ImmobilisationEntity,
     StockArticleEntity,
     StockMouvementEntity,
+    CommandeEntity,
+    CommandeItemEntity,
+    BonLivraisonEntity,
+    BonLivraisonItemEntity,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
   synchronize: false,

@@ -28,6 +28,10 @@ import { BusinessPlanEntity } from './entities/business-plan.entity';
 import { ImmobilisationEntity } from './entities/immobilisation.entity';
 import { StockArticleEntity } from './entities/stock-article.entity';
 import { StockMouvementEntity } from './entities/stock-mouvement.entity';
+import { CommandeEntity } from './entities/commande.entity';
+import { CommandeItemEntity } from './entities/commande-item.entity';
+import { BonLivraisonEntity } from './entities/bon-livraison.entity';
+import { BonLivraisonItemEntity } from './entities/bon-livraison-item.entity';
 
 import { SequenceService } from './common/services/sequence.service';
 import { AuditLogService } from './common/services/audit-log.service';
@@ -63,6 +67,8 @@ import { ImmobilisationsController } from './modules/immobilisations/immobilisat
 import { ImmobilisationsService } from './modules/immobilisations/immobilisations.service';
 import { StocksController } from './modules/stocks/stocks.controller';
 import { StocksService } from './modules/stocks/stocks.service';
+import { CommandesController } from './modules/commandes/commandes.controller';
+import { CommandesService } from './modules/commandes/commandes.service';
 
 @Module({
   imports: [
@@ -90,6 +96,10 @@ import { StocksService } from './modules/stocks/stocks.service';
       ImmobilisationEntity,
       StockArticleEntity,
       StockMouvementEntity,
+      CommandeEntity,
+      CommandeItemEntity,
+      BonLivraisonEntity,
+      BonLivraisonItemEntity,
     ]),
     AuthModule,
   ],
@@ -108,6 +118,7 @@ import { StocksService } from './modules/stocks/stocks.service';
     AuditController,
     ImmobilisationsController,
     StocksController,
+    CommandesController,
   ],
   providers: [
     SequenceService,
@@ -127,6 +138,7 @@ import { StocksService } from './modules/stocks/stocks.service';
     BusinessPlanService,
     ImmobilisationsService,
     StocksService,
+    CommandesService,
     { provide: AI_PROVIDER, useClass: GeminiProvider },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },

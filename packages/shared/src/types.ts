@@ -533,6 +533,68 @@ export interface StockSynthese {
   parCompte: { accountCode: string; valeur: number }[];
 }
 
+export type CommandeType = 'VENTE' | 'ACHAT';
+export type CommandeStatus = 'BROUILLON' | 'CONFIRMEE' | 'LIVREE' | 'FACTUREE' | 'ANNULEE';
+export type BonLivraisonStatus = 'CONFIRME' | 'FACTURE';
+
+export interface CommandeItem {
+  id: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  tvaRate: number;
+  totalHT: number;
+  totalTVA: number;
+  totalTTC: number;
+  accountCode: string;
+}
+
+export interface Commande {
+  id: string;
+  companyId: string;
+  numero: string;
+  type: CommandeType;
+  tierId: string;
+  tierName: string;
+  date: string;
+  items: CommandeItem[];
+  subtotalHT: number;
+  totalTVA: number;
+  totalTTC: number;
+  status: CommandeStatus;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface BonLivraison {
+  id: string;
+  companyId: string;
+  commandeId: string;
+  numero: string;
+  type: CommandeType;
+  tierId: string;
+  tierName: string;
+  date: string;
+  items: CommandeItem[];
+  status: BonLivraisonStatus;
+  invoiceId?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CreateCommandeDto {
+  type: CommandeType;
+  tierId: string;
+  tierName: string;
+  date: string;
+  items: Omit<CommandeItem, 'id'>[];
+  subtotalHT: number;
+  totalTVA: number;
+  totalTTC: number;
+  notes?: string;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;

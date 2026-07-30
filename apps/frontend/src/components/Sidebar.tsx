@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard, BookOpenCheck, Wallet, Users, Truck,
   FileSpreadsheet, BarChart3, Settings, ShieldCheck, Target,
-  Bot, Rocket, ChevronRight, Landmark, FileClock, Building2, Package
+  Bot, Rocket, ChevronRight, Landmark, FileClock, Building2, Package, ClipboardList
 } from 'lucide-react';
 import { UserRole } from '@financepro/shared';
 
@@ -12,6 +12,7 @@ export type ModuleId =
   | 'treasury'
   | 'clients'
   | 'suppliers'
+  | 'commandes'
   | 'invoicing'
   | 'reports'
   | 'fiscalite'
@@ -54,6 +55,7 @@ const menuGroups = [
     items: [
       { id: 'clients' as ModuleId, label: 'Clients & Créances', icon: Users },
       { id: 'suppliers' as ModuleId, label: 'Fournisseurs & Dettes', icon: Truck },
+      { id: 'commandes' as ModuleId, label: 'Commandes & Livraisons', icon: ClipboardList },
       { id: 'invoicing' as ModuleId, label: 'Facturation & Taxes', icon: FileSpreadsheet },
     ],
   },

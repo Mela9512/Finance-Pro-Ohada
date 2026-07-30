@@ -15,6 +15,7 @@ import { AccountingModule } from './components/modules/AccountingModule';
 import { TreasuryModule } from './components/modules/TreasuryModule';
 import { ClientsModule } from './components/modules/ClientsModule';
 import { SuppliersModule } from './components/modules/SuppliersModule';
+import { CommandesModule } from './components/modules/CommandesModule';
 import { InvoicingModule } from './components/modules/InvoicingModule';
 import { ReportsModule } from './components/modules/ReportsModule';
 import { FiscaliteModule } from './components/modules/FiscaliteModule';
@@ -66,6 +67,7 @@ const AppShell: React.FC = () => {
       case 'treasury': return 'Trésorerie, Banques & Caisses';
       case 'clients': return 'Gestion des clients & créances';
       case 'suppliers': return 'Gestion des fournisseurs & dettes';
+      case 'commandes': return 'Commandes & livraisons';
       case 'invoicing': return 'Facturation & retenues fiscales (TVA/AIR)';
       case 'reports': return 'États financiers OHADA (Bilan & Compte de Résultat)';
       case 'fiscalite': return 'Fiscalité — Déclarations TVA & AIR';
@@ -102,6 +104,7 @@ const AppShell: React.FC = () => {
           {activeModule === 'treasury' && <TreasuryModule />}
           {activeModule === 'clients' && <ClientsModule />}
           {activeModule === 'suppliers' && <SuppliersModule />}
+          {activeModule === 'commandes' && <CommandesModule />}
           {activeModule === 'invoicing' && <InvoicingModule />}
           {activeModule === 'reports' && <ReportsModule />}
           {activeModule === 'fiscalite' && <FiscaliteModule />}
