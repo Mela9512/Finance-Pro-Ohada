@@ -395,6 +395,16 @@ export interface SuggestedHypotheses {
   rationale: string;
 }
 
+export interface CompanyProfileSuggestion {
+  legalForm: string;
+  taxRegime: string;
+  vatRate: number;
+  departments: string[];
+  costCenters: string[];
+  recommendedModuleIds: string[];
+  rationale: string;
+}
+
 export interface DashboardMetrics {
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;

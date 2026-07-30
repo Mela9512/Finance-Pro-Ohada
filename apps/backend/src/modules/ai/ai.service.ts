@@ -56,6 +56,16 @@ export interface SupplierAlert {
   riskLevel: RiskLevel;
 }
 
+export interface CompanyProfileSuggestion {
+  legalForm: string;
+  taxRegime: string;
+  vatRate: number;
+  departments: string[];
+  costCenters: string[];
+  recommendedModuleIds: string[];
+  rationale: string;
+}
+
 const INVOICE_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -80,6 +90,20 @@ const INVOICE_SCHEMA = {
   required: ['supplierName', 'invoiceDate', 'subtotalHT', 'totalTVA', 'totalTTC'],
 };
 
+const COMPANY_PROFILE_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    legalForm: { type: 'STRING', description: 'Une valeur exacte parmi la liste des formes juridiques fournie' },
+    taxRegime: { type: 'STRING', description: 'Une valeur exacte parmi la liste des régimes fiscaux fournie' },
+    vatRate: { type: 'NUMBER', description: 'Taux de TVA typique du pays/secteur, en %' },
+    departments: { type: 'ARRAY', items: { type: 'STRING' }, description: '4 à 6 départements typiques pour ce secteur' },
+    costCenters: { type: 'ARRAY', items: { type: 'STRING' }, description: '2 à 4 centres de coûts typiques pour ce secteur' },
+    recommendedModuleIds: { type: 'ARRAY', items: { type: 'STRING' }, description: 'Identifiants exacts parmi la liste de modules fournie' },
+    rationale: { type: 'STRING', description: 'Justification en 1-2 phrases' },
+  },
+  required: ['legalForm', 'taxRegime', 'vatRate', 'departments', 'costCenters', 'recommendedModuleIds', 'rationale'],
+};
+
 const ACCOUNT_SUGGESTION_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -91,6 +115,23 @@ const ACCOUNT_SUGGESTION_SCHEMA = {
 };
 
 const BUDGET_VARIANCE_THRESHOLD_PERCENT = 20;
+
+// Le LLM reproduit parfois un tiret (– U+2013 vs — U+2014) ou des espaces différents
+// de ceux fournis dans la liste d'options : on normalise avant de comparer, pour ne pas
+// silencieusement rejeter une suggestion par ailleurs valide à cause d'un caractère invisible.
+function normalizeForMatch(value: string): string {
+  return value
+    .normalize('NFKC')
+    .replace(/[‐-―\-]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function matchNormalized(value: string, options: string[]): string | null {
+  const normalizedValue = normalizeForMatch(value);
+  return options.find((option) => normalizeForMatch(option) === normalizedValue) ?? null;
+}
 
 @Injectable()
 export class AiService {
@@ -142,6 +183,42 @@ export class AiService {
       'Réponds uniquement avec un code de compte qui existe dans ce plan comptable.';
 
     return this.aiProvider.generateJson<AccountSuggestion>(prompt, ACCOUNT_SUGGESTION_SCHEMA);
+  }
+
+  /**
+   * Propose un profil d'entreprise TYPIQUE (forme juridique, régime fiscal, départements,
+   * modules) à partir du nom et du secteur d'activité saisis pendant la création d'entreprise.
+   * Ce sont des suggestions éditables, jamais un remplissage silencieux — l'utilisateur les
+   * valide avant qu'elles soient enregistrées.
+   */
+  async suggestCompanyProfile(
+    companyName: string,
+    sector: string,
+    legalFormOptions: string[],
+    taxRegimeOptions: string[],
+    moduleOptions: { id: string; label: string }[],
+  ): Promise<CompanyProfileSuggestion> {
+    const prompt =
+      `Pour une entreprise nommée "${companyName}", dans le secteur d'activité "${sector}", en zone OHADA (Afrique francophone), ` +
+      'propose un profil TYPIQUE pour cette activité. Ce sont des suggestions indicatives à ajuster, pas des faits réels de cette entreprise.\n\n' +
+      `Formes juridiques possibles (choisis-en UNE exactement telle qu'écrite) :\n${legalFormOptions.join('\n')}\n\n` +
+      `Régimes fiscaux possibles (choisis-en UN exactement tel qu'écrit) :\n${taxRegimeOptions.join('\n')}\n\n` +
+      `Modules disponibles (choisis les identifiants les plus pertinents pour ce secteur parmi) :\n${moduleOptions.map((m) => `${m.id} - ${m.label}`).join('\n')}\n\n` +
+      'Réponds uniquement avec les champs demandés par le schéma.';
+
+    const suggestion = await this.aiProvider.generateJson<CompanyProfileSuggestion>(prompt, COMPANY_PROFILE_SCHEMA);
+
+    const validModuleIds = new Set(moduleOptions.map((m) => m.id));
+    return {
+      ...suggestion,
+      // Le modèle rend parfois un tiret légèrement différent (– au lieu de —) ou des espaces
+      // différents dans les libellés fournis : on remappe vers la valeur EXACTE de la liste
+      // fournie via une comparaison normalisée, plutôt que de silencieusement ignorer une
+      // suggestion valide à cause d'un caractère invisible différent.
+      legalForm: matchNormalized(suggestion.legalForm, legalFormOptions) ?? suggestion.legalForm,
+      taxRegime: matchNormalized(suggestion.taxRegime, taxRegimeOptions) ?? suggestion.taxRegime,
+      recommendedModuleIds: suggestion.recommendedModuleIds.filter((id) => validModuleIds.has(id)),
+    };
   }
 
   /** Détection d'anomalies déterministe (doublons, dépassements, écarts budgétaires) + synthèse IA optionnelle. */

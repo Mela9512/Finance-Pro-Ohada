@@ -4,7 +4,7 @@ import {
   Budget, BudgetComparisonRow, FiscalDeclaration, ImportBankStatementResult,
   ExtractedInvoiceDraft, AccountSuggestion, AnomalyReport, CashflowForecast,
   ClientRiskReport, SupplierAlertReport, FinancialVariationExplanation,
-  BusinessPlan, CreateBusinessPlanDto, SuggestedHypotheses,
+  BusinessPlan, CreateBusinessPlanDto, SuggestedHypotheses, CompanyProfileSuggestion,
 } from '@financepro/shared';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -185,6 +185,17 @@ export const api = {
     request<{ accountCode: string; basedOnYear: number; suggestedAmount: number }>(
       `/ai/suggest-budget?accountCode=${encodeURIComponent(accountCode)}&exercice=${exercice}`,
     ),
+  aiSuggestCompanyProfile: (
+    companyName: string,
+    sector: string,
+    legalFormOptions: string[],
+    taxRegimeOptions: string[],
+    moduleOptions: { id: string; label: string }[],
+  ) =>
+    request<CompanyProfileSuggestion>('/ai/suggest-company-profile', {
+      method: 'POST',
+      body: JSON.stringify({ companyName, sector, legalFormOptions, taxRegimeOptions, moduleOptions }),
+    }),
 
   getBusinessPlans: () => request<BusinessPlan[]>('/business-plan'),
   getBusinessPlan: (id: string) => request<BusinessPlan>(`/business-plan/${id}`),

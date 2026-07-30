@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { ArrowRight, ArrowLeft, FileText, Hash } from 'lucide-react';
-import { StepProps, FORMES_JURIDIQUES, SECTEURS } from './types';
+import { ArrowRight, ArrowLeft, FileText, Hash, Sparkles } from 'lucide-react';
+import { StepProps, FORMES_JURIDIQUES, SECTEURS, REGIMES_FISCAUX, MODULES_LISTE } from './types';
+import { api, ApiError } from '../../services/api';
 
 const Field: React.FC<{ label: string; required?: boolean; children: React.ReactNode; error?: string }> = ({ label, required, children, error }) => (
   <div>
@@ -15,12 +16,54 @@ const Field: React.FC<{ label: string; required?: boolean; children: React.React
 export const Step2Identification: React.FC<StepProps> = ({ data, onChange, onNext, onPrev }) => {
   const [form, setForm] = useState(data.step2);
   const [errors, setErrors] = useState<Partial<Record<keyof typeof form, string>>>({});
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestionNote, setSuggestionNote] = useState<string | null>(null);
+  const [suggestionError, setSuggestionError] = useState<string | null>(null);
 
   const update = (field: keyof typeof form, value: string) => {
     const updated = { ...form, [field]: value };
     setForm(updated);
     onChange('step2', updated);
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+
+  const handleSuggest = async () => {
+    if (!form.raisonSociale.trim() || !form.secteur) return;
+    setSuggesting(true);
+    setSuggestionError(null);
+    setSuggestionNote(null);
+    try {
+      const suggestion = await api.aiSuggestCompanyProfile(
+        form.raisonSociale,
+        form.secteur,
+        FORMES_JURIDIQUES,
+        REGIMES_FISCAUX,
+        MODULES_LISTE.map((m) => ({ id: m.id, label: m.label })),
+      );
+
+      if (FORMES_JURIDIQUES.includes(suggestion.legalForm)) {
+        update('formeJuridique', suggestion.legalForm);
+      }
+
+      if (REGIMES_FISCAUX.includes(suggestion.taxRegime)) {
+        onChange('step5', { ...data.step5, regimeFiscal: suggestion.taxRegime, tauxTVA: String(suggestion.vatRate) });
+      }
+
+      if (suggestion.departments.length > 0) {
+        onChange('step7', { ...data.step7, departements: suggestion.departments, centresCouts: suggestion.costCenters });
+      }
+
+      if (suggestion.recommendedModuleIds.length > 0) {
+        const merged = Array.from(new Set([...data.step9.modules, ...suggestion.recommendedModuleIds]));
+        onChange('step9', { modules: merged });
+      }
+
+      setSuggestionNote(suggestion.rationale);
+    } catch (err) {
+      setSuggestionError(err instanceof ApiError ? err.message : "Erreur lors de la suggestion IA");
+    } finally {
+      setSuggesting(false);
+    }
   };
 
   const handleNext = (e: React.FormEvent) => {
@@ -105,6 +148,25 @@ export const Step2Identification: React.FC<StepProps> = ({ data, onChange, onNex
           <input type="date" value={form.dateCreation} onChange={e => update('dateCreation', e.target.value)}
             className={inputCls()} />
         </Field>
+      </div>
+
+      {/* Suggestions IA basées sur le nom + secteur */}
+      <div className="bg-violet-50 border border-violet-200 rounded-2xl p-4 space-y-2">
+        <button
+          type="button"
+          onClick={handleSuggest}
+          disabled={suggesting || !form.raisonSociale.trim() || !form.secteur}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-extrabold text-xs transition-all"
+        >
+          <Sparkles className="w-4 h-4" />
+          {suggesting ? 'Analyse en cours...' : "Pré-remplir les étapes suivantes avec l'IA (fiscalité, organisation, modules)"}
+        </button>
+        <p className="text-[11px] text-violet-700">
+          À partir de la raison sociale et du secteur, l'IA propose un régime fiscal, des départements et des modules
+          typiques pour ce type d'activité — modifiable à chaque étape suivante.
+        </p>
+        {suggestionNote && <p className="text-[11px] text-violet-900 font-semibold bg-violet-100 rounded-xl p-2.5">{suggestionNote}</p>}
+        {suggestionError && <p className="text-[11px] text-red-700 font-semibold bg-red-50 rounded-xl p-2.5">{suggestionError}</p>}
       </div>
 
       {/* RCCM Info */}

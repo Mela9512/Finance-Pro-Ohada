@@ -4,6 +4,7 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser, AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 import { InvoiceOcrDto } from './dto/invoice-ocr.dto';
 import { ChatDto } from './dto/chat.dto';
+import { SuggestCompanyProfileDto } from './dto/suggest-company-profile.dto';
 
 @Controller('ai')
 export class AiController {
@@ -60,5 +61,16 @@ export class AiController {
     @Query('exercice') exercice: string,
   ) {
     return this.aiService.suggestBudgetAmount(user.companyId, accountCode, Number(exercice));
+  }
+
+  @Post('suggest-company-profile')
+  suggestCompanyProfile(@Body() body: SuggestCompanyProfileDto) {
+    return this.aiService.suggestCompanyProfile(
+      body.companyName,
+      body.sector,
+      body.legalFormOptions,
+      body.taxRegimeOptions,
+      body.moduleOptions,
+    );
   }
 }
