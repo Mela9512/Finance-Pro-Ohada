@@ -128,7 +128,52 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
     </div>
   );
 
-  const m = metrics;
+  const raw = metrics;
+  const m = {
+    tresorerieNetteTotal: raw.tresorerieNetteTotal ?? 0,
+    chiffreAffairesMois: raw.chiffreAffairesMois ?? 0,
+    chiffreAffairesVariation: raw.chiffreAffairesVariation ?? 0,
+    resultatNet: raw.resultatNet ?? 0,
+    margeNette: raw.margeNette ?? 0,
+    creancesClientsTotal: raw.creancesClientsTotal ?? 0,
+    dettesFournisseursTotal: raw.dettesFournisseursTotal ?? 0,
+    capitauxPropres: raw.capitauxPropres ?? 0,
+    totalActif: raw.totalActif ?? 0,
+    bfr: raw.bfr ?? 0,
+    fdr: raw.fdr ?? 0,
+    excédentBrutExploitation: raw.excédentBrutExploitation ?? 0,
+    ratioLiquidite: raw.ratioLiquidite ?? 0,
+    ratioAutonomieFinanciere: raw.ratioAutonomieFinanciere ?? 0,
+    roe: raw.roe ?? 0,
+    roa: raw.roa ?? 0,
+    endettement: raw.endettement ?? 0,
+    actifImmobilise: raw.actifImmobilise ?? 0,
+    actifCirculant: raw.actifCirculant ?? 0,
+    passifCirculant: raw.passifCirculant ?? 0,
+    dettesFinancieres: raw.dettesFinancieres ?? 0,
+    valeurAjoutee: raw.valeurAjoutee ?? 0,
+    resultatFinancier: raw.resultatFinancier ?? 0,
+    resultatExceptionnel: raw.resultatExceptionnel ?? 0,
+    resultatExploitation: raw.resultatExploitation ?? 0,
+    scoreFinancier: raw.scoreFinancier ?? 50,
+    facturesEmises: raw.facturesEmises ?? 0,
+    facturesEnAttente: raw.facturesEnAttente ?? 0,
+    facturesEchues: raw.facturesEchues ?? 0,
+    clientsActifs: raw.clientsActifs ?? 0,
+    fournisseursActifs: raw.fournisseursActifs ?? 0,
+    paiementsReçusAujourdhui: raw.paiementsReçusAujourdhui ?? 0,
+    paiementsEffectuesAujourdhui: raw.paiementsEffectuesAujourdhui ?? 0,
+    fluxTrésorerieGraph: raw.fluxTrésorerieGraph || [],
+    caParMoisGraph: raw.caParMoisGraph || [],
+    chargesParMoisGraph: raw.chargesParMoisGraph || [],
+    resultatMensuelGraph: raw.resultatMensuelGraph || [],
+    topClients: raw.topClients || [],
+    topFournisseurs: raw.topFournisseurs || [],
+    alertes: raw.alertes || [],
+    previsions: raw.previsions || [],
+    ecrituresRecent: raw.ecrituresRecent || [],
+    facturessRecent: raw.facturessRecent || [],
+  };
 
   // ─── Quick Actions ────────────────────────────────────────────────────────
   const quickActions: { label: string; icon: React.ElementType; color: string; bg: string; to: ModuleId }[] = [
