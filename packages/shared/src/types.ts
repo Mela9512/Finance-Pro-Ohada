@@ -94,7 +94,13 @@ export interface PayrollContribution {
   ceiling?: number;
 }
 
-export type JournalType = 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD';
+export type JournalType = 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD' | 'SALAIRES';
+
+export interface AccountSuggestion {
+  accountCode: string;
+  label: string;
+  confidence: number;
+}
 
 export interface JournalLine {
   id: string;
@@ -929,6 +935,62 @@ export interface DashboardMetrics {
   ecrituresRecent: JournalEntry[];
   facturessRecent: { id: string; numero: string; client: string; montant: number; statut: string; date: string }[];
 }
+
+export interface JournalAccounting {
+  code: string;
+  label: string;
+  type: 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD' | 'SALAIRES';
+  status: 'OUVERT' | 'CLOTURE';
+  entriesCount: number;
+}
+
+export interface LettrageRow {
+  id: string;
+  date: string;
+  pieceNumber: string;
+  accountCode: string;
+  tierName: string;
+  wording: string;
+  debit: number;
+  credit: number;
+  lettrageCode?: string;
+}
+
+export interface BankStatementRow {
+  id: string;
+  date: string;
+  libelle: string;
+  montant: number;
+  type: 'CREDIT' | 'DEBIT';
+  pointe: boolean;
+  journalEntryId?: string;
+}
+
+export interface AuditAccountingLog {
+  id: string;
+  date: string;
+  user: string;
+  action: 'CREATION' | 'MODIFICATION' | 'SUPPRESSION' | 'VALIDATION' | 'CLOTURE';
+  details: string;
+  ip: string;
+}
+
+export interface SIGSyscohada {
+  chiffreAffaires: number;
+  achatsConsommes: number;
+  margeBrute: number;
+  servicesExterieurs: number;
+  valeurAjoutee: number;
+  chargesPersonnel: number;
+  ebe: number;
+  amortissements: number;
+  resultatExploitation: number;
+  resultatFinancier: number;
+  resultatHAO: number;
+  impotSocietes: number;
+  resultatNet: number;
+}
+
 
 
 

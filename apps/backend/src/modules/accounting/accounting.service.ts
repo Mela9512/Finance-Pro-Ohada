@@ -25,6 +25,7 @@ const JOURNAL_PREFIX: Record<string, string> = {
   BANQUE: 'BQ',
   CAISSE: 'CA',
   OD: 'OD',
+  SALAIRES: 'SA',
 };
 
 @Injectable()
