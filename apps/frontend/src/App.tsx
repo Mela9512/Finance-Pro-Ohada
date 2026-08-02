@@ -101,7 +101,7 @@ const AppShell: React.FC = () => {
         />
 
         <main className="flex-1 overflow-y-auto p-6 bg-[#F8F7FF]">
-          {activeModule === 'dashboard' && <DashboardModule />}
+          {activeModule === 'dashboard' && <DashboardModule onNavigate={setActiveModule} />}
           {activeModule === 'accounting' && <AccountingModule />}
           {activeModule === 'treasury' && <TreasuryModule />}
           {activeModule === 'clients' && <ClientsModule />}

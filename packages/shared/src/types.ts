@@ -727,17 +727,91 @@ export const PAYROLL_TEMPLATES: Record<string, PayrollTemplate> = {
   },
 };
 
+export interface DashboardAlert {
+  type: 'TVA' | 'IS' | 'CNPS' | 'SALAIRES' | 'DECOUVERT' | 'STOCK' | 'CREDIT' | 'DSF' | 'FACTURE_ECHUE';
+  label: string;
+  detail: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  daysLeft?: number;
+}
+
+export interface DashboardForecast {
+  horizon: '30j' | '60j' | '90j' | '6m' | '12m';
+  label: string;
+  tresoreriePrevisionnelle: number;
+  caPrevisionnelCumulé: number;
+  probability: number; // 0–100
+}
+
 export interface DashboardMetrics {
+  // ─── KPI Principaux ──────────────────────────────────────
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;
   tresorerieNetteTotal: number;
   creancesClientsTotal: number;
   dettesFournisseursTotal: number;
-  bfr: number; // Besoin en Fonds de Roulement
-  fdr: number; // Fonds de Roulement
+
+  // Résultats
+  resultatNet: number;
+  resultatExploitation: number;
+  margeBrute: number;
+  margeNette: number; // %
+
+  // Ratios financiers
+  bfr: number;
+  fdr: number;
   excédentBrutExploitation: number;
+  ratioLiquidite: number;          // actif circulant / passif circulant
+  ratioAutonomieFinanciere: number; // capitaux propres / total passif
+  roe: number;                     // résultat net / capitaux propres (%)
+  roa: number;                     // résultat net / total actif (%)
+  endettement: number;             // dettes financières / capitaux propres
+
+  // ─── Bilan OHADA ─────────────────────────────────────────
+  capitauxPropres: number;
+  totalActif: number;
+  totalPassif: number;
+  actifImmobilise: number;
+  actifCirculant: number;
+  passifCirculant: number;
+  dettesFinancieres: number;
+  disponibilites: number;
+  valeurAjoutee: number;
+  resultatFinancier: number;
+  resultatExceptionnel: number;
+
+  // ─── Score santé financière ───────────────────────────────
+  scoreFinancier: number; // 0–100
+
+  // ─── Activité opérationnelle ─────────────────────────────
+  facturesEmises: number;
+  facturesEnAttente: number;
+  facturesEchues: number;
+  clientsActifs: number;
+  fournisseursActifs: number;
+  paiementsReçusAujourdhui: number;
+  paiementsEffectuesAujourdhui: number;
+
+  // ─── Graphiques ──────────────────────────────────────────
   fluxTrésorerieGraph: { month: string; encaissements: number; decaissements: number }[];
+  caParMoisGraph: { month: string; ca: number }[];          // 12 mois
+  chargesParMoisGraph: { month: string; charges: number }[]; // 6 mois
+  resultatMensuelGraph: { month: string; resultat: number }[]; // 6 mois
+
+  // ─── Top performance ─────────────────────────────────────
+  topClients: { nom: string; montant: number }[];
+  topFournisseurs: { nom: string; montant: number }[];
+
+  // ─── Alertes ─────────────────────────────────────────────
+  alertes: DashboardAlert[];
+
+  // ─── Prévisions IA ───────────────────────────────────────
+  previsions: DashboardForecast[];
+
+  // ─── Activités récentes ───────────────────────────────────
   ecrituresRecent: JournalEntry[];
+  facturessRecent: { id: string; numero: string; client: string; montant: number; statut: string; date: string }[];
 }
+
 
 
