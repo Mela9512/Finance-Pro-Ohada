@@ -728,11 +728,13 @@ export const PAYROLL_TEMPLATES: Record<string, PayrollTemplate> = {
 };
 
 export interface DashboardAlert {
-  type: 'TVA' | 'IS' | 'CNPS' | 'SALAIRES' | 'DECOUVERT' | 'STOCK' | 'CREDIT' | 'DSF' | 'FACTURE_ECHUE';
+  type: 'TVA' | 'IS' | 'CNPS' | 'SALAIRES' | 'DECOUVERT' | 'STOCK' | 'CREDIT' | 'DSF' | 'FACTURE_ECHUE' | 'PATENTE';
   label: string;
   detail: string;
   severity: 'LOW' | 'MEDIUM' | 'HIGH';
   daysLeft?: number;
+  dueDate?: string;
+  amount?: number;
 }
 
 export interface DashboardForecast {
@@ -743,6 +745,45 @@ export interface DashboardForecast {
   probability: number; // 0–100
 }
 
+export interface ScoreDetaille {
+  liquidite: number;   // /20
+  rentabilite: number; // /20
+  solvabilite: number; // /20
+  croissance: number; // /20
+  risque: number;     // /20
+  total: number;      // /100
+}
+
+export interface DiagnosticIA {
+  rentabiliteStatus: 'Faible' | 'Moyenne' | 'Forte';
+  liquiditeStatus: 'Critique' | 'Satisfaisante' | 'Excellente';
+  endettementStatus: 'Bon' | 'Modéré' | 'Élevé';
+  tresorerieStatus: 'À surveiller' | 'Saine' | 'Solide';
+  risqueGlobal: 'Faible' | 'Moyen' | 'Élevé';
+  recommandations: string[];
+}
+
+export interface FluxOIF {
+  fluxExploitation: number;
+  fluxInvestissement: number;
+  fluxFinancement: number;
+  variationNette: number;
+}
+
+export interface BalanceAgee {
+  moins30j: number;
+  entre31et60j: number;
+  entre61et90j: number;
+  plus90j: number;
+  total: number;
+}
+
+export interface ComparisonN1 {
+  currentYear: number;
+  previousYear: number;
+  variationPct: number;
+}
+
 export interface DashboardMetrics {
   // ─── KPI Principaux ──────────────────────────────────────
   chiffreAffairesMois: number;
@@ -751,9 +792,13 @@ export interface DashboardMetrics {
   creancesClientsTotal: number;
   dettesFournisseursTotal: number;
 
-  // Résultats
+  // Résultats SYSCOHADA
   resultatNet: number;
   resultatExploitation: number;
+  resultatFinancier: number;
+  resultatHAO: number;
+  resultatAvantImpot: number;
+  resultatExceptionnel: number;
   margeBrute: number;
   margeNette: number; // %
 
@@ -777,11 +822,23 @@ export interface DashboardMetrics {
   dettesFinancieres: number;
   disponibilites: number;
   valeurAjoutee: number;
-  resultatFinancier: number;
-  resultatExceptionnel: number;
 
-  // ─── Score santé financière ───────────────────────────────
+  // ─── Score & Diagnostic IA ───────────────────────────────
   scoreFinancier: number; // 0–100
+  scoreDetaille: ScoreDetaille;
+  diagnosticIA: DiagnosticIA;
+
+  // ─── Flux & Balance ──────────────────────────────────────
+  fluxOIF: FluxOIF;
+  balanceAgee: BalanceAgee;
+
+  // ─── Comparatifs N vs N-1 ────────────────────────────────
+  comparatifN1: {
+    ca: ComparisonN1;
+    tresorerie: ComparisonN1;
+    resultatNet: ComparisonN1;
+    bfr: ComparisonN1;
+  };
 
   // ─── Activité opérationnelle ─────────────────────────────
   facturesEmises: number;
@@ -797,6 +854,9 @@ export interface DashboardMetrics {
   caParMoisGraph: { month: string; ca: number }[];          // 12 mois
   chargesParMoisGraph: { month: string; charges: number }[]; // 6 mois
   resultatMensuelGraph: { month: string; resultat: number }[]; // 6 mois
+  bfrParMoisGraph: { month: string; bfr: number }[];         // 6 mois
+  chargesRepartitionGraph: { category: string; amount: number; percentage: number }[];
+  produitsRepartitionGraph: { category: string; amount: number; percentage: number }[];
 
   // ─── Top performance ─────────────────────────────────────
   topClients: { nom: string; montant: number }[];
@@ -812,6 +872,7 @@ export interface DashboardMetrics {
   ecrituresRecent: JournalEntry[];
   facturessRecent: { id: string; numero: string; client: string; montant: number; statut: string; date: string }[];
 }
+
 
 
 
