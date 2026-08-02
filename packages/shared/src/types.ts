@@ -784,7 +784,56 @@ export interface ComparisonN1 {
   variationPct: number;
 }
 
+export interface CashDisponibleItem {
+  nom: string;
+  type: 'BANQUE' | 'CAISSE' | 'MOBILE_MONEY';
+  solde: number;
+  sigle: string;
+}
+
+export interface ConformiteSyscohada {
+  score: number; // 0-100
+  journauxEquilibres: boolean;
+  tvaCoherente: boolean;
+  balanceEquilibree: boolean;
+  bilanEquilibre: boolean;
+}
+
+export interface HeatmapRisques {
+  finance: 'LOW' | 'MEDIUM' | 'HIGH';
+  fiscal: 'LOW' | 'MEDIUM' | 'HIGH';
+  tresorerie: 'LOW' | 'MEDIUM' | 'HIGH';
+  clients: 'LOW' | 'MEDIUM' | 'HIGH';
+  stocks: 'LOW' | 'MEDIUM' | 'HIGH';
+  conformite: 'LOW' | 'MEDIUM' | 'HIGH';
+}
+
+export interface MeteoIA {
+  condition: 'ENSOLEILLE' | 'NUAGEUX' | 'ORAGEUX';
+  description: string;
+  probaTensionTréso: number;
+  croissancePrevue: number;
+  confianceIA: number;
+}
+
+export interface PerformanceBudget {
+  caPct: number;       // % de l'objectif atteint
+  chargesPct: number;  // % du budget consommé
+  resultatPct: number; // % du résultat visé
+}
+
+export interface AFaireAujourdhui {
+  facturesAEnvoyer: number;
+  relancesClients: number;
+  paiementsFournisseurs: number;
+  alertesFiscales: number;
+}
+
 export interface DashboardMetrics {
+  // ─── Santé Globale ─────────────────────────────────────────
+  santeGlobalePct: number;
+  santeGlobaleStatus: string;
+
   // ─── KPI Principaux ──────────────────────────────────────
   chiffreAffairesMois: number;
   chiffreAffairesVariation: number;
@@ -827,6 +876,14 @@ export interface DashboardMetrics {
   scoreFinancier: number; // 0–100
   scoreDetaille: ScoreDetaille;
   diagnosticIA: DiagnosticIA;
+  meteoIA: MeteoIA;
+
+  // ─── Cash & Conformité & Risques ──────────────────────────
+  cashDisponible: CashDisponibleItem[];
+  conformiteSyscohada: ConformiteSyscohada;
+  heatmapRisques: HeatmapRisques;
+  performanceBudget: PerformanceBudget;
+  aFaireAujourdhui: AFaireAujourdhui;
 
   // ─── Flux & Balance ──────────────────────────────────────
   fluxOIF: FluxOIF;
@@ -872,6 +929,7 @@ export interface DashboardMetrics {
   ecrituresRecent: JournalEntry[];
   facturessRecent: { id: string; numero: string; client: string; montant: number; statut: string; date: string }[];
 }
+
 
 
 

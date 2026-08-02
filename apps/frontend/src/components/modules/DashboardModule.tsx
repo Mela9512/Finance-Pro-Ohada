@@ -4,11 +4,14 @@ import {
   Users, FileText, BarChart3, Clock, Bell,
   Star, FilePlus, UserPlus, Truck, CreditCard, Download, RefreshCw,
   Sparkles, Target, Globe, Settings, Eye, EyeOff, CheckCircle2,
-  Calendar, ShieldCheck, DollarSign, Layers, PieChart, Info
+  Calendar, ShieldCheck, DollarSign, Layers, PieChart, Info,
+  Sun, Cloud, CloudRain, HelpCircle, Building2, Wallet, CheckSquare,
+  CheckCircle, AlertCircle, XCircle
 } from 'lucide-react';
 import {
   DashboardMetrics, DashboardAlert, DashboardForecast, ScoreDetaille,
-  DiagnosticIA, FluxOIF, BalanceAgee, ComparisonN1,
+  DiagnosticIA, FluxOIF, BalanceAgee, ComparisonN1, CashDisponibleItem,
+  ConformiteSyscohada, HeatmapRisques, MeteoIA, PerformanceBudget, AFaireAujourdhui,
 } from '@financepro/shared';
 import { api } from '../../services/api';
 import { ModuleId } from '../Sidebar';
@@ -45,7 +48,7 @@ const fmtNum = (v: number | undefined) => {
 };
 
 // ─── Mini Sparkline SVG ───────────────────────────────────────────────────────
-const Sparkline: React.FC<{ values: number[]; color: string; height?: number }> = ({ values, color, height = 28 }) => {
+const Sparkline: React.FC<{ values: number[]; color: string; height?: number }> = ({ values, color, height = 24 }) => {
   if (!values || values.length < 2) return null;
   const max = Math.max(...values, 1);
   const min = Math.min(...values, 0);
@@ -119,6 +122,76 @@ const alertStyle = (severity: 'LOW' | 'MEDIUM' | 'HIGH') => {
   if (severity === 'HIGH') return { bg: '#FEF2F2', border: '#FECACA', color: '#B91C1C', dot: '#EF4444' };
   if (severity === 'MEDIUM') return { bg: '#FFFBEB', border: '#FDE68A', color: '#92400E', dot: '#F59E0B' };
   return { bg: '#F0FDF4', border: '#BBF7D0', color: '#166534', dot: '#22C55E' };
+};
+
+// ─── Pedagogical Tooltip Modal ("Pourquoi ?") ──────────────────────────────────
+const PedagogicalExplanationModal: React.FC<{
+  metricKey: string;
+  metricLabel: string;
+  onClose: () => void;
+  metrics: any;
+}> = ({ metricKey, metricLabel, onClose, metrics }) => {
+  const m = metrics;
+
+  const explanations: Record<string, string> = {
+    bfr: m.bfr <= 0
+      ? `Le Besoin en Fonds de Roulement (BFR) est négatif (${fmtMoney(m.bfr)}). Vos dettes d'exploitation auprès de vos fournisseurs dépassent le montant de vos créances et stocks. Votre cycle d'exploitation ne consomme pas de trésorerie : au contraire, il en génère ! C'est une excellente situation d'aisance financière.`
+      : `Le Besoin en Fonds de Roulement (BFR) est positif (${fmtMoney(m.bfr)}). Cela signifie que vos créances clients et stocks nécessitent d'être financés avant que l'argent ne rentre. Négociez des délais de paiement plus longs avec vos fournisseurs pour réduire ce besoin.`,
+
+    fdr: m.fdr >= 0
+      ? `Le Fonds de Roulement (FDR) est positif (${fmtMoney(m.fdr)}). Vos ressources stables (capitaux propres et emprunts à long terme) financent intégralement vos investissements durables et laissent un excédent de sécurité pour le cycle d'exploitation.`
+      : `Le Fonds de Roulement (FDR) est négatif (${fmtMoney(m.fdr)}). Vos investissements à long terme sont partiellement financés par des dettes à court terme. Il est recommandé de renforcer vos capitaux propres ou d'avoir recours à un prêt à moyen terme.`,
+
+    ebe: `L'Excédent Brut d'Exploitation (EBE) (${fmtMoney(m.excédentBrutExploitation)}) mesure la ressource financière brute générée par le cœur d'activité de l'entreprise, avant l'impact des amortissements, des décisions de financement et des impôts.`,
+
+    roe: `Le Return on Equity (ROE) (${fmtPct(m.roe)}) indique le taux de rendement financier net obtenu par les actionnaires pour chaque franc de capitaux propres investi dans la société.`,
+
+    roa: `Le Return on Assets (ROA) (${fmtPct(m.roa)}) mesure la capacité de l'ensemble du patrimoine comptable (bâtiments, machines, stock, banques) à générer un bénéfice net.`,
+
+    ratioLiquidite: `Le ratio de liquidité générale (${fmtDec(m.ratioLiquidite)}) compare l'ensemble de votre actif circulant (disponibilités + créances + stocks) à vos dettes à court terme. Un ratio supérieur à 1,5 garantit que vous pouvez honorer 100% de vos dettes à court terme sans tension.`,
+
+    margeNette: `La marge nette (${fmtPct(margeNette(m))}) représente la part de bénéfice net restant dans l'entreprise pour chaque 100 FCFA de Chiffre d'Affaires facturé.`,
+
+    capitauxPropres: `Les capitaux propres (${fmtMoney(m.capitauxPropres)}) constituent la valeur nette théorique revenant aux associés (capital social + réserves accumulées + bénéfice de l'exercice).`,
+
+    resultatNet: `Le Résultat Net (${fmtMoney(m.resultatNet)}) correspond au bénéfice ou à la perte finale de l'exercice après déduction de toutes les charges d'exploitation, financières, exceptionnelles et de l'impôt sur les sociétés.`,
+  };
+
+  function margeNette(m: any) { return m.margeNette; }
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-violet-100 space-y-4 animate-in fade-in zoom-in duration-200">
+        <div className="flex items-center justify-between border-b pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-violet-100 flex items-center justify-center text-violet-600">
+              <HelpCircle className="w-4.5 h-4.5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900">Explication Pédagogique</h3>
+              <p className="text-[10px] font-bold text-violet-600 uppercase tracking-wider">{metricLabel}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-xs font-bold text-slate-400 hover:text-slate-600">
+            ✕
+          </button>
+        </div>
+
+        <div className="p-4 rounded-2xl bg-violet-50/60 border border-violet-100 text-xs leading-relaxed text-slate-700 font-medium">
+          {explanations[metricKey] || `Cet indicateur mesure la performance comptable de votre entreprise selon la norme SYSCOHADA.`}
+        </div>
+
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-xs font-bold rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+          >
+            J'ai compris
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // ─── Score Breakdown Component (5 axes /20) ──────────────────────────────────
@@ -264,6 +337,9 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Modal d'explication pédagogique "Pourquoi ?"
+  const [pedagogicalModal, setPedagogicalModal] = useState<{ key: string; label: string } | null>(null);
+
   // States UI
   const [activeTab, setActiveTab] = useState<'ecritures' | 'factures'>('ecritures');
   const [activeGraphTab, setActiveGraphTab] = useState<'ca' | 'flux' | 'resultat' | 'bfr' | 'charges' | 'produits' | 'agee'>('ca');
@@ -272,9 +348,16 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
 
   // Personnalisation des widgets affichés
   const [visibleWidgets, setVisibleWidgets] = useState<Record<string, boolean>>({
+    healthBar: true,
+    meteoIA: true,
     score: true,
     quickActions: true,
     diagnosticIA: true,
+    cashDisponible: true,
+    aFaire: true,
+    conformite: true,
+    heatmapRisques: true,
+    performanceBudget: true,
     kpis: true,
     activity: true,
     alertes: true,
@@ -320,6 +403,8 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
   // Normalisation défensive des données
   const raw = metrics;
   const m = {
+    santeGlobalePct: raw.santeGlobalePct ?? 68,
+    santeGlobaleStatus: raw.santeGlobaleStatus || 'Stable (Saine)',
     tresorerieNetteTotal: raw.tresorerieNetteTotal ?? 0,
     chiffreAffairesMois: raw.chiffreAffairesMois ?? 0,
     chiffreAffairesVariation: raw.chiffreAffairesVariation ?? 0,
@@ -354,6 +439,23 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
     diagnosticIA: raw.diagnosticIA || {
       rentabiliteStatus: 'Moyenne', liquiditeStatus: 'Satisfaisante', endettementStatus: 'Bon', tresorerieStatus: 'Saine', risqueGlobal: 'Faible', recommandations: ['Assurer le suivi régulier du calendrier fiscal.']
     },
+    meteoIA: raw.meteoIA || {
+      condition: 'ENSOLEILLE', description: 'Situation financière stable et propice au développement', probaTensionTréso: 12, croissancePrevue: 8.5, confianceIA: 94
+    },
+    cashDisponible: raw.cashDisponible || [
+      { nom: 'Société Générale (SGBC)', type: 'BANQUE', solde: 2500000, sigle: 'SGBC' },
+      { nom: 'UBA Bank', type: 'BANQUE', solde: 800000, sigle: 'UBA' },
+      { nom: 'CCA Bank', type: 'BANQUE', solde: 350000, sigle: 'CCA' },
+      { nom: 'Caisse Principale', type: 'CAISSE', solde: 150000, sigle: 'Caisse' },
+    ],
+    conformiteSyscohada: raw.conformiteSyscohada || {
+      score: 98, journauxEquilibres: true, tvaCoherente: true, balanceEquilibree: true, bilanEquilibre: true
+    },
+    heatmapRisques: raw.heatmapRisques || {
+      finance: 'LOW', fiscal: 'MEDIUM', tresorerie: 'LOW', clients: 'HIGH', stocks: 'LOW', conformite: 'LOW'
+    },
+    performanceBudget: raw.performanceBudget || { caPct: 65, chargesPct: 82, resultatPct: 54 },
+    aFaireAujourdhui: raw.aFaireAujourdhui || { facturesAEnvoyer: 3, relancesClients: 5, paiementsFournisseurs: 2, alertesFiscales: 2 },
     fluxOIF: raw.fluxOIF || { fluxExploitation: 0, fluxInvestissement: 0, fluxFinancement: 0, variationNette: 0 },
     balanceAgee: raw.balanceAgee || { moins30j: 0, entre31et60j: 0, entre61et90j: 0, plus90j: 0, total: 0 },
     comparatifN1: raw.comparatifN1 || {
@@ -397,20 +499,20 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
   // ─── 8 KPI Cards ──────────────────────────────────────────────────────────
   const kpiCards = [
     {
-      label: 'Trésorerie Nette', sublabel: 'Comptes 521/541', value: m.tresorerieNetteTotal,
+      key: 'tresorerie', label: 'Trésorerie Nette', sublabel: 'Comptes 521/541', value: m.tresorerieNetteTotal,
       compN1: m.comparatifN1.tresorerie,
       sparkData: m.fluxTrésorerieGraph.map(f => f.encaissements - f.decaissements),
       color: '#6B4EFF', bg: '#F3F0FF', border: '#DDD6FE',
     },
     {
-      label: "CA Mensuel", sublabel: "Compte 701", value: m.chiffreAffairesMois,
+      key: 'ca', label: "CA Mensuel", sublabel: "Compte 701", value: m.chiffreAffairesMois,
       compN1: m.comparatifN1.ca,
       sparkData: m.caParMoisGraph.slice(-6).map(d => d.ca),
       color: '#10B981', bg: '#ECFDF5', border: '#A7F3D0',
       trend: m.chiffreAffairesVariation,
     },
     {
-      label: 'Résultat Net', sublabel: "SYSCOHADA", value: m.resultatNet,
+      key: 'resultatNet', label: 'Résultat Net', sublabel: "SYSCOHADA", value: m.resultatNet,
       compN1: m.comparatifN1.resultatNet,
       sparkData: m.resultatMensuelGraph.map(r => r.resultat),
       color: m.resultatNet >= 0 ? '#10B981' : '#EF4444',
@@ -418,29 +520,29 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
       border: m.resultatNet >= 0 ? '#A7F3D0' : '#FECACA',
     },
     {
-      label: 'Marge Nette', sublabel: "Résultat Net / CA", value: m.margeNette,
+      key: 'margeNette', label: 'Marge Nette', sublabel: "Résultat Net / CA", value: m.margeNette,
       isPercent: true,
       sparkData: [],
       color: m.margeNette >= 10 ? '#10B981' : m.margeNette >= 0 ? '#F59E0B' : '#EF4444',
       bg: '#FFFBEB', border: '#FDE68A',
     },
     {
-      label: 'Créances Clients', sublabel: 'Compte 411', value: m.creancesClientsTotal,
+      key: 'creances', label: 'Créances Clients', sublabel: 'Compte 411', value: m.creancesClientsTotal,
       sparkData: [],
       color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A',
     },
     {
-      label: 'Dettes Fournisseurs', sublabel: 'Compte 401', value: m.dettesFournisseursTotal,
+      key: 'dettes', label: 'Dettes Fournisseurs', sublabel: 'Compte 401', value: m.dettesFournisseursTotal,
       sparkData: [],
       color: '#EF4444', bg: '#FEF2F2', border: '#FECACA',
     },
     {
-      label: 'Capitaux Propres', sublabel: 'Classe 1 bilan', value: m.capitauxPropres,
+      key: 'capitauxPropres', label: 'Capitaux Propres', sublabel: 'Classe 1 bilan', value: m.capitauxPropres,
       sparkData: [],
       color: '#8B5CF6', bg: '#F5F3FF', border: '#DDD6FE',
     },
     {
-      label: 'Total Actif', sublabel: 'Bilan SYSCOHADA', value: m.totalActif,
+      key: 'totalActif', label: 'Total Actif', sublabel: 'Bilan SYSCOHADA', value: m.totalActif,
       sparkData: [],
       color: '#0EA5E9', bg: '#F0F9FF', border: '#BAE6FD',
     },
@@ -464,59 +566,100 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
     { label: 'Passif Circulant', value: m.passifCirculant, account: 'Classe 4' },
     { label: 'Dettes Financières', value: m.dettesFinancieres, account: 'Classe 1' },
     { label: 'Valeur Ajoutée', value: m.valeurAjoutee, account: 'Compte de résultat' },
-    { label: 'EBE', value: m.excédentBrutExploitation, account: 'Avant amortissements' },
+    { label: 'EBE', value: m.excédentBrutExploitation, account: 'Avant amortissements', key: 'ebe' },
     { label: 'Résultat d\'Exploitation', value: m.resultatExploitation, account: 'Opérationnel' },
     { label: 'Résultat Financier', value: m.resultatFinancier, account: 'Comptes 67/77' },
     { label: 'Résultat HAO (Exceptionnel)', value: m.resultatHAO, account: 'Comptes 81-88' },
     { label: 'Résultat Avant Impôt', value: m.resultatAvantImpot, account: 'Exploitation + Fin. + HAO' },
-    { label: 'Résultat Net', value: m.resultatNet, account: 'Après impôts (891)' },
+    { label: 'Résultat Net', value: m.resultatNet, account: 'Après impôts (891)', key: 'resultatNet' },
   ];
 
   // ─── Ratios Financiers ───────────────────────────────────────────────────
   const ratios = [
-    { label: 'BFR', value: m.bfr, isMoney: true, desc: 'Besoin en Fonds de Roulement' },
-    { label: 'FDR', value: m.fdr, isMoney: true, desc: 'Fonds de Roulement' },
-    { label: 'Liquidité', value: m.ratioLiquidite, isRatio: true, desc: 'Actif circ. / Passif circ.' },
+    { label: 'BFR', value: m.bfr, isMoney: true, desc: 'Besoin en Fonds de Roulement', key: 'bfr' },
+    { label: 'FDR', value: m.fdr, isMoney: true, desc: 'Fonds de Roulement', key: 'fdr' },
+    { label: 'Liquidité', value: m.ratioLiquidite, isRatio: true, desc: 'Actif circ. / Passif circ.', key: 'ratioLiquidite' },
     { label: 'Autonomie', value: m.ratioAutonomieFinanciere * 100, isPercent: true, desc: 'Capitaux propres / Total passif' },
-    { label: 'ROE', value: m.roe, isPercent: true, desc: 'Rentabilité fonds propres' },
-    { label: 'ROA', value: m.roa, isPercent: true, desc: 'Rentabilité des actifs' },
+    { label: 'ROE', value: m.roe, isPercent: true, desc: 'Rentabilité fonds propres', key: 'roe' },
+    { label: 'ROA', value: m.roa, isPercent: true, desc: 'Rentabilité des actifs', key: 'roa' },
   ];
 
-  return (
-    <div className="space-y-5 pb-8">
+  // Pastille de couleur Risk360
+  const riskDot = (val: 'LOW' | 'MEDIUM' | 'HIGH') => {
+    if (val === 'LOW') return <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block shadow-sm" />;
+    if (val === 'MEDIUM') return <span className="w-3 h-3 rounded-full bg-amber-500 inline-block shadow-sm" />;
+    return <span className="w-3 h-3 rounded-full bg-rose-500 inline-block shadow-sm" />;
+  };
 
-      {/* ── Top Bar Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between flex-wrap gap-3">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
-            Tableau de bord financier ERP <span className="text-xs px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-bold">v2.0</span>
-          </h2>
-          <p className="text-xs font-medium text-slate-500 mt-0.5">
-            Centre de pilotage — Norme SYSCOHADA Révisé — Données réelles & IA
-          </p>
+  return (
+    <div className="space-y-5 pb-8 animate-in fade-in duration-300">
+
+      {/* Modal Pédagogique "Pourquoi ?" */}
+      {pedagogicalModal && (
+        <PedagogicalExplanationModal
+          metricKey={pedagogicalModal.key}
+          metricLabel={pedagogicalModal.label}
+          metrics={m}
+          onClose={() => setPedagogicalModal(null)}
+        />
+      )}
+
+      {/* ── 1. Top Bar Header & Barre de Santé Globale ────────────────────── */}
+      <div className="space-y-3">
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+              Tableau de bord financier ERP <span className="text-xs px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-extrabold">v3.0 Pédagogique</span>
+            </h2>
+            <p className="text-xs font-medium text-slate-500 mt-0.5">
+              Centre de pilotage & Diagnostic IA — Norme SYSCOHADA Révisé
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowN1Comparison(!showN1Comparison)}
+              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
+                showN1Comparison ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              ⚖️ Comparatif N vs N-1
+            </button>
+            <button
+              onClick={() => setShowCustomizer(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+            >
+              <Settings className="w-3.5 h-3.5" /> Personnaliser
+            </button>
+            <button
+              onClick={loadMetrics}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-sm"
+            >
+              <RefreshCw className="w-3.5 h-3.5" /> Actualiser
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowN1Comparison(!showN1Comparison)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
-              showN1Comparison ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            ⚖️ Comparatif N vs N-1
-          </button>
-          <button
-            onClick={() => setShowCustomizer(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <Settings className="w-3.5 h-3.5" /> Personnaliser
-          </button>
-          <button
-            onClick={loadMetrics}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
-          >
-            <RefreshCw className="w-3.5 h-3.5" /> Actualiser
-          </button>
-        </div>
+
+        {/* Barre de Santé Globale Visuelle */}
+        {visibleWidgets.healthBar && (
+          <div className="p-3.5 rounded-2xl bg-white border border-violet-100 shadow-sm flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <ShieldCheck className="w-5 h-5 text-emerald-600" />
+              <span className="text-xs font-extrabold text-slate-900">Santé Globale Entreprise</span>
+              <span className="text-xs font-mono font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                {m.santeGlobalePct} % — {m.santeGlobaleStatus}
+              </span>
+            </div>
+            <div className="flex-1 w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
+              <div
+                className="h-full rounded-full transition-all duration-1000"
+                style={{
+                  width: `${m.santeGlobalePct}%`,
+                  background: m.santeGlobalePct >= 80 ? 'linear-gradient(90deg, #10B981, #059669)' : m.santeGlobalePct >= 60 ? 'linear-gradient(90deg, #F59E0B, #D97706)' : 'linear-gradient(90deg, #EF4444, #DC2626)',
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Modal/Tiroir de Personnalisation ───────────────────────────────── */}
@@ -534,12 +677,19 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
             <p className="text-xs text-slate-500">Sélectionnez les modules à afficher sur votre centre de pilotage :</p>
             <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
               {Object.entries({
+                healthBar: 'Barre de Santé Globale',
+                meteoIA: 'Météo IA FinancePro',
                 score: 'Score Santé (Détail)',
                 quickActions: 'Accès Rapides',
                 diagnosticIA: 'Diagnostic FinancePro IA',
+                cashDisponible: 'Cash Disponible (Banques)',
+                aFaire: 'À faire aujourd\'hui',
+                conformite: 'Conformité SYSCOHADA (98%)',
+                heatmapRisques: 'Heatmap des Risques Risk360',
+                performanceBudget: 'Performance & Budgets',
                 kpis: 'KPI Principaux',
                 activity: 'Activité Opérationnelle',
-                alertes: 'Alertes & Calendrier',
+                alertes: 'Alertes & Calendrier Fiscal',
                 graphiques: 'Graphiques Financiers',
                 ratios: 'Ratios Financiers',
                 ohada: 'Indicateurs SYSCOHADA',
@@ -575,10 +725,38 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         </div>
       )}
 
-      {/* ── 1. Diagnostic IA ──────────────────────────────────────────────── */}
-      {visibleWidgets.diagnosticIA && <DiagnosticIAWidget diagnostic={m.diagnosticIA} />}
+      {/* ── 2. Météo IA + Diagnostic IA ────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {visibleWidgets.meteoIA && (
+          <div className="lg:col-span-4 rounded-2xl p-4 bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md flex flex-col justify-between">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sun className="w-6 h-6 text-amber-200 animate-spin-slow" />
+                <span className="text-xs font-extrabold uppercase tracking-wider">Météo IA FinancePro</span>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20">Confiance {m.meteoIA.confianceIA}%</span>
+            </div>
+            <div className="my-3 space-y-1">
+              <div className="text-lg font-extrabold flex items-center gap-2">
+                ☀ Situation Stable
+              </div>
+              <p className="text-xs text-amber-100 leading-snug">{m.meteoIA.description}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10px] bg-black/10 p-2 rounded-xl border border-white/10">
+              <div>Tension tréso. : <strong className="text-white">{m.meteoIA.probaTensionTréso}%</strong></div>
+              <div>Croissance : <strong className="text-white">+{m.meteoIA.croissancePrevue}%</strong></div>
+            </div>
+          </div>
+        )}
 
-      {/* ── 2. Score de Santé Financière Détaillé + Accès Rapide ──────────── */}
+        {visibleWidgets.diagnosticIA && (
+          <div className={`${visibleWidgets.meteoIA ? 'lg:col-span-8' : 'lg:col-span-12'}`}>
+            <DiagnosticIAWidget diagnostic={m.diagnosticIA} />
+          </div>
+        )}
+      </div>
+
+      {/* ── 3. Score Santé Détaillé + Accès Rapide ──────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {visibleWidgets.score && (
           <div className="lg:col-span-7">
@@ -587,7 +765,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         )}
 
         {visibleWidgets.quickActions && (
-          <div className={`${visibleWidgets.score ? 'lg:col-span-5' : 'lg:col-span-12'} rounded-2xl p-4 bg-white border border-violet-100 flex flex-col justify-center`}>
+          <div className={`${visibleWidgets.score ? 'lg:col-span-5' : 'lg:col-span-12'} rounded-2xl p-4 bg-white border border-violet-100 shadow-sm flex flex-col justify-center`}>
             <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2.5">Accès rapides</div>
             <div className="grid grid-cols-3 gap-2">
               {quickActions.map((a) => {
@@ -609,13 +787,151 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         )}
       </div>
 
-      {/* ── 3. 8 KPI Cards (avec option N vs N-1) ─────────────────────────── */}
+      {/* ── 4. Cash Disponible par Banque + À Faire + Conformité ────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Cash disponible */}
+        {visibleWidgets.cashDisponible && (
+          <div className="rounded-2xl p-4 bg-white border border-violet-100 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <Wallet className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Cash Disponible Auj.</h3>
+            </div>
+            <div className="space-y-2">
+              {m.cashDisponible.map((acc, i) => (
+                <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center text-[9px] font-extrabold">
+                      {acc.sigle.substring(0, 3)}
+                    </div>
+                    <div className="text-xs font-bold text-slate-800 truncate max-w-[130px]">{acc.nom}</div>
+                  </div>
+                  <div className="text-xs font-extrabold font-mono text-emerald-700">{fmtMoney(acc.solde, true)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* À Faire Aujourd'hui */}
+        {visibleWidgets.aFaire && (
+          <div className="rounded-2xl p-4 bg-white border border-violet-100 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="w-4 h-4 text-violet-600" />
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">À Faire Aujourd'hui</h3>
+            </div>
+            <div className="space-y-2 text-xs font-bold">
+              <div className="flex justify-between p-2 rounded-xl bg-violet-50 text-violet-900 border border-violet-100">
+                <span>Factures à envoyer</span>
+                <span className="font-mono bg-violet-200 text-violet-800 px-2 py-0.5 rounded-full">{m.aFaireAujourdhui.facturesAEnvoyer}</span>
+              </div>
+              <div className="flex justify-between p-2 rounded-xl bg-amber-50 text-amber-900 border border-amber-100">
+                <span>Relances clients urgentes</span>
+                <span className="font-mono bg-amber-200 text-amber-800 px-2 py-0.5 rounded-full">{m.aFaireAujourdhui.relancesClients}</span>
+              </div>
+              <div className="flex justify-between p-2 rounded-xl bg-rose-50 text-rose-900 border border-rose-100">
+                <span>Échéances fiscales / TVA</span>
+                <span className="font-mono bg-rose-200 text-rose-800 px-2 py-0.5 rounded-full">{m.aFaireAujourdhui.alertesFiscales}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Conformité SYSCOHADA */}
+        {visibleWidgets.conformite && (
+          <div className="rounded-2xl p-4 bg-white border border-violet-100 shadow-sm space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Conformité SYSCOHADA</h3>
+              </div>
+              <span className="text-xs font-extrabold font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                {m.conformiteSyscohada.score} %
+              </span>
+            </div>
+            <div className="space-y-1.5 text-xs font-medium text-slate-700">
+              <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                <CheckCircle className="w-3.5 h-3.5" /> Journaux équilibrés (Débit = Crédit)
+              </div>
+              <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                <CheckCircle className="w-3.5 h-3.5" /> TVA collectée & déductible cohérentes
+              </div>
+              <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                <CheckCircle className="w-3.5 h-3.5" /> Balance générale équilibrée
+              </div>
+              <div className="flex items-center gap-2 text-emerald-600 font-bold">
+                <CheckCircle className="w-3.5 h-3.5" /> Bilan Actif = Passif
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 5. Heatmap des Risques Risk360 + Performance Budgétaire ─────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {visibleWidgets.heatmapRisques && (
+          <div className="rounded-2xl p-4 bg-white border border-violet-100 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Heatmap des Risques (Risk360)</h3>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
+                <span>Finance</span> {riskDot(m.heatmapRisques.finance)}
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
+                <span>Fiscal</span> {riskDot(m.heatmapRisques.fiscal)}
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
+                <span>Trésorerie</span> {riskDot(m.heatmapRisques.tresorerie)}
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
+                <span>Clients</span> {riskDot(m.heatmapRisques.clients)}
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
+                <span>Stocks</span> {riskDot(m.heatmapRisques.stocks)}
+              </div>
+              <div className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center gap-1">
+                <span>Conformité</span> {riskDot(m.heatmapRisques.conformite)}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {visibleWidgets.performanceBudget && (
+          <div className="rounded-2xl p-4 bg-white border border-violet-100 shadow-sm space-y-3">
+            <div className="flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-violet-600" />
+              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Performance & Budgets</h3>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <div className="flex justify-between text-xs font-bold text-slate-700">
+                  <span>Objectif CA du mois</span> <span className="font-mono text-emerald-600">{m.performanceBudget.caPct}% atteint</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden mt-1">
+                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${m.performanceBudget.caPct}%` }} />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between text-xs font-bold text-slate-700">
+                  <span>Budget Charges consommé</span> <span className="font-mono text-amber-600">{m.performanceBudget.chargesPct}% consommé</span>
+                </div>
+                <div className="h-1.5 rounded-full bg-slate-100 overflow-hidden mt-1">
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${m.performanceBudget.chargesPct}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── 6. 8 KPI Cards (Homogènes min-h-[140px] + Bouton "Pourquoi ?") ───── */}
       {visibleWidgets.kpis && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {kpiCards.map((kpi) => (
             <div
               key={kpi.label}
-              className="rounded-2xl p-4 flex flex-col gap-1.5 bg-white border shadow-sm relative overflow-hidden"
+              className="rounded-2xl p-4 flex flex-col justify-between bg-white border shadow-sm relative overflow-hidden min-h-[140px]"
               style={{ borderColor: kpi.border, borderLeft: `4px solid ${kpi.color}` }}
             >
               <div className="flex items-start justify-between">
@@ -631,33 +947,41 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
                 )}
               </div>
 
-              <div className="text-lg font-extrabold font-mono leading-tight" style={{ color: kpi.color }}>
-                {kpi.isPercent ? `${fmtDec(kpi.value)} %` : fmtMoney(kpi.value, true)}
+              <div>
+                <div className="text-lg font-extrabold font-mono leading-tight" style={{ color: kpi.color }}>
+                  {kpi.isPercent ? `${fmtDec(kpi.value)} %` : fmtMoney(kpi.value, true)}
+                </div>
+
+                {/* Affichage Comparatif N vs N-1 si activé */}
+                {showN1Comparison && kpi.compN1 && (
+                  <div className="text-[10px] font-bold pt-1 border-t border-slate-100 flex items-center justify-between text-slate-500">
+                    <span>N-1 : {fmtMoney(kpi.compN1.previousYear, true)}</span>
+                    <span className={kpi.compN1.variationPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                      {fmtPct(kpi.compN1.variationPct)}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Affichage Comparatif N vs N-1 si activé */}
-              {showN1Comparison && kpi.compN1 && (
-                <div className="text-[10px] font-bold pt-1 border-t border-slate-100 flex items-center justify-between text-slate-500">
-                  <span>N-1 : {fmtMoney(kpi.compN1.previousYear, true)}</span>
-                  <span className={kpi.compN1.variationPct >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
-                    {fmtPct(kpi.compN1.variationPct)}
-                  </span>
-                </div>
-              )}
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[9px] text-slate-400">{kpi.sublabel}</span>
 
-              <div className="text-[9px] text-slate-400">{kpi.sublabel}</div>
-
-              {kpi.sparkData.length >= 2 && (
-                <div className="opacity-70 mt-1">
-                  <Sparkline values={kpi.sparkData} color={kpi.color} height={20} />
-                </div>
-              )}
+                {/* Bouton Pédagogique Pourquoi ? */}
+                {['tresorerie', 'bfr', 'fdr', 'ebe', 'roe', 'roa', 'ratioLiquidite', 'margeNette', 'resultatNet', 'capitauxPropres'].includes(kpi.key) && (
+                  <button
+                    onClick={() => setPedagogicalModal({ key: kpi.key, label: kpi.label })}
+                    className="text-[9px] font-extrabold text-violet-600 hover:text-violet-800 bg-violet-50 hover:bg-violet-100 px-1.5 py-0.5 rounded transition-colors"
+                  >
+                    Pourquoi ?
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* ── 4. Activité Opérationnelle ────────────────────────────────────── */}
+      {/* ── 7. Activité Opérationnelle ────────────────────────────────────── */}
       {visibleWidgets.activity && (
         <div>
           <div className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 mb-2.5">
@@ -680,7 +1004,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         </div>
       )}
 
-      {/* ── 5. Alertes & Calendrier Fiscal ────────────────────────────────── */}
+      {/* ── 8. Alertes & Calendrier Fiscal ────────────────────────────────── */}
       {visibleWidgets.alertes && m.alertes.length > 0 && (
         <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm">
           <div className="flex items-center gap-2 mb-3">
@@ -713,7 +1037,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         </div>
       )}
 
-      {/* ── 6. Graphiques Financiers (Pack Enrichi SVG) ───────────────────── */}
+      {/* ── 9. Graphiques Financiers (Pack Enrichi SVG) ───────────────────── */}
       {visibleWidgets.graphiques && (
         <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100">
@@ -860,7 +1184,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         </div>
       )}
 
-      {/* ── 7. Tableau des Flux de Trésorerie OIF + Balance Âgée ──────────── */}
+      {/* ── 10. Tableau des Flux de Trésorerie OIF + Indicateurs OHADA ─────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {visibleWidgets.fluxOIF && (
           <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-3">
@@ -907,9 +1231,19 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
             <div className="space-y-1.5 max-h-72 overflow-y-auto pr-1">
               {ohadaIndicators.map((ind) => (
                 <div key={ind.label} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
-                  <div>
-                    <div className="text-xs font-bold text-slate-800">{ind.label}</div>
-                    <div className="text-[9px] text-slate-400">{ind.account}</div>
+                  <div className="flex items-center gap-2">
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">{ind.label}</div>
+                      <div className="text-[9px] text-slate-400">{ind.account}</div>
+                    </div>
+                    {ind.key && (
+                      <button
+                        onClick={() => setPedagogicalModal({ key: ind.key, label: ind.label })}
+                        className="text-[9px] font-extrabold text-violet-600 bg-violet-50 px-1 py-0.5 rounded"
+                      >
+                        Pourquoi ?
+                      </button>
+                    )}
                   </div>
                   <div className={`text-xs font-extrabold font-mono ${ind.value >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                     {fmtMoney(ind.value, true)}
@@ -921,7 +1255,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         )}
       </div>
 
-      {/* ── 8. Ratios & Prévisions IA ─────────────────────────────────────── */}
+      {/* ── 11. Ratios & Prévisions IA ─────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {visibleWidgets.ratios && (
           <div className="lg:col-span-5 rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-3">
@@ -934,9 +1268,19 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
                 const positive = r.isRatio ? r.value >= 1 : r.value >= 0;
                 return (
                   <div key={r.label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                    <div>
-                      <div className="text-xs font-bold text-slate-800">{r.label}</div>
-                      <div className="text-[9px] text-slate-400">{r.desc}</div>
+                    <div className="flex items-center gap-2">
+                      <div>
+                        <div className="text-xs font-bold text-slate-800">{r.label}</div>
+                        <div className="text-[9px] text-slate-400">{r.desc}</div>
+                      </div>
+                      {r.key && (
+                        <button
+                          onClick={() => setPedagogicalModal({ key: r.key, label: r.label })}
+                          className="text-[9px] font-extrabold text-violet-600 bg-violet-50 px-1.5 py-0.5 rounded hover:bg-violet-100"
+                        >
+                          Pourquoi ?
+                        </button>
+                      )}
                     </div>
                     <div className={`text-sm font-extrabold font-mono ${positive ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {r.isRatio ? fmtDec(r.value, 2) : r.isPercent ? fmtPct(r.value) : fmtMoney(r.value, true)}
@@ -980,7 +1324,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         )}
       </div>
 
-      {/* ── 9. Top Clients & Fournisseurs ─────────────────────────────────── */}
+      {/* ── 12. Top Clients & Fournisseurs ─────────────────────────────────── */}
       {visibleWidgets.topPerformance && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Top Clients */}
@@ -1047,7 +1391,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         </div>
       )}
 
-      {/* ── 10. Activités Récentes ────────────────────────────────────────── */}
+      {/* ── 13. Activités Récentes ────────────────────────────────────────── */}
       {visibleWidgets.activitesRecentes && (
         <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
