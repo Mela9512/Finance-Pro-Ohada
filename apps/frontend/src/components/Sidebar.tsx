@@ -45,7 +45,7 @@ const menuGroups = [
       { id: 'accounting' as ModuleId, label: 'Comptabilité SYSCOHADA', icon: BookOpenCheck },
       { id: 'treasury' as ModuleId, label: 'Trésorerie & Banque', icon: Wallet },
       { id: 'reports' as ModuleId, label: 'États Financiers OHADA', icon: BarChart3 },
-      { id: 'fiscalite' as ModuleId, label: 'Fiscalité (TVA / AIR)', icon: Landmark },
+      { id: 'fiscalite' as ModuleId, label: 'Fiscalité & Déclarations', icon: Landmark },
       { id: 'immobilisations' as ModuleId, label: 'Immobilisations', icon: Building2 },
       { id: 'stocks' as ModuleId, label: 'Stocks & Inventaire', icon: Package },
       { id: 'paie' as ModuleId, label: 'Paie', icon: Users2 },
