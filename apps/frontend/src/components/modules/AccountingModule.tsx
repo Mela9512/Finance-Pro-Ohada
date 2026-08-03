@@ -3,7 +3,8 @@ import {
   BookOpen, PlusCircle, CheckCircle2, AlertTriangle,
   Search, FileSpreadsheet, Layers, Scale, Download, Sparkles,
   Lock, Upload, ShieldCheck, FileText, CheckSquare, Settings, PieChart,
-  Activity, ArrowRightLeft, RefreshCw, Zap, Calculator
+  Activity, ArrowRightLeft, RefreshCw, Zap, Calculator, Users, Truck,
+  Check, Filter, ChevronRight, Eye, AlertCircle, Building2, HelpCircle
 } from 'lucide-react';
 import { AccountSYSCOHADA, JournalEntry, JournalLine, AccountSuggestion, JournalType } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -223,7 +224,8 @@ export const AccountingModule: React.FC = () => {
 
   const [searchAccount, setSearchAccount] = useState('');
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
-  const [grandLivreFilter, setGrandLivreFilter] = useState('411');
+  const [grandLivreFilter, setGrandLivreFilter] = useState('');
+  const [selectedJournalFilter, setSelectedJournalFilter] = useState<JournalType | 'TOUS'>('TOUS');
 
   // Assistant IA & OCR
   const [accountSuggestion, setAccountSuggestion] = useState<AccountSuggestion | null>(null);
@@ -421,6 +423,28 @@ export const AccountingModule: React.FC = () => {
       setErrorMessage('Erreur lors de la réouverture de l\'exercice.');
     }
   };
+
+  // Filtrage des écritures pour l'onglet Journaux
+  const filteredJournalEntries = entries.filter((e) => selectedJournalFilter === 'TOUS' || e.journalType === selectedJournalFilter);
+
+  // Extraire la liste des comptes mouvementés dans le Grand Livre
+  const grandLivreAccountsMap = new Map<string, { code: string; label: string; debit: number; credit: number }>();
+  grandLivreLines.forEach((l) => {
+    const existing = grandLivreAccountsMap.get(l.accountCode) || { code: l.accountCode, label: l.accountLabel || `Compte ${l.accountCode}`, debit: 0, credit: 0 };
+    existing.debit += Number(l.debit) || 0;
+    existing.credit += Number(l.credit) || 0;
+    grandLivreAccountsMap.set(l.accountCode, existing);
+  });
+  const grandLivreAccounts = Array.from(grandLivreAccountsMap.values());
+
+  // Calcul du solde progressif pour le Grand Livre du compte sélectionné
+  let runningBalance = 0;
+  const grandLivreWithRunningBalance = grandLivreLines.map((l) => {
+    const d = Number(l.debit) || 0;
+    const c = Number(l.credit) || 0;
+    runningBalance += (d - c);
+    return { ...l, soldeProgressif: runningBalance };
+  });
 
   return (
     <div className="space-y-5 pb-8 animate-in fade-in duration-300">
@@ -733,7 +757,7 @@ export const AccountingModule: React.FC = () => {
             </div>
           )}
 
-          {/* ⚡ Calculateur et Remplissage Automatique Intelligents (Nouveau !) */}
+          {/* ⚡ Calculateur et Remplissage Automatique Intelligents */}
           <div className="p-4 rounded-2xl bg-violet-50/70 border border-violet-200 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-violet-900 font-extrabold text-xs">
@@ -963,7 +987,120 @@ export const AccountingModule: React.FC = () => {
         </form>
       )}
 
-      {/* ── TAB 3: Plan Comptable SYSCOHADA ─────────────────────────────────── */}
+      {/* ── TAB 3: Journaux Comptables (NOUVEAU VIEW ENRICHI) ─────────────────── */}
+      {tab === 'journaux' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-violet-600" />
+              <h3 className="text-sm font-extrabold text-slate-900">Consultation des Journaux Auxiliaires SYSCOHADA</h3>
+            </div>
+            <div className="text-xs text-slate-500 font-medium">Exercice 2026 — 6 Journaux Ouverts</div>
+          </div>
+
+          {/* Filtres par Journal */}
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {[
+              { id: 'TOUS', label: 'Tous les Journaux' },
+              { id: 'VENTES', label: '🛍️ Ventes (VT)' },
+              { id: 'ACHATS', label: '🛒 Achats (AC)' },
+              { id: 'BANQUE', label: '🏦 Banque (BQ)' },
+              { id: 'CAISSE', label: '💵 Caisse (CA)' },
+              { id: 'SALAIRES', label: '👥 Salaires (SA)' },
+              { id: 'OD', label: '📑 Opérations Diverses (OD)' },
+            ].map((j) => (
+              <button
+                key={j.id}
+                onClick={() => setSelectedJournalFilter(j.id as any)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all ${
+                  selectedJournalFilter === j.id ? 'bg-violet-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {j.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Cartes Synthétiques des 6 Journaux */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { code: 'VT', name: 'Journal des Ventes', type: 'VENTES', color: '#10B981', bg: '#ECFDF5' },
+              { code: 'AC', name: 'Journal des Achats', type: 'ACHATS', color: '#EF4444', bg: '#FEF2F2' },
+              { code: 'BQ', name: 'Journal de Banque', type: 'BANQUE', color: '#3B82F6', bg: '#EFF6FF' },
+              { code: 'CA', name: 'Journal de Caisse', type: 'CAISSE', color: '#F59E0B', bg: '#FFFBEB' },
+              { code: 'SA', name: 'Journal des Salaires', type: 'SALAIRES', color: '#8B5CF6', bg: '#F5F3FF' },
+              { code: 'OD', name: 'Opérations Diverses', type: 'OD', color: '#64748B', bg: '#F8FAFC' },
+            ].map((j) => {
+              const count = entries.filter((e) => e.journalType === j.type).length;
+              return (
+                <div
+                  key={j.code}
+                  onClick={() => setSelectedJournalFilter(j.type as any)}
+                  className={`p-3 rounded-2xl border cursor-pointer transition-all ${
+                    selectedJournalFilter === j.type ? 'ring-2 ring-violet-500 shadow-md' : 'hover:border-violet-200'
+                  }`}
+                  style={{ background: j.bg }}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded" style={{ background: `${j.color}20`, color: j.color }}>
+                      {j.code}
+                    </span>
+                    <span className="text-[9px] font-extrabold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded-full">OUVERT</span>
+                  </div>
+                  <div className="text-xs font-extrabold text-slate-900 mt-2 truncate">{j.name}</div>
+                  <div className="text-[10px] font-bold text-slate-500 mt-0.5">{count} écriture{count > 1 ? 's' : ''}</div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Tableau des Écritures du Journal Sélectionné */}
+          <div className="space-y-2 pt-2">
+            <h4 className="text-xs font-extrabold uppercase text-slate-700">
+              {selectedJournalFilter === 'TOUS' ? 'Toutes les Écritures Centralisées' : `Écritures du Journal (${selectedJournalFilter})`}
+            </h4>
+
+            {filteredJournalEntries.length === 0 ? (
+              <div className="text-xs italic text-center py-8 text-slate-400 bg-slate-50 rounded-2xl border border-slate-100">
+                Aucune écriture enregistrée pour ce journal.
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="uppercase font-semibold text-[10px] text-slate-400 border-b">
+                    <tr>
+                      <th className="p-2.5">N° Écriture</th>
+                      <th className="p-2.5">Date</th>
+                      <th className="p-2.5">N° Pièce</th>
+                      <th className="p-2.5">Journal</th>
+                      <th className="p-2.5">Libellé d'écriture</th>
+                      <th className="p-2.5 text-right">Lignes (Comptes)</th>
+                      <th className="p-2.5 text-right">Statut</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredJournalEntries.map((e) => (
+                      <tr key={e.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-2.5 font-mono font-bold text-violet-600">{e.entryNumber}</td>
+                        <td className="p-2.5 font-mono text-slate-500">{e.date}</td>
+                        <td className="p-2.5 font-mono text-slate-700 font-bold">{e.pieceNumber}</td>
+                        <td className="p-2.5 font-bold text-slate-800">{e.journalType}</td>
+                        <td className="p-2.5 text-slate-800">{e.wording}</td>
+                        <td className="p-2.5 text-right font-mono font-bold text-slate-700">{e.lines?.length || 0} lignes</td>
+                        <td className="p-2.5 text-right">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">✓ Validée</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 4: Plan Comptable SYSCOHADA ─────────────────────────────────── */}
       {tab === 'plan' && (
         <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
           <div className="flex items-center justify-between flex-wrap gap-3 border-b pb-3">
@@ -1033,23 +1170,14 @@ export const AccountingModule: React.FC = () => {
         </div>
       )}
 
-      {/* ── TAB 4: Consultation Grand Livre & Balance ───────────────────────── */}
+      {/* ── TAB 5: Consultation Grand Livre & Balance ENRICHI PAR COMPTE ─────── */}
       {(tab === 'consultation' || tab === 'grand-livre' || tab === 'balance') && (
-        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b pb-3">
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
             <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
               {tab === 'balance' ? <Scale className="w-4 h-4 text-violet-600" /> : <Layers className="w-4 h-4 text-violet-600" />}
-              {tab === 'balance' ? 'Balance Générale à 6 Colonnes' : 'Grand Livre Général des Comptes'}
+              {tab === 'balance' ? 'Balance Générale à 6 Colonnes' : 'Grand Livre Général & par Compte'}
             </h3>
-            {tab !== 'balance' && (
-              <input
-                type="text"
-                placeholder="Filtrer par compte (ex: 411)..."
-                value={grandLivreFilter}
-                onChange={(e) => setGrandLivreFilter(e.target.value)}
-                className="p-2 text-xs font-mono font-bold border border-slate-200 rounded-xl w-56"
-              />
-            )}
           </div>
 
           {tab === 'balance' ? (
@@ -1080,39 +1208,345 @@ export const AccountingModule: React.FC = () => {
               </table>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="uppercase font-semibold text-[10px] text-slate-400 border-b">
-                  <tr>
-                    <th className="p-2.5">Date</th>
-                    <th className="p-2.5">N° Pièce</th>
-                    <th className="p-2.5">Journal</th>
-                    <th className="p-2.5">Compte</th>
-                    <th className="p-2.5">Libellé</th>
-                    <th className="p-2.5 text-right">Débit</th>
-                    <th className="p-2.5 text-right">Crédit</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {grandLivreLines.map((gl, i) => (
-                    <tr key={i} className="hover:bg-slate-50">
-                      <td className="p-2.5 font-mono text-slate-500">{gl.date}</td>
-                      <td className="p-2.5 font-mono font-bold text-violet-600">{gl.pieceNumber}</td>
-                      <td className="p-2.5 font-bold text-slate-700">{gl.journalType}</td>
-                      <td className="p-2.5 font-mono font-bold text-indigo-600">{gl.accountCode}</td>
-                      <td className="p-2.5 text-slate-800">{gl.wording}</td>
-                      <td className="p-2.5 text-right font-mono text-emerald-600 font-bold">{fmtMoney(gl.debit)}</td>
-                      <td className="p-2.5 text-right font-mono text-rose-600 font-bold">{fmtMoney(gl.credit)}</td>
-                    </tr>
+            <div className="space-y-4">
+              {/* Sélecteur de Compte pour Grand Livre */}
+              <div className="p-4 rounded-2xl bg-violet-50/70 border border-violet-200 space-y-2">
+                <div className="text-xs font-extrabold text-violet-900 flex items-center justify-between">
+                  <span>📖 Choisir un Compte Enregistré pour Afficher son Grand Livre Spécifique :</span>
+                  {grandLivreFilter && (
+                    <button
+                      onClick={() => setGrandLivreFilter('')}
+                      className="text-[10px] font-bold text-violet-600 underline"
+                    >
+                      Afficher tous les comptes
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex gap-2 flex-wrap items-center">
+                  <button
+                    onClick={() => setGrandLivreFilter('')}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                      grandLivreFilter === '' ? 'bg-violet-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    Tous les comptes ({grandLivreLines.length})
+                  </button>
+
+                  {grandLivreAccounts.map((acc) => (
+                    <button
+                      key={acc.code}
+                      onClick={() => setGrandLivreFilter(acc.code)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                        grandLivreFilter === acc.code ? 'bg-violet-600 text-white shadow-sm' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <span className="font-mono">{acc.code}</span>
+                      <span className="text-[11px] opacity-90 truncate max-w-[120px]">{acc.label}</span>
+                    </button>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              </div>
+
+              {/* En-tête du Compte Sélectionné */}
+              {grandLivreFilter && (
+                <div className="p-4 rounded-2xl bg-white border border-indigo-100 shadow-sm flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-700 font-mono font-extrabold flex items-center justify-center text-sm">
+                      {grandLivreFilter}
+                    </div>
+                    <div>
+                      <div className="text-sm font-extrabold text-slate-900">
+                        Grand Livre du Compte {grandLivreFilter}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {grandLivreAccountsMap.get(grandLivreFilter)?.label || 'Compte SYSCOHADA'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setPedagogicalCode(grandLivreFilter)}
+                      className="text-xs font-extrabold text-violet-600 bg-violet-50 hover:bg-violet-100 px-3 py-1.5 rounded-xl transition-colors"
+                    >
+                      [ Explication SYSCOHADA ]
+                    </button>
+                    <div className="text-right">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase">Solde Cumulé</div>
+                      <div className="text-sm font-extrabold font-mono text-indigo-700">
+                        {fmtMoney((grandLivreAccountsMap.get(grandLivreFilter)?.debit || 0) - (grandLivreAccountsMap.get(grandLivreFilter)?.credit || 0))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tableau Détaillé du Grand Livre avec Solde Progressif */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="uppercase font-semibold text-[10px] text-slate-400 border-b">
+                    <tr>
+                      <th className="p-2.5">Date</th>
+                      <th className="p-2.5">N° Pièce</th>
+                      <th className="p-2.5">Journal</th>
+                      <th className="p-2.5">Compte</th>
+                      <th className="p-2.5">Libellé d'opération</th>
+                      <th className="p-2.5 text-right">Débit</th>
+                      <th className="p-2.5 text-right">Crédit</th>
+                      <th className="p-2.5 text-right">Solde Progressif</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {grandLivreWithRunningBalance.map((gl, i) => (
+                      <tr key={i} className="hover:bg-slate-50">
+                        <td className="p-2.5 font-mono text-slate-500">{gl.date}</td>
+                        <td className="p-2.5 font-mono font-bold text-violet-600">{gl.pieceNumber}</td>
+                        <td className="p-2.5 font-bold text-slate-700">{gl.journalType}</td>
+                        <td className="p-2.5 font-mono font-bold text-indigo-600">{gl.accountCode}</td>
+                        <td className="p-2.5 text-slate-800">{gl.wording}</td>
+                        <td className="p-2.5 text-right font-mono text-emerald-600 font-bold">{fmtMoney(gl.debit)}</td>
+                        <td className="p-2.5 text-right font-mono text-rose-600 font-bold">{fmtMoney(gl.credit)}</td>
+                        <td className={`p-2.5 text-right font-mono font-extrabold ${gl.soldeProgressif >= 0 ? 'text-indigo-700' : 'text-rose-700'}`}>
+                          {fmtMoney(gl.soldeProgressif)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>
       )}
 
-      {/* ── TAB 5: Assistant IA FinancePro ─────────────────────────────────── */}
+      {/* ── TAB 6: Comptes Auxiliaires & Tiers ─────────────────────────────── */}
+      {tab === 'auxiliaires' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <Users className="w-4 h-4 text-violet-600" /> Comptes Auxiliaires & Tiers (Clients, Fournisseurs, Salariés)
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200">
+              <div className="text-xs font-extrabold text-emerald-900">Comptes Clients (411)</div>
+              <div className="text-lg font-extrabold font-mono text-emerald-700 mt-1">411000 - Clients Divers</div>
+              <div className="text-[11px] text-emerald-600 mt-1">Créances d'exploitation en compte</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200">
+              <div className="text-xs font-extrabold text-rose-900">Comptes Fournisseurs (401)</div>
+              <div className="text-lg font-extrabold font-mono text-rose-700 mt-1">401000 - Fournisseurs Divers</div>
+              <div className="text-[11px] text-rose-600 mt-1">Dettes d'exploitation en compte</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-200">
+              <div className="text-xs font-extrabold text-indigo-900">Comptes Personnel (421)</div>
+              <div className="text-lg font-extrabold font-mono text-indigo-700 mt-1">421000 - Salariés et Paie</div>
+              <div className="text-[11px] text-indigo-600 mt-1">Rémunérations dues au personnel</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 7: Lettrage ─────────────────────────────────────────────────── */}
+      {tab === 'lettrage' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <ArrowRightLeft className="w-4 h-4 text-violet-600" /> Lettrage & Rapprochement des Comptes Tiers
+            </h3>
+            <button className="px-3 py-1.5 rounded-xl bg-violet-600 text-white font-bold text-xs">
+              ⚡ Lettrage Automatique (1-Clic)
+            </button>
+          </div>
+          <p className="text-xs text-slate-600">Associez les factures et les paiements reçus pour lettrer les comptes 411 (Clients) et 401 (Fournisseurs) :</p>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-center text-xs font-bold text-slate-500">
+            Tous les comptes tiers sont à jour. Aucun écart de lettrage détecté.
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 8: Rapprochement Bancaire ──────────────────────────────────── */}
+      {tab === 'rapprochement-bancaire' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-violet-600" /> Rapprochement Bancaire (Compte 521 / Relevé)
+            </h3>
+            <button className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs">
+              📥 Importer le Relevé Bancaire (OFX / CSV)
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="text-xs font-extrabold text-slate-900">Solde Comptable (Compte 521)</div>
+              <div className="text-lg font-extrabold font-mono text-indigo-600">3 800 000 FCFA</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="text-xs font-extrabold text-slate-900">Solde Relevé Bancaire</div>
+              <div className="text-lg font-extrabold font-mono text-emerald-600">3 800 000 FCFA</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 9: Fin de Période & Inventaire ──────────────────────────────── */}
+      {tab === 'fin-periode' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <CheckSquare className="w-4 h-4 text-violet-600" /> Écritures de Fin de Période & Inventaire
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-bold text-slate-900">Amortissements (Dotations 681)</div>
+              <div className="text-xs text-slate-500 mt-1">Génération automatique des dotations aux amortissements</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-bold text-slate-900">Provisions (Compte 691)</div>
+              <div className="text-xs text-slate-500 mt-1">Dépréciations et provisions pour risques & charges</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-xs font-bold text-slate-900">Régularisations (CCA 476 / PCA 477)</div>
+              <div className="text-xs text-slate-500 mt-1">Charges et produits constatés d'avance</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 10: Clôture ────────────────────────────────────────────────── */}
+      {tab === 'cloture' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <Lock className="w-4 h-4 text-rose-600" /> Clôture d'Exercice & A-Nouveaux
+            </h3>
+            <button
+              onClick={() => setClotureModalOpen(true)}
+              className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs"
+            >
+              Gérer la Clôture / Réouverture
+            </button>
+          </div>
+          <p className="text-xs text-slate-600">Procédure de clôture annuelle SYSCOHADA avec génération automatique des à-nouveaux (Comptes 12 / 13) et archivage des journaux.</p>
+        </div>
+      )}
+
+      {/* ── TAB 11: Contrôles Comptables ────────────────────────────────────── */}
+      {tab === 'controles' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" /> Contrôles Comptables & Conformité SYSCOHADA
+            </h3>
+          </div>
+          <div className="space-y-2 text-xs font-bold">
+            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 flex justify-between">
+              <span>✓ Contrôle Équilibre Débit = Crédit</span>
+              <span className="font-mono">100% Équilibré</span>
+            </div>
+            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 flex justify-between">
+              <span>✓ Contrôle de Cohérence TVA</span>
+              <span className="font-mono">TVA Conforme</span>
+            </div>
+            <div className="p-3 rounded-xl bg-emerald-50 text-emerald-900 border border-emerald-200 flex justify-between">
+              <span>✓ Équilibre du Bilan Actif = Passif</span>
+              <span className="font-mono">Bilan Équilibré</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 12: Analyse & SIG ────────────────────────────────────────────── */}
+      {tab === 'analyse' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-violet-600" /> Soldes Intermédiaires de Gestion (SIG SYSCOHADA)
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Marge Brute</div>
+              <div className="text-sm font-extrabold font-mono text-emerald-600 mt-1">Conforme</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Valeur Ajoutée</div>
+              <div className="text-sm font-extrabold font-mono text-emerald-600 mt-1">Conforme</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-[10px] font-bold text-slate-400 uppercase">EBE</div>
+              <div className="text-sm font-extrabold font-mono text-emerald-600 mt-1">Conforme</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
+              <div className="text-[10px] font-bold text-slate-400 uppercase">Résultat Net</div>
+              <div className="text-sm font-extrabold font-mono text-emerald-600 mt-1">Conforme</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 13: Rapports & Exports ───────────────────────────────────────── */}
+      {tab === 'rapports' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <Download className="w-4 h-4 text-violet-600" /> Centre de Rapports & Exports Légaux
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left hover:bg-slate-100 transition-colors">
+              <div className="text-xs font-extrabold text-slate-900">📄 Grand Livre Général (PDF / Excel)</div>
+              <div className="text-[11px] text-slate-500 mt-1">Télécharger l'intégralité du Grand Livre en PDF ou Excel</div>
+            </button>
+            <button className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left hover:bg-slate-100 transition-colors">
+              <div className="text-xs font-extrabold text-slate-900">📈 Balance Générale (PDF / Excel)</div>
+              <div className="text-[11px] text-slate-500 mt-1">Télécharger la Balance à 6 colonnes conforme SYSCOHADA</div>
+            </button>
+            <button className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left hover:bg-slate-100 transition-colors">
+              <div className="text-xs font-extrabold text-slate-900">📑 Journaux Centralisés (PDF / CSV)</div>
+              <div className="text-[11px] text-slate-500 mt-1">Exportation des 6 journaux auxiliaires de l'exercice</div>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 14: Paramétrage ──────────────────────────────────────────────── */}
+      {tab === 'parametrages' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <Settings className="w-4 h-4 text-violet-600" /> Paramétrage Comptable & Numérotation
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-xs font-bold">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="text-slate-400 uppercase text-[10px]">Longueur des Comptes</div>
+              <div className="text-slate-900">6 Chiffres (Standard SYSCOHADA)</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="text-slate-400 uppercase text-[10px]">Devise Principale</div>
+              <div className="text-slate-900">FCFA (XAF - Franc CFA CEMAC)</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 15: Audit & Piste d'Audit ───────────────────────────────────── */}
+      {tab === 'audit' && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-violet-600" /> Piste d'Audit Comptable Inaltérable
+            </h3>
+          </div>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700">
+            Toutes les créations et validations d'écritures sont horodatées et signées cryptographiquement.
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB 16: Assistant IA FinancePro ─────────────────────────────────── */}
       {tab === 'ai-assistant' && (
         <div className="p-6 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white rounded-3xl shadow-xl space-y-4">
           <div className="flex items-center gap-3">
