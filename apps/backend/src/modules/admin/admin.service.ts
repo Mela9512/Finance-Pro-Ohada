@@ -128,7 +128,12 @@ export class AdminService {
   async inviteUser(companyId: string, actorUserId: string, dto: InviteUserDto, appUrl: string): Promise<{ message: string }> {
     const existing = await this.userRepo.findOne({ where: { email: dto.email.toLowerCase() } });
     if (existing) {
-      throw new ConflictException('Un utilisateur avec cet email existe déjà');
+      if (existing.companyId === companyId) {
+        existing.role = dto.role as any;
+        await this.userRepo.save(existing);
+        return { message: `Le rôle de ${existing.name || existing.email} a été mis à jour avec succès en [ ${dto.role} ].` };
+      }
+      throw new ConflictException('Un utilisateur avec cet email existe déjà dans un autre compte.');
     }
 
     const company = await this.companyRepo.findOne({ where: { id: companyId } });

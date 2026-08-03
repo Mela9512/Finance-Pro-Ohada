@@ -115,17 +115,23 @@ export const AdminModule: React.FC = () => {
     }
   };
 
+  const [modalErrorMessage, setModalErrorMessage] = useState<string | null>(null);
+  const [isInviting, setIsInviting] = useState(false);
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage(null);
+    setModalErrorMessage(null);
     setInviteSentMessage(null);
+    setIsInviting(true);
     try {
       const res = await api.inviteUser({ email: inviteEmail, role: inviteRole });
       setInviteSentMessage(res.message);
       setInviteEmail('');
       load();
     } catch (err) {
-      setErrorMessage(err instanceof ApiError ? err.message : "Erreur lors de l'envoi de l'invitation");
+      setModalErrorMessage(err instanceof ApiError ? err.message : "Erreur lors de l'envoi de l'invitation");
+    } finally {
+      setIsInviting(false);
     }
   };
 
@@ -962,6 +968,13 @@ export const AdminModule: React.FC = () => {
                 </select>
               </div>
 
+              {modalErrorMessage && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-xl p-3 font-bold flex items-center justify-between">
+                  <span>⚠️ {modalErrorMessage}</span>
+                  <button type="button" onClick={() => setModalErrorMessage(null)} className="text-rose-400">✕</button>
+                </div>
+              )}
+
               {inviteSentMessage && (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl p-3 font-bold">
                   ✓ {inviteSentMessage}
@@ -971,16 +984,24 @@ export const AdminModule: React.FC = () => {
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setShowInviteModal(false)}
+                  onClick={() => { setShowInviteModal(false); setModalErrorMessage(null); setInviteSentMessage(null); }}
                   className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-200"
                 >
                   Annuler
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-700 shadow-sm"
+                  disabled={isInviting}
+                  className="px-5 py-2 bg-violet-600 text-white rounded-xl text-xs font-bold hover:bg-violet-700 shadow-sm disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  Envoyer l'Invitation
+                  {isInviting ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      <span>Traitement...</span>
+                    </>
+                  ) : (
+                    <span>Envoyer l'Invitation / Mettre à jour</span>
+                  )}
                 </button>
               </div>
             </form>
