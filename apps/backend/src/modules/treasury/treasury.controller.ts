@@ -14,6 +14,14 @@ export class TreasuryController {
     return this.treasuryService.getAccounts(user.companyId);
   }
 
+  @Post('accounts')
+  createAccount(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() body: { code: string; name: string; type: 'BANQUE' | 'CAISSE' | 'MOBILE_MONEY'; accountNumber?: string; rib?: string; currency?: string; balance?: number },
+  ) {
+    return this.treasuryService.createAccount(user.companyId, body);
+  }
+
   @Get('transactions')
   getTransactions(@CurrentUser() user: AuthenticatedUser) {
     return this.treasuryService.getTransactions(user.companyId);

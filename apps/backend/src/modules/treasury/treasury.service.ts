@@ -34,6 +34,19 @@ export class TreasuryService {
     return this.accountRepo.find({ where: { companyId }, order: { code: 'ASC' } });
   }
 
+  async createAccount(
+    companyId: string,
+    dto: { code: string; name: string; type: 'BANQUE' | 'CAISSE' | 'MOBILE_MONEY'; accountNumber?: string; rib?: string; currency?: string; balance?: number },
+  ): Promise<TreasuryAccountEntity> {
+    const acc = this.accountRepo.create({
+      ...dto,
+      companyId,
+      balance: dto.balance || 0,
+      currency: dto.currency || 'XAF',
+    });
+    return this.accountRepo.save(acc);
+  }
+
   getTransactions(companyId: string): Promise<TreasuryTransactionEntity[]> {
     return this.txRepo.find({ where: { companyId }, order: { date: 'DESC' } });
   }

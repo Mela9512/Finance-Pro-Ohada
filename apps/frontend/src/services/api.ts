@@ -144,6 +144,8 @@ export const api = {
     request<Supplier>('/suppliers', { method: 'POST', body: JSON.stringify(dto) }),
 
   getTreasuryAccounts: () => request<TreasuryAccount[]>('/treasury/accounts'),
+  createTreasuryAccount: (dto: { code: string; name: string; type: 'BANQUE' | 'CAISSE' | 'MOBILE_MONEY'; accountNumber?: string; rib?: string; currency?: string; balance?: number }) =>
+    request<TreasuryAccount>('/treasury/accounts', { method: 'POST', body: JSON.stringify(dto) }),
   getTreasuryTransactions: () => request<TreasuryTransaction[]>('/treasury/transactions'),
   createTreasuryTransaction: (dto: Omit<TreasuryTransaction, 'id' | 'status'>) =>
     request<TreasuryTransaction>('/treasury/transactions', { method: 'POST', body: JSON.stringify(dto) }),
