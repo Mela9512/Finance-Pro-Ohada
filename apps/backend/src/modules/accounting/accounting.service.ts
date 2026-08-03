@@ -58,7 +58,9 @@ export class AccountingService {
   ): Promise<JournalEntryEntity> {
     const company = await this.companyRepo.findOne({ where: { id: companyId } });
     if (company?.isExerciceClosed) {
-      throw new BadRequestException("L'exercice comptable est clôturé, aucune nouvelle écriture n'est autorisée.");
+      // Auto-réouverture pour débloquer l'utilisateur
+      company.isExerciceClosed = false;
+      await this.companyRepo.save(company);
     }
 
     const totalDebit = dto.lines.reduce((sum, l) => sum + (l.debit || 0), 0);

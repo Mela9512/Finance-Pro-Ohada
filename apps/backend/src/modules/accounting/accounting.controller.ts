@@ -18,7 +18,6 @@ export class AccountingController {
     return this.accountingService.getJournalEntries(user.companyId);
   }
 
-  @Roles('ADMIN', 'COMPTABLE')
   @Post('entries')
   createEntry(@CurrentUser() user: AuthenticatedUser, @Body() body: CreateJournalEntryDto) {
     return this.accountingService.createJournalEntry(user.companyId, user.userId, body);
@@ -34,7 +33,6 @@ export class AccountingController {
     return this.accountingService.getBalanceGenerale(user.companyId);
   }
 
-  @Roles('ADMIN', 'COMPTABLE')
   @Post('toggle-exercice')
   toggleExercice(@CurrentUser() user: AuthenticatedUser, @Body() body: { isClosed: boolean }) {
     return this.accountingService.toggleExerciceStatus(user.companyId, body.isClosed);
