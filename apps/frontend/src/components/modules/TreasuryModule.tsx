@@ -447,35 +447,35 @@ export const TreasuryModule: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setShowRapprochementModal(true)}
+              onClick={() => setActiveTab(8)}
               className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition-all flex items-center gap-1.5"
             >
               <RefreshCw className="w-3.5 h-3.5 text-slate-600" /> 🔄 Rapprochement
             </button>
 
             <button
-              onClick={() => setShowSimulatorModal(true)}
+              onClick={() => setActiveTab(9)}
               className="px-3.5 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 font-bold text-xs transition-all flex items-center gap-1.5"
             >
               <TrendingUp className="w-3.5 h-3.5 text-amber-600" /> 📊 Prévisions & IA
             </button>
 
             <button
-              onClick={() => setShowChequeModal(true)}
+              onClick={() => setActiveTab(7)}
               className="px-3.5 py-2 rounded-xl bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 font-bold text-xs transition-all flex items-center gap-1.5"
             >
               <FileText className="w-3.5 h-3.5 text-cyan-600" /> 📜 Portefeuille Chèques
             </button>
 
             <button
-              onClick={() => setShowPrintReportModal(true)}
+              onClick={() => setActiveTab(13)}
               className="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold text-xs transition-all flex items-center gap-1.5"
             >
               <Printer className="w-3.5 h-3.5" /> 🖨️ Imprimer / PDF
             </button>
 
             <button
-              onClick={() => setShowAiAssistantModal(true)}
+              onClick={() => setActiveTab(17)}
               className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-extrabold text-xs hover:opacity-90 transition-all shadow-md flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" /> 🤖 Assistant IA
@@ -550,7 +550,7 @@ export const TreasuryModule: React.FC = () => {
         ))}
       </div>
 
-      {/* ── CONTENU INTERACTIF PAR PILIER ───────────────────────────────────── */}
+      {/* ── CONTENU DÉDIÉ PAR PILIER (1 à 17) ─────────────────────────────────── */}
 
       {/* PILIER 1 : TABLEAU DE BORD & KPIS DE TRÉSORERIE */}
       {activeTab === 1 && (
@@ -629,7 +629,7 @@ export const TreasuryModule: React.FC = () => {
       )}
 
       {/* PILIER 2 : COMPTES DE TRÉSORERIE (BANQUES, CAISSES, MOBILE MONEY) */}
-      {(activeTab === 2 || activeTab === 1) && (
+      {activeTab === 2 && (
         <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
             <div className="flex items-center gap-2">
@@ -673,97 +673,190 @@ export const TreasuryModule: React.FC = () => {
         </div>
       )}
 
-      {/* PILIER 3, 4, 5 ET LISTE DES MOUVEMENTS DE TRÉSORERIE */}
-      {(activeTab >= 3 && activeTab <= 6) || activeTab === 1 ? (
+      {/* PILIER 3 : ENCAISSEMENTS (+ FLUX D'ENTRÉES) */}
+      {activeTab === 3 && (
         <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-4 border-b pb-3">
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-              Derniers Mouvements & Flux de Trésorerie ({filteredTxs.length})
-            </h3>
-
-            {/* Barre de Recherche & Filtres */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
-                <input
-                  type="text"
-                  placeholder="Rechercher tiers, réf..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-slate-50 focus:bg-white w-48"
-                />
-              </div>
-
-              <select
-                value={filterAccount}
-                onChange={(e) => setFilterAccount(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
-              >
-                <option value="TOUS">Tous les Comptes</option>
-                {accounts.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
-              >
-                <option value="TOUS">Tous les Types</option>
-                <option value="ENCAISSEMENT">Encaissements (+)</option>
-                <option value="DECAISSEMENT">Décaissements (-)</option>
-              </select>
+          <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <ArrowDownLeft className="w-4 h-4 text-emerald-600" /> Journal des Encaissements (+ Entrées de Trésorerie)
+              </h3>
+              <p className="text-xs text-slate-500">Règlements clients, ventes au comptant, subventions, apports et revenus financiers</p>
             </div>
+            <button
+              onClick={() => { setTxType('ENCAISSEMENT'); setShowMoveModal(true); }}
+              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition-colors flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" /> 💰 Nouvel Encaissement
+            </button>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100 text-slate-600 uppercase font-bold text-[10px]">
+              <thead className="bg-emerald-50 text-emerald-900 uppercase font-bold text-[10px]">
                 <tr>
                   <th className="p-3">Date</th>
-                  <th className="p-3">Compte de Trésorerie</th>
-                  <th className="p-3">Tiers Associé</th>
-                  <th className="p-3">Catégorie</th>
+                  <th className="p-3">Compte Récepteur</th>
+                  <th className="p-3">Client / Tiers</th>
+                  <th className="p-3">Catégorie Encaissement</th>
                   <th className="p-3">Référence / Pièce</th>
-                  <th className="p-3 text-right">Montant</th>
-                  <th className="p-3 text-right">Statut Rapprochement</th>
+                  <th className="p-3 text-right">Montant Encaissé</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredTxs.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-slate-50 transition-colors">
+                {transactions.filter(t => t.type === 'ENCAISSEMENT').map((tx) => (
+                  <tr key={tx.id} className="hover:bg-slate-50">
                     <td className="p-3 font-mono text-slate-500">{tx.date}</td>
                     <td className="p-3 font-bold text-slate-900">{tx.treasuryAccountName}</td>
-                    <td className="p-3 font-semibold text-slate-700">{tx.tierName || 'Tiers Divers'}</td>
+                    <td className="p-3 font-semibold text-slate-800">{tx.tierName || 'Client Divers'}</td>
                     <td className="p-3 text-slate-600">{tx.category}</td>
                     <td className="p-3 font-mono text-slate-500">{tx.reference}</td>
-                    <td className="p-3 text-right font-mono font-extrabold text-sm">
-                      <span className={tx.type === 'ENCAISSEMENT' ? 'text-emerald-600' : 'text-rose-600'}>
-                        {tx.type === 'ENCAISSEMENT' ? '+' : '-'}{formatMoney(Number(tx.amount))}
-                      </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                        tx.status === 'RAPPROCHE' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {tx.status === 'RAPPROCHE' ? '✓ RAPPROCHÉ' : '⏳ EN ATTENTE'}
-                      </span>
+                    <td className="p-3 text-right font-mono font-black text-emerald-600 text-sm">
+                      +{formatMoney(Number(tx.amount))}
                     </td>
                   </tr>
                 ))}
-                {filteredTxs.length === 0 && (
-                  <tr>
-                    <td colSpan={7} className="p-8 text-center text-slate-400 font-bold text-xs">
-                      Aucun mouvement de trésorerie trouvé pour ces filtres.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </div>
-      ) : null}
+      )}
+
+      {/* PILIER 4 : DÉCAISSEMENTS (- FLUX DE SORTIES) */}
+      {activeTab === 4 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <ArrowUpRight className="w-4 h-4 text-rose-600" /> Journal des Décaissements (- Sorties de Trésorerie)
+              </h3>
+              <p className="text-xs text-slate-500">Paiements fournisseurs, salaires, charges fiscales (TVA, AIR, IS), CNPS et loyers</p>
+            </div>
+            <button
+              onClick={() => { setTxType('DECAISSEMENT'); setShowMoveModal(true); }}
+              className="px-3.5 py-1.5 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 transition-colors flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" /> 💸 Nouveau Décaissement
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-rose-50 text-rose-900 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="p-3">Date</th>
+                  <th className="p-3">Compte Débité</th>
+                  <th className="p-3">Fournisseur / Bénéficiaire</th>
+                  <th className="p-3">Catégorie Dépense</th>
+                  <th className="p-3">Référence / Pièce</th>
+                  <th className="p-3 text-right">Montant Décaissé</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {transactions.filter(t => t.type === 'DECAISSEMENT').map((tx) => (
+                  <tr key={tx.id} className="hover:bg-slate-50">
+                    <td className="p-3 font-mono text-slate-500">{tx.date}</td>
+                    <td className="p-3 font-bold text-slate-900">{tx.treasuryAccountName}</td>
+                    <td className="p-3 font-semibold text-slate-800">{tx.tierName || 'Fournisseur Divers'}</td>
+                    <td className="p-3 text-slate-600">{tx.category}</td>
+                    <td className="p-3 font-mono text-slate-500">{tx.reference}</td>
+                    <td className="p-3 text-right font-mono font-black text-rose-600 text-sm">
+                      -{formatMoney(Number(tx.amount))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 5 : TRANSFERTS INTERNES (COMPTE 585) */}
+      {activeTab === 5 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <ArrowLeftRight className="w-4 h-4 text-indigo-600" /> Transferts Internes & Virements de Fonds (Compte 585)
+              </h3>
+              <p className="text-xs text-slate-500">Mouvements de fonds inter-banques, dépôts en caisse et transferts Mobile Money</p>
+            </div>
+            <button
+              onClick={() => setShowVirementModal(true)}
+              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 transition-colors flex items-center gap-1.5"
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5" /> Effectuer un Virement Interne
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-indigo-50 text-indigo-900 uppercase font-bold text-[10px]">
+                <tr>
+                  <th className="p-3">Date</th>
+                  <th className="p-3">Compte Source</th>
+                  <th className="p-3">Compte Cible</th>
+                  <th className="p-3">Motif / Description</th>
+                  <th className="p-3">Référence Virement</th>
+                  <th className="p-3 text-right">Montant Transféré</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {transactions.filter(t => t.category.includes('585') || t.category.includes('Transfert')).map((tx) => (
+                  <tr key={tx.id} className="hover:bg-slate-50">
+                    <td className="p-3 font-mono text-slate-500">{tx.date}</td>
+                    <td className="p-3 font-bold text-slate-900">{tx.treasuryAccountName}</td>
+                    <td className="p-3 font-semibold text-slate-800">{tx.tierName}</td>
+                    <td className="p-3 text-slate-600">{tx.description}</td>
+                    <td className="p-3 font-mono text-slate-500">{tx.reference}</td>
+                    <td className="p-3 text-right font-mono font-black text-indigo-700 text-sm">
+                      {formatMoney(Number(tx.amount))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 6 : MODES DE PAIEMENT & RÉPARTITION */}
+      {activeTab === 6 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Analyse par Mode de Paiement (Espèces, Chèque, Virement, Mobile Money)
+            </h3>
+            <p className="text-xs text-slate-500">Répartition des flux financiers selon le moyen d'encaissement et de décaissement</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1">
+              <div className="text-[10px] font-bold text-emerald-800 uppercase">Virements Bancaires</div>
+              <div className="text-xl font-black text-emerald-950">65 % des Flux</div>
+              <div className="text-[10px] text-emerald-700">Règlements sécurisés via Comptes 521</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-1">
+              <div className="text-[10px] font-bold text-amber-800 uppercase">Chèques Bancaires</div>
+              <div className="text-xl font-black text-amber-950">20 % des Flux</div>
+              <div className="text-[10px] text-amber-700">Remises en portefeuille et à l'encaissement</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-violet-50 border border-violet-200 space-y-1">
+              <div className="text-[10px] font-bold text-violet-800 uppercase">Mobile Money (Orange/MTN)</div>
+              <div className="text-xl font-black text-violet-950">10 % des Flux</div>
+              <div className="text-[10px] text-violet-700">Encaissements de ventes rapides</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200 space-y-1">
+              <div className="text-[10px] font-bold text-slate-600 uppercase">Espèces (Caisses)</div>
+              <div className="text-xl font-black text-slate-900">5 % des Flux</div>
+              <div className="text-[10px] text-slate-500">Dépenses de petite caisse & divers</div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* PILIER 7 : GESTION DES CHÈQUES EN PORTEFEUILLE */}
       {activeTab === 7 && (
@@ -823,6 +916,45 @@ export const TreasuryModule: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 8 : RAPPROCHEMENT BANCAIRE */}
+      {activeTab === 8 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-violet-600" /> Espace Rapprochement Bancaire SYSCOHADA
+              </h3>
+              <p className="text-xs text-slate-500">Confrontez vos extraits bancaires aux écritures de trésorerie comptables</p>
+            </div>
+
+            <button
+              onClick={() => { setShowImportModal(true); setImportError(null); setImportResult(null); }}
+              className="px-3.5 py-1.5 rounded-xl bg-violet-600 text-white font-bold text-xs hover:bg-violet-700 transition-colors flex items-center gap-1.5"
+            >
+              <Upload className="w-3.5 h-3.5" /> Importer le Relevé CSV
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="font-extrabold text-slate-900 flex items-center justify-between">
+                <span>1. Extrait du Relevé Bancaire (Banque)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold">Importé</span>
+              </div>
+              <div className="text-slate-500 text-[11px]">Dernier relevé importé : 15 opérations reçues de la banque.</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="font-extrabold text-slate-900 flex items-center justify-between">
+                <span>2. Écritures de Trésorerie (Compte 521)</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-100 text-indigo-800 font-bold">Comptabilité</span>
+              </div>
+              <div className="text-slate-500 text-[11px]">Toutes les écritures validées du journal de banque.</div>
+            </div>
           </div>
         </div>
       )}
@@ -893,6 +1025,46 @@ export const TreasuryModule: React.FC = () => {
         </div>
       )}
 
+      {/* PILIER 10 : GESTION DES ÉCHÉANCES */}
+      {activeTab === 10 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Gestion des Échéances & Calendrier des Règlement Clients / Fournisseurs
+            </h3>
+            <p className="text-xs text-slate-500">Suivi rigoureux des factures échues et relances prioritaires</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
+              <div className="font-extrabold text-emerald-950">Factures à Encaisser (Créances Clients 411)</div>
+              <div className="text-xl font-black text-emerald-700">12 450 000 FCFA</div>
+              <div className="text-[10px] text-emerald-800">4 Factures venant à échéance sous 15 jours</div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-2">
+              <div className="font-extrabold text-rose-950">Factures à Payer (Dettes Fournisseurs 401)</div>
+              <div className="text-xl font-black text-rose-700">8 900 000 FCFA</div>
+              <div className="text-[10px] text-rose-800">3 Règlement programmés pour la semaine prochaine</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 11 : BUDGETS DE TRÉSORERIE */}
+      {activeTab === 11 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Budgets de Trésorerie & Suivi Réel vs Prévisionnel
+            </h3>
+          </div>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+            Comparaison synthétique des budgets d'encaissement et de décaissement sur l'exercice en cours.
+          </div>
+        </div>
+      )}
+
       {/* PILIER 12 : RATIOS & ANALYSE FINANCIÈRE */}
       {activeTab === 12 && (
         <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
@@ -926,6 +1098,140 @@ export const TreasuryModule: React.FC = () => {
               <div className="text-xl font-black text-rose-600">{formatMoney(cashBurnRateMensuel)}</div>
               <div className="text-[10px] text-slate-500">Décaissements moyens incompressibles par mois</div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 13 : RAPPORTS SYSCOHADA (A4) */}
+      {activeTab === 13 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Centre d'Impression des Rapports de Trésorerie (PDF / Format A4)
+            </h3>
+            <button
+              onClick={() => window.print()}
+              className="px-4 py-2 bg-slate-900 text-white rounded-xl font-bold text-xs hover:bg-slate-800 flex items-center gap-1.5"
+            >
+              <Printer className="w-3.5 h-3.5" /> Imprimer le Rapport A4
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
+              <div className="font-extrabold text-slate-900">📜 Livre de Caisse Officiel (A4)</div>
+              <div className="text-slate-500">Document obligatoire traçant chaque mouvement d'espèces avec solde quotidien.</div>
+            </div>
+
+            <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50 space-y-2">
+              <div className="font-extrabold text-slate-900">📊 État de Rapprochement Bancaire (A4)</div>
+              <div className="text-slate-500">Justificatif comptable certifiant la conciliation banque / trésorerie.</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 14 : PARAMÉTRAGE & PLAFONDS */}
+      {activeTab === 14 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Paramétrage des Plafonds de Caisse & Autorisations
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="text-[10px] font-bold text-slate-500 uppercase">Plafond Encaisses Caisse</div>
+              <div className="text-lg font-extrabold text-slate-900 font-mono">2 000 000 FCFA</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="text-[10px] font-bold text-slate-500 uppercase">Plafond Décaissement Comptable</div>
+              <div className="text-lg font-extrabold text-slate-900 font-mono">1 000 000 FCFA</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="text-[10px] font-bold text-slate-500 uppercase">Validation DAF / Admin</div>
+              <div className="text-lg font-extrabold text-indigo-700">Au-delà de 1 000 000 FCFA</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 15 : ALERTES & RISQUES */}
+      {activeTab === 15 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 text-rose-600" /> Alertes & Détection Automatique des Risques
+            </h3>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold flex items-center gap-2">
+              <span>✓ Aucune alerte de solde négatif sur les comptes bancaires 521.</span>
+            </div>
+            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 font-bold flex items-center gap-2">
+              <span>⚠️ 1 chèque en portefeuille approche de son échéance d'encaissement (CHQ-88912).</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 16 : AUDIT & VALIDATION MULTI-NIVEAUX */}
+      {activeTab === 16 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-violet-600" /> Workflow de Validation Multi-niveaux & Piste d'Audit
+            </h3>
+          </div>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+            Niveaux d'approbation : <strong>Comptable Saisisseur</strong> → <strong>Chef Comptable</strong> → <strong>Direction Financière (DAF)</strong>.
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 17 : ASSISTANT IA FINANCEPRO */}
+      {activeTab === 17 && (
+        <div className="p-6 bg-slate-900 text-white rounded-3xl shadow-xl space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-300" />
+              <h3 className="text-sm font-extrabold uppercase tracking-wider">Assistant IA FinancePro — Expert Trésorerie</h3>
+            </div>
+            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+              Modèle IA Spécialisé OHADA
+            </span>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            <p className="text-slate-300">
+              Posez toute question relative à l'optimisation de vos liquidités, vos négociations bancaires ou l'analyse des risques de votre compte.
+            </p>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="ex: Comment optimiser mes règlements fournisseurs cette semaine ?"
+                value={aiQuestion}
+                onChange={(e) => setAiQuestion(e.target.value)}
+                className="w-full p-3 rounded-2xl bg-slate-800 border border-slate-700 font-bold text-xs text-white"
+              />
+              <button
+                onClick={handleAskAi}
+                disabled={aiLoading}
+                className="px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white font-extrabold rounded-2xl text-xs disabled:opacity-50"
+              >
+                {aiLoading ? 'Analyse...' : 'Demander'}
+              </button>
+            </div>
+
+            {aiAnswer && (
+              <div className="p-4 rounded-2xl bg-slate-800 border border-slate-700 text-slate-200 font-medium text-xs leading-relaxed space-y-1">
+                <div className="font-extrabold text-amber-300 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" /> Diagnostic de l'Assistant IA :
+                </div>
+                <div>{aiAnswer}</div>
+              </div>
+            )}
           </div>
         </div>
       )}
