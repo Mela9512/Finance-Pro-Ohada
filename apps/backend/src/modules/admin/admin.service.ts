@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
@@ -129,6 +129,9 @@ export class AdminService {
     const existing = await this.userRepo.findOne({ where: { email: dto.email.toLowerCase() } });
     if (existing) {
       if (existing.companyId === companyId) {
+        if (existing.id === actorUserId && dto.role !== 'ADMIN') {
+          throw new BadRequestException('Vous ne pouvez pas modifier ou rétrograder votre propre rôle d\'administrateur principal.');
+        }
         existing.role = dto.role as any;
         await this.userRepo.save(existing);
         return { message: `Le rôle de ${existing.name || existing.email} a été mis à jour avec succès en [ ${dto.role} ].` };

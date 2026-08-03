@@ -13,7 +13,8 @@ import {
 } from '../wizard/types';
 
 export const AdminModule: React.FC = () => {
-  const { refreshCompany } = useAuth();
+  const { refreshCompany, company: ctxCompany, user: ctxUser } = useAuth();
+  const isAdmin = ctxUser?.role === 'ADMIN';
   const [company, setCompany] = useState<Partial<Company> | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [activeStep, setActiveStep] = useState<number>(1);
@@ -32,10 +33,24 @@ export const AdminModule: React.FC = () => {
   const [inviteRole, setInviteRole] = useState<UserRole>('COMPTABLE');
   const [inviteSentMessage, setInviteSentMessage] = useState<string | null>(null);
 
+  // Pre-fill with AuthContext company to avoid blank screen
+  useEffect(() => {
+    if (ctxCompany && !company) {
+      setCompany({
+        ...ctxCompany,
+        departments: ctxCompany.departments || ['Comptabilité', 'Direction Générale', 'Finance', 'Ressources Humaines'],
+        costCenters: ctxCompany.costCenters || ['Centre Douala - Akwa', 'Siège Social'],
+        branches: ctxCompany.branches || ['Direction Générale Douala'],
+        enabledModules: ctxCompany.enabledModules || ['comptabilite', 'tresorerie', 'ventes', 'facturation', 'paie', 'budget', 'etats', 'dashboard'],
+        paymentMethods: ctxCompany.paymentMethods || ['Virement bancaire', 'Chèque', 'Espèces', 'Mobile Money'],
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ctxCompany]);
+
   const load = async () => {
     try {
       const c = await api.getCompany();
-      const u = await api.getUsers();
       setCompany({
         ...c,
         departments: c.departments || ['Comptabilité', 'Direction Générale', 'Finance', 'Ressources Humaines'],
@@ -44,14 +59,21 @@ export const AdminModule: React.FC = () => {
         enabledModules: c.enabledModules || ['comptabilite', 'tresorerie', 'ventes', 'facturation', 'paie', 'budget', 'etats', 'dashboard'],
         paymentMethods: c.paymentMethods || ['Virement bancaire', 'Chèque', 'Espèces', 'Mobile Money'],
       });
+    } catch (_companyErr) {
+      // Silently ignore — ctxCompany used as fallback (already applied in useEffect above)
+    }
+    // Load users list (admin-only, ignore 403 for non-admins)
+    try {
+      const u = await api.getUsers();
       setUsers(u);
-    } catch (err) {
-      setErrorMessage("Erreur lors du chargement des paramètres d'administration.");
+    } catch (_userErr) {
+      // Non-admin users can't see the users list — that's expected
     }
   };
 
   useEffect(() => {
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSaveCompany = async (e?: React.FormEvent) => {
@@ -170,7 +192,7 @@ export const AdminModule: React.FC = () => {
   if (!company) {
     return (
       <div className="p-12 text-center text-slate-400 font-bold text-xs animate-pulse">
-        Chargement des 10 étapes de paramétrage de l'entreprise...
+        Chargement des paramètres de l'entreprise...
       </div>
     );
   }
@@ -190,6 +212,14 @@ export const AdminModule: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+      {/* Bandeau Lecture-Seule pour non-ADMIN */}
+      {!isAdmin && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 text-xs rounded-2xl p-3.5 font-bold flex items-center gap-2">
+          <Shield className="w-4 h-4 text-amber-600" />
+          <span>Mode consultation — Votre rôle <strong>{ctxUser?.role}</strong> permet la visualisation des paramètres mais pas leur modification. Contactez l'ADMIN pour toute mise à jour.</span>
+        </div>
+      )}
+
       {/* Messages de Statut */}
       {errorMessage && (
         <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs rounded-2xl p-4 font-bold flex items-center justify-between">
@@ -927,9 +957,14 @@ export const AdminModule: React.FC = () => {
 
           <button
             type="submit"
-            className="px-8 py-3 rounded-2xl bg-emerald-600 text-white font-extrabold text-xs hover:bg-emerald-700 transition-colors shadow-lg flex items-center gap-2 ml-auto"
+            disabled={!isAdmin}
+            className={`px-8 py-3 rounded-2xl font-extrabold text-xs transition-colors shadow-lg flex items-center gap-2 ml-auto ${
+              isAdmin
+                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+            }`}
           >
-            <Check className="w-4 h-4" /> Sauvegarder les 10 Étapes d'Administration
+            <Check className="w-4 h-4" /> {isAdmin ? 'Sauvegarder les 10 Étapes d\'Administration' : 'Réservé aux Administrateurs'}
           </button>
         </div>
       </form>
