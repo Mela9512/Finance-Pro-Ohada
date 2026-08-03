@@ -361,7 +361,7 @@ export const ReportsModule: React.FC = () => {
           </div>
         );
 
-      default:
+      default: {
         // Render dynamic table rows for any other selected table (4, 5, 6, 8, 9, 10, 11, 12, 15..35)
         const curTable = liasseTablesList.find(t => t.id === tableId);
         return (
@@ -406,6 +406,7 @@ export const ReportsModule: React.FC = () => {
             </table>
           </div>
         );
+      }
     }
   };
 

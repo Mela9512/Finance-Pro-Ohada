@@ -122,7 +122,7 @@ const BUDGET_VARIANCE_THRESHOLD_PERCENT = 20;
 function normalizeForMatch(value: string): string {
   return value
     .normalize('NFKC')
-    .replace(/[‐-―\-]/g, '-')
+    .replace(/[‐-―-]/g, '-')
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();

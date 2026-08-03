@@ -28,7 +28,7 @@ export const OnboardingWizard: React.FC = () => {
         const parsed = JSON.parse(saved) as WizardData;
         return { ...DEFAULT_WIZARD_DATA, ...parsed };
       }
-    } catch {}
+    } catch { /* ignore */ }
     // Pre-fill companyName from existing company data
     return {
       ...DEFAULT_WIZARD_DATA,
@@ -43,7 +43,7 @@ export const OnboardingWizard: React.FC = () => {
     try {
       const saved = localStorage.getItem(STORAGE_STEP_KEY);
       if (saved) return Math.max(1, Math.min(10, parseInt(saved, 10)));
-    } catch {}
+    } catch { /* ignore */ }
     return 1;
   };
 
@@ -59,7 +59,7 @@ export const OnboardingWizard: React.FC = () => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(wizardData));
         localStorage.setItem(STORAGE_STEP_KEY, String(currentStep));
-      } catch {}
+      } catch { /* ignore */ }
     }, 500);
     return () => clearTimeout(timer);
   }, [wizardData, currentStep]);
