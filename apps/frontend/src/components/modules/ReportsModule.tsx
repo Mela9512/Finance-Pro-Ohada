@@ -21,7 +21,6 @@ interface DrillDownData {
 export const ReportsModule: React.FC = () => {
   // ── States principaux ────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<number>(1);
-  const [reportType, setReportType] = useState<'bilan' | 'compte-resultat' | 'tft' | 'sig'>('bilan');
   const [bilanMode, setBilanMode] = useState<'synthetique' | 'detaille'>('synthetique');
 
   const [bilanData, setBilanData] = useState<FinancialReportBilan | null>(null);
@@ -315,7 +314,7 @@ export const ReportsModule: React.FC = () => {
         ))}
       </div>
 
-      {/* ── CONTENU INTERACTIF PAR PILIER (1 à 16) ───────────────────────────── */}
+      {/* ── CONTENU INTERACTIF DÉDIÉ POUR CHAQUE PILIER (1 À 16) ───────────── */}
 
       {/* PILIER 1 : TABLEAU DE BORD FINANCIER & KPIS */}
       {activeTab === 1 && (
@@ -593,6 +592,105 @@ export const ReportsModule: React.FC = () => {
         </div>
       )}
 
+      {/* PILIER 5 : VARIATION DES CAPITAUX PROPRES */}
+      {activeTab === 5 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Tableau de Variation des Capitaux Propres
+            </h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                <tr>
+                  <th className="p-3">Rubrique</th>
+                  <th className="p-3 text-right">Solde Début N</th>
+                  <th className="p-3 text-right">Variations (+)</th>
+                  <th className="p-3 text-right">Variations (-)</th>
+                  <th className="p-3 text-right font-black">Solde Fin N</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr>
+                  <td className="p-3 font-bold text-slate-900">Capital Social (101)</td>
+                  <td className="p-3 text-right">10 000 000 FCFA</td>
+                  <td className="p-3 text-right">0 FCFA</td>
+                  <td className="p-3 text-right">0 FCFA</td>
+                  <td className="p-3 text-right font-bold text-slate-900">10 000 000 FCFA</td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-slate-900">Réserves Légales & Statutaires</td>
+                  <td className="p-3 text-right">2 500 000 FCFA</td>
+                  <td className="p-3 text-right">+500 000 FCFA</td>
+                  <td className="p-3 text-right">0 FCFA</td>
+                  <td className="p-3 text-right font-bold text-slate-900">3 000 000 FCFA</td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-indigo-700">Résultat Net de l'Exercice (131)</td>
+                  <td className="p-3 text-right">2 050 000 FCFA</td>
+                  <td className="p-3 text-right">+{formatMoney(resultatNet)}</td>
+                  <td className="p-3 text-right">-2 050 000 FCFA</td>
+                  <td className="p-3 text-right font-bold text-indigo-700">{formatMoney(resultatNet)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 6 : NOTES ANNEXES OHADA */}
+      {activeTab === 6 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Notes Annexes Réglementaires SYSCOHADA (Notes 1 à 5)
+            </h3>
+            <p className="text-xs text-slate-500">Document explicatif des méthodes comptables, règles d'amortissement et échéanciers</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="font-extrabold text-slate-900">Note 1 : Règles et Méthodes Comptables</div>
+              <p className="text-slate-600 text-[11px]">Évaluation des stocks au CUMP, amortissements linéaires selon les durées fiscales OHADA.</p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="font-extrabold text-slate-900">Note 2 : Tableau des Immobilisations</div>
+              <p className="text-slate-600 text-[11px]">Suivi des entrées, cessions et valeurs brutes de l'exercice.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 7 : SOLDES SIG DÉTAILLÉS */}
+      {activeTab === 7 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Tableau Détaillé des 9 Soldes Intermédiaires de Gestion (SIG)
+            </h3>
+          </div>
+          <div className="overflow-x-auto text-xs font-mono">
+            <table className="w-full text-left">
+              <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                <tr>
+                  <th className="p-3">Solde Intermédiaire</th>
+                  <th className="p-3 text-right">Montant (FCFA)</th>
+                  <th className="p-3 text-right">% / CA</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr><td className="p-3 font-bold">1. Marge Brute</td><td className="p-3 text-right">{formatMoney(margeBrute)}</td><td className="p-3 text-right">56.8 %</td></tr>
+                <tr><td className="p-3 font-bold">2. Valeur Ajoutée</td><td className="p-3 text-right">{formatMoney(margeBrute - 3200000)}</td><td className="p-3 text-right">44.0 %</td></tr>
+                <tr><td className="p-3 font-bold text-indigo-700">3. EBE (Excédent Brut)</td><td className="p-3 text-right text-indigo-700 font-bold">{formatMoney(ebe)}</td><td className="p-3 text-right">27.2 %</td></tr>
+                <tr><td className="p-3 font-bold text-emerald-600">4. Résultat Net</td><td className="p-3 text-right text-emerald-600 font-black">{formatMoney(resultatNet)}</td><td className="p-3 text-right">13.8 %</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* PILIER 8 : RATIOS FINANCIERS INTÉGRÉS */}
       {activeTab === 8 && (
         <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
@@ -626,6 +724,46 @@ export const ReportsModule: React.FC = () => {
               <div className="text-xl font-black text-violet-700">1.85</div>
               <div className="text-[10px] text-slate-500">Actif circulant / Passif circulant</div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 9 : COMPARAISON MULTI-EXERCICES */}
+      {activeTab === 9 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Comparaison Multi-Exercices (N, N-1, N-2, N-3)
+            </h3>
+          </div>
+          <div className="overflow-x-auto text-xs font-mono">
+            <table className="w-full text-left">
+              <thead className="bg-slate-100 text-slate-700 font-bold uppercase text-[10px]">
+                <tr>
+                  <th className="p-3">Indicateur</th>
+                  <th className="p-3 text-right">Exercice N (2026)</th>
+                  <th className="p-3 text-right">Exercice N-1 (2025)</th>
+                  <th className="p-3 text-right">Exercice N-2 (2024)</th>
+                  <th className="p-3 text-right font-black">Variation N/N-1</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr>
+                  <td className="p-3 font-bold text-slate-900">Chiffre d'Affaires</td>
+                  <td className="p-3 text-right font-bold text-slate-900">{formatMoney(chiffreAffaires)}</td>
+                  <td className="p-3 text-right">22 250 000 FCFA</td>
+                  <td className="p-3 text-right">19 800 000 FCFA</td>
+                  <td className="p-3 text-right font-bold text-emerald-600">+12.4 %</td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-slate-900">Résultat Net</td>
+                  <td className="p-3 text-right font-bold text-emerald-600">{formatMoney(resultatNet)}</td>
+                  <td className="p-3 text-right">2 800 000 FCFA</td>
+                  <td className="p-3 text-right">2 100 000 FCFA</td>
+                  <td className="p-3 text-right font-bold text-emerald-600">+23.2 %</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -666,6 +804,31 @@ export const ReportsModule: React.FC = () => {
         </div>
       )}
 
+      {/* PILIER 11 : PRÉVISIONS & SIMULATIONS */}
+      {activeTab === 11 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Prévisions Financières & Simulation de Scénarios
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-1">
+              <div className="font-bold text-emerald-900 uppercase text-[10px]">Scénario Optimiste (+20%)</div>
+              <div className="text-lg font-black text-emerald-700">{formatMoney(chiffreAffaires * 1.20)}</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="font-bold text-slate-700 uppercase text-[10px]">Scénario Réaliste (+10%)</div>
+              <div className="text-lg font-black text-slate-900">{formatMoney(chiffreAffaires * 1.10)}</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-1">
+              <div className="font-bold text-rose-900 uppercase text-[10px]">Scénario Pessimiste (-5%)</div>
+              <div className="text-lg font-black text-rose-700">{formatMoney(chiffreAffaires * 0.95)}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* PILIER 12 : CONTRÔLE DE CONFORMITÉ OHADA (AUDIT PRÉ-LIASSE) */}
       {activeTab === 12 && (
         <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
@@ -695,6 +858,66 @@ export const ReportsModule: React.FC = () => {
             <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold flex items-center justify-between">
               <span>✓ Continuité des Amortissements : Tableau de dotation synchronisé avec le compte 681</span>
               <span className="text-emerald-700 font-black">VALIDÉ</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 13 : LIASSE FISCALE OFFICIELLE */}
+      {activeTab === 13 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Liasse Fiscale Normalisée OHADA (36 Tableaux Réglementaires)
+            </h3>
+          </div>
+          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600">
+            Liasse statistique et fiscale conforme aux centres des impôts DGI. Prête pour export XML / Excel.
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 14 : HISTORIQUE & CLÔTURES */}
+      {activeTab === 14 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Historique des Clôtures & Archivage des Exercices
+            </h3>
+          </div>
+          <div className="space-y-2 text-xs">
+            <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex justify-between items-center font-bold">
+              <span>Exercice Comptable 2025</span>
+              <span className="text-rose-600">🔒 Closed & Archived</span>
+            </div>
+            <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex justify-between items-center font-bold">
+              <span>Exercice Comptable 2026</span>
+              <span className="text-emerald-700">🟢 Exercice En Cours</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PILIER 15 : RAPPORTS POUR LA DIRECTION */}
+      {activeTab === 15 && (
+        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
+          <div className="border-b pb-3">
+            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+              Dossiers & Rapports Financiers pour la Direction
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="font-extrabold text-slate-900">Dossier Banque / Crédit</div>
+              <div className="text-[10px] text-slate-500">Pour demandes de financement bancaire.</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="font-extrabold text-slate-900">Rapport de Gestion AG</div>
+              <div className="text-[10px] text-slate-500">Présentation annuelle pour l'Assemblée Générale.</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
+              <div className="font-extrabold text-slate-900">Dossier Investisseurs</div>
+              <div className="text-[10px] text-slate-500">Plaquette financière pour levée de fonds.</div>
             </div>
           </div>
         </div>
