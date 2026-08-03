@@ -3,7 +3,7 @@ import {
   BookOpen, PlusCircle, CheckCircle2, AlertTriangle,
   Search, FileSpreadsheet, Layers, Scale, Download, Sparkles,
   Lock, Upload, ShieldCheck, FileText, CheckSquare, Settings, PieChart,
-  Activity, ArrowRightLeft, RefreshCw
+  Activity, ArrowRightLeft, RefreshCw, Zap, Calculator
 } from 'lucide-react';
 import { AccountSYSCOHADA, JournalEntry, JournalLine, AccountSuggestion, JournalType } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -52,6 +52,37 @@ type AccountingTab =
   | 'parametrages'
   | 'audit'
   | 'ai-assistant';
+
+const JOURNAL_TEMPLATES: Record<JournalType, Array<{ accountCode: string; accountLabel: string; debit: number; credit: number }>> = {
+  VENTES: [
+    { accountCode: '411', accountLabel: 'Clients, Ventes de biens et services', debit: 0, credit: 0 },
+    { accountCode: '701', accountLabel: 'Ventes de marchandises', debit: 0, credit: 0 },
+    { accountCode: '443', accountLabel: 'État, TVA facturée sur ventes', debit: 0, credit: 0 },
+  ],
+  ACHATS: [
+    { accountCode: '601', accountLabel: 'Achats de marchandises', debit: 0, credit: 0 },
+    { accountCode: '445', accountLabel: 'État, TVA récupérable sur achats', debit: 0, credit: 0 },
+    { accountCode: '401', accountLabel: 'Fournisseurs, dettes en compte', debit: 0, credit: 0 },
+  ],
+  BANQUE: [
+    { accountCode: '521', accountLabel: 'Banques locales', debit: 0, credit: 0 },
+    { accountCode: '411', accountLabel: 'Clients, Ventes de biens et services', debit: 0, credit: 0 },
+  ],
+  CAISSE: [
+    { accountCode: '571', accountLabel: 'Caisse principale', debit: 0, credit: 0 },
+    { accountCode: '411', accountLabel: 'Clients, Ventes de biens et services', debit: 0, credit: 0 },
+  ],
+  SALAIRES: [
+    { accountCode: '661', accountLabel: 'Rémunérations du personnel (Salaires bruts)', debit: 0, credit: 0 },
+    { accountCode: '421', accountLabel: 'Personnel, rémunérations dues (Net à payer)', debit: 0, credit: 0 },
+    { accountCode: '431', accountLabel: 'Sécurité sociale (CNPS / Cotisations)', debit: 0, credit: 0 },
+    { accountCode: '447', accountLabel: 'État, impôts sur salaires (IRPP / Retenues)', debit: 0, credit: 0 },
+  ],
+  OD: [
+    { accountCode: '658', accountLabel: 'Charges diverses d\'exploitation', debit: 0, credit: 0 },
+    { accountCode: '758', accountLabel: 'Produits divers d\'exploitation', debit: 0, credit: 0 },
+  ],
+};
 
 // ─── Modal Pédagogique SYSCOHADA ──────────────────────────────────────────────
 const SyscohadaPedagogicalModal: React.FC<{ accountCode: string; onClose: () => void }> = ({ accountCode, onClose }) => {
@@ -182,11 +213,13 @@ export const AccountingModule: React.FC = () => {
   const [date, setDate] = useState(new Date().toISOString().substring(0, 10));
   const [wording, setWording] = useState('');
   const [pieceNumber, setPieceNumber] = useState('');
-  const [lines, setLines] = useState<Array<{ accountCode: string; accountLabel: string; debit: number; credit: number }>>([
-    { accountCode: '411', accountLabel: 'Clients, Ventes de biens et services', debit: 0, credit: 0 },
-    { accountCode: '701', accountLabel: 'Ventes de marchandises', debit: 0, credit: 0 },
-    { accountCode: '443', accountLabel: 'État, TVA facturée sur ventes', debit: 0, credit: 0 },
-  ]);
+  const [lines, setLines] = useState<Array<{ accountCode: string; accountLabel: string; debit: number; credit: number }>>(
+    JOURNAL_TEMPLATES.VENTES
+  );
+
+  // Automations Calculateur HT / TVA / TTC
+  const [autoAmountHT, setAutoAmountHT] = useState<number | ''>('');
+  const [vatRate, setVatRate] = useState<number>(19.25);
 
   const [searchAccount, setSearchAccount] = useState('');
   const [selectedClass, setSelectedClass] = useState<number | null>(null);
@@ -227,6 +260,67 @@ export const AccountingModule: React.FC = () => {
   const applySuggestion = () => {
     if (!accountSuggestion) return;
     handleLineChange(0, 'accountCode', accountSuggestion.accountCode);
+  };
+
+  // Changement de journal automatique
+  const handleJournalChange = (newJournal: JournalType) => {
+    setJournalType(newJournal);
+    setLines(JOURNAL_TEMPLATES[newJournal] || JOURNAL_TEMPLATES.VENTES);
+    if (!pieceNumber) {
+      const prefixMap: Record<JournalType, string> = { VENTES: 'VT', ACHATS: 'AC', BANQUE: 'BQ', CAISSE: 'CA', SALAIRES: 'SA', OD: 'OD' };
+      setPieceNumber(`${prefixMap[newJournal]}-2026-${Math.floor(Math.random() * 899 + 100)}`);
+    }
+  };
+
+  // Calculateur Automatique des Montants (HT, TVA & TTC)
+  const handleAutoCalculateAmounts = (htVal: number) => {
+    if (!htVal || htVal <= 0) return;
+    const ht = Math.round(htVal);
+    const tva = Math.round(ht * (vatRate / 100));
+    const ttc = ht + tva;
+
+    const newLines = [...lines];
+    if (journalType === 'VENTES') {
+      if (newLines[0]) newLines[0] = { ...newLines[0], debit: ttc, credit: 0 };
+      if (newLines[1]) newLines[1] = { ...newLines[1], debit: 0, credit: ht };
+      if (newLines[2]) newLines[2] = { ...newLines[2], debit: 0, credit: tva };
+    } else if (journalType === 'ACHATS') {
+      if (newLines[0]) newLines[0] = { ...newLines[0], debit: ht, credit: 0 };
+      if (newLines[1]) newLines[1] = { ...newLines[1], debit: tva, credit: 0 };
+      if (newLines[2]) newLines[2] = { ...newLines[2], debit: 0, credit: ttc };
+    } else if (journalType === 'BANQUE' || journalType === 'CAISSE') {
+      if (newLines[0]) newLines[0] = { ...newLines[0], debit: ttc, credit: 0 };
+      if (newLines[1]) newLines[1] = { ...newLines[1], debit: 0, credit: ttc };
+    } else if (journalType === 'SALAIRES') {
+      const net = Math.round(ht * 0.8);
+      const cnps = Math.round(ht * 0.1);
+      const irpp = ht - net - cnps;
+      if (newLines[0]) newLines[0] = { ...newLines[0], debit: ht, credit: 0 };
+      if (newLines[1]) newLines[1] = { ...newLines[1], debit: 0, credit: net };
+      if (newLines[2]) newLines[2] = { ...newLines[2], debit: 0, credit: cnps };
+      if (newLines[3]) newLines[3] = { ...newLines[3], debit: 0, credit: irpp };
+    } else {
+      if (newLines[0]) newLines[0] = { ...newLines[0], debit: ttc, credit: 0 };
+      if (newLines[1]) newLines[1] = { ...newLines[1], debit: 0, credit: ttc };
+    }
+    setLines(newLines);
+  };
+
+  // Équilibrage automatique de la dernière ligne
+  const handleAutoBalanceLastLine = () => {
+    if (lines.length < 2) return;
+    const debits = lines.slice(0, -1).reduce((sum, l) => sum + (Number(l.debit) || 0), 0);
+    const credits = lines.slice(0, -1).reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
+    const diff = debits - credits;
+
+    const newLines = [...lines];
+    const lastIndex = newLines.length - 1;
+    if (diff > 0) {
+      newLines[lastIndex] = { ...newLines[lastIndex], debit: 0, credit: diff };
+    } else if (diff < 0) {
+      newLines[lastIndex] = { ...newLines[lastIndex], debit: Math.abs(diff), credit: 0 };
+    }
+    setLines(newLines);
   };
 
   useEffect(() => {
@@ -276,7 +370,7 @@ export const AccountingModule: React.FC = () => {
         date,
         journalType,
         wording,
-        pieceNumber,
+        pieceNumber: pieceNumber || `${journalType.substring(0, 2)}-${date.substring(0, 4)}-001`,
         lines: lines.map((l, i) => ({
           id: String(i + 1),
           accountCode: l.accountCode,
@@ -288,11 +382,8 @@ export const AccountingModule: React.FC = () => {
       setSuccessMessage('Écriture comptable enregistrée et validée avec succès dans le journal !');
       setWording('');
       setPieceNumber('');
-      setLines([
-        { accountCode: '411', accountLabel: 'Clients, Ventes de biens et services', debit: 0, credit: 0 },
-        { accountCode: '701', accountLabel: 'Ventes de marchandises', debit: 0, credit: 0 },
-        { accountCode: '443', accountLabel: 'État, TVA facturée sur ventes', debit: 0, credit: 0 },
-      ]);
+      setAutoAmountHT('');
+      setLines(JOURNAL_TEMPLATES[journalType]);
       loadEntries();
     } catch (err) {
       setErrorMessage(err instanceof ApiError ? err.message : 'Erreur lors de l\'enregistrement de l\'écriture');
@@ -605,12 +696,94 @@ export const AccountingModule: React.FC = () => {
             </div>
           )}
 
+          {/* ⚡ Calculateur et Remplissage Automatique Intelligents (Nouveau !) */}
+          <div className="p-4 rounded-2xl bg-violet-50/70 border border-violet-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-violet-900 font-extrabold text-xs">
+                <Zap className="w-4 h-4 text-violet-600 fill-violet-600" />
+                <span>Assistant de Calcul Automatique HT / TVA / TTC (Remplissage Instantané)</span>
+              </div>
+              <span className="text-[10px] font-bold text-violet-600 bg-violet-100 px-2 py-0.5 rounded-full">
+                Saisie 1-Clic
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Montant Hors Taxe (HT en FCFA)</label>
+                <input
+                  type="number"
+                  placeholder="ex: 100000"
+                  value={autoAmountHT}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? '' : Number(e.target.value);
+                    setAutoAmountHT(val);
+                    if (typeof val === 'number' && val > 0) {
+                      handleAutoCalculateAmounts(val);
+                    }
+                  }}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-violet-200 font-mono text-xs font-bold bg-white text-violet-900 focus:ring-2 focus:ring-violet-400"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Taux de TVA (%)</label>
+                <select
+                  value={vatRate}
+                  onChange={(e) => {
+                    const r = Number(e.target.value);
+                    setVatRate(r);
+                    if (typeof autoAmountHT === 'number' && autoAmountHT > 0) {
+                      const ht = autoAmountHT;
+                      const tva = Math.round(ht * (r / 100));
+                      const ttc = ht + tva;
+                      const newLines = [...lines];
+                      if (journalType === 'VENTES') {
+                        if (newLines[0]) newLines[0] = { ...newLines[0], debit: ttc, credit: 0 };
+                        if (newLines[1]) newLines[1] = { ...newLines[1], debit: 0, credit: ht };
+                        if (newLines[2]) newLines[2] = { ...newLines[2], debit: 0, credit: tva };
+                      } else if (journalType === 'ACHATS') {
+                        if (newLines[0]) newLines[0] = { ...newLines[0], debit: ht, credit: 0 };
+                        if (newLines[1]) newLines[1] = { ...newLines[1], debit: tva, credit: 0 };
+                        if (newLines[2]) newLines[2] = { ...newLines[2], debit: 0, credit: ttc };
+                      }
+                      setLines(newLines);
+                    }
+                  }}
+                  className="w-full mt-1 p-2.5 rounded-xl border border-violet-200 text-xs font-bold bg-white"
+                >
+                  <option value={19.25}>19,25 % (Standard CEMAC/SYSCOHADA)</option>
+                  <option value={18}>18,00 % (Standard UEMOA)</option>
+                  <option value={0}>0,00 % (Exonéré de TVA)</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => typeof autoAmountHT === 'number' && handleAutoCalculateAmounts(autoAmountHT)}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-violet-600 text-white font-bold text-xs hover:bg-violet-700 transition-colors shadow-sm flex items-center justify-center gap-1.5"
+                >
+                  <Calculator className="w-3.5 h-3.5" /> Auto-remplir
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAutoBalanceLastLine}
+                  className="py-2.5 px-3 rounded-xl bg-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-300 transition-colors flex items-center gap-1"
+                  title="Ajuste la dernière ligne pour rendre Débit = Crédit"
+                >
+                  ⚡ Équilibrer
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
               <label className="text-[10px] font-bold text-slate-400 uppercase">Journal</label>
               <select
                 value={journalType}
-                onChange={(e: any) => setJournalType(e.target.value)}
+                onChange={(e: any) => handleJournalChange(e.target.value)}
                 className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
               >
                 <option value="VENTES">Journal des Ventes (VT)</option>
@@ -636,7 +809,7 @@ export const AccountingModule: React.FC = () => {
               <label className="text-[10px] font-bold text-slate-400 uppercase">N° Pièce Justificative</label>
               <input
                 type="text"
-                placeholder="ex: FAC-2026-001"
+                placeholder="ex: VT-2026-001"
                 value={pieceNumber}
                 onChange={(e) => setPieceNumber(e.target.value)}
                 className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs font-mono font-bold"
@@ -658,7 +831,7 @@ export const AccountingModule: React.FC = () => {
           {/* Table des Lignes d'écriture */}
           <div className="space-y-2">
             <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
-              <span>Lignes d'Écritures Comptables</span>
+              <span>Lignes d'Écritures Comptables (Adaptées au Journal)</span>
               <span>Débit / Crédit en FCFA</span>
             </div>
 
@@ -715,13 +888,22 @@ export const AccountingModule: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={handleAddLine}
-              className="text-xs font-bold text-violet-600 hover:text-violet-800 flex items-center gap-1"
-            >
-              + Ajouter une ligne d'écriture
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleAddLine}
+                className="text-xs font-bold text-violet-600 hover:text-violet-800 flex items-center gap-1"
+              >
+                + Ajouter une ligne d'écriture
+              </button>
+              <button
+                type="button"
+                onClick={handleAutoBalanceLastLine}
+                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+              >
+                ⚡ Équilibrer automatiquement
+              </button>
+            </div>
 
             <div className="flex items-center gap-4 text-xs font-mono font-bold">
               <div>Total Débit : <span className="text-emerald-600">{totalDebit.toLocaleString('fr-FR')} FCFA</span></div>
