@@ -182,7 +182,15 @@ export class AiService {
       `Pour le libellé d'écriture suivant : "${wording}", quel est le compte SYSCOHADA le plus approprié parmi le plan comptable ci-dessus ? ` +
       'Réponds uniquement avec un code de compte qui existe dans ce plan comptable.';
 
-    return this.aiProvider.generateJson<AccountSuggestion>(prompt, ACCOUNT_SUGGESTION_SCHEMA);
+    const result = await this.aiProvider.generateJson<AccountSuggestion>(prompt, ACCOUNT_SUGGESTION_SCHEMA);
+    if (!result.label && result.accountCode) {
+      const acc = accounts.find((a) => a.code === result.accountCode);
+      if (acc) result.label = acc.label;
+    }
+    if (!result.label) {
+      result.label = `Compte ${result.accountCode}`;
+    }
+    return result;
   }
 
   /**

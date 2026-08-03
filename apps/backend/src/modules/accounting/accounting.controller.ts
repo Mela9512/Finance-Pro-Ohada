@@ -33,4 +33,10 @@ export class AccountingController {
   getBalance(@CurrentUser() user: AuthenticatedUser) {
     return this.accountingService.getBalanceGenerale(user.companyId);
   }
+
+  @Roles('ADMIN', 'COMPTABLE')
+  @Post('toggle-exercice')
+  toggleExercice(@CurrentUser() user: AuthenticatedUser, @Body() body: { isClosed: boolean }) {
+    return this.accountingService.toggleExerciceStatus(user.companyId, body.isClosed);
+  }
 }

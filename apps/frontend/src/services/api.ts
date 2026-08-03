@@ -121,6 +121,8 @@ export const api = {
   getGrandLivre: (accountCode?: string) =>
     request<any[]>(`/accounting/grand-livre${accountCode ? `?accountCode=${encodeURIComponent(accountCode)}` : ''}`),
   getBalance: () => request<any[]>('/accounting/balance'),
+  toggleExerciceStatus: (isClosed: boolean) =>
+    request<Company>('/accounting/toggle-exercice', { method: 'POST', body: JSON.stringify({ isClosed }) }),
 
   getBilan: () => request<FinancialReportBilan>('/reports/bilan'),
   getCompteResultat: () => request<CompteDeResultat>('/reports/compte-resultat'),

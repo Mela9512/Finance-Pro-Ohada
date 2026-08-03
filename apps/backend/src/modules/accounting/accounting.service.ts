@@ -230,4 +230,11 @@ export class AccountingService {
       soldeCrediteur: b.soldeCrediteur,
     }));
   }
+
+  async toggleExerciceStatus(companyId: string, isClosed: boolean): Promise<CompanyEntity> {
+    await this.companyRepo.update({ id: companyId }, { isExerciceClosed: isClosed });
+    const company = await this.companyRepo.findOne({ where: { id: companyId } });
+    if (!company) throw new BadRequestException('Entreprise non trouvée');
+    return company;
+  }
 }

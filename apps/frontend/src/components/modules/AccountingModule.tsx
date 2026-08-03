@@ -412,6 +412,16 @@ export const AccountingModule: React.FC = () => {
     return matchSearch && matchClass;
   });
 
+  const handleReopenExercice = async () => {
+    try {
+      await api.toggleExerciceStatus(false);
+      setErrorMessage(null);
+      setSuccessMessage("L'exercice comptable a été réouvert avec succès ! La saisie des écritures est désormais active.");
+    } catch (err) {
+      setErrorMessage('Erreur lors de la réouverture de l\'exercice.');
+    }
+  };
+
   return (
     <div className="space-y-5 pb-8 animate-in fade-in duration-300">
 
@@ -461,7 +471,7 @@ export const AccountingModule: React.FC = () => {
             onClick={() => setClotureModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors"
           >
-            <Lock className="w-3.5 h-3.5" /> Clôturer
+            <Lock className="w-3.5 h-3.5" /> Clôturer / Réouvrir
           </button>
           <button
             onClick={() => setTab('grand-livre')}
@@ -523,14 +533,14 @@ export const AccountingModule: React.FC = () => {
         </div>
       )}
 
-      {/* Modale Clôture */}
+      {/* Modale Clôture & Réouverture */}
       {clotureModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-violet-100">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-rose-600" />
-                <h3 className="text-sm font-extrabold text-slate-900">Clôture Comptable de Période</h3>
+                <h3 className="text-sm font-extrabold text-slate-900">Gestion de la Clôture / Réouverture</h3>
               </div>
               <button onClick={() => setClotureModalOpen(false)} className="text-xs font-bold text-slate-400">✕</button>
             </div>
@@ -538,14 +548,30 @@ export const AccountingModule: React.FC = () => {
               <div className="flex items-center gap-2 text-emerald-600 font-bold"><CheckCircle2 className="w-4 h-4" /> 1. Vérification Débit = Crédit (100% Équilibré)</div>
               <div className="flex items-center gap-2 text-emerald-600 font-bold"><CheckCircle2 className="w-4 h-4" /> 2. Clôture des journaux auxiliaires</div>
               <div className="flex items-center gap-2 text-emerald-600 font-bold"><CheckCircle2 className="w-4 h-4" /> 3. Génération des A-Nouveaux automatique</div>
-              <div className="flex items-center gap-2 text-emerald-600 font-bold"><CheckCircle2 className="w-4 h-4" /> 4. Verrouillage inaltérable de la période</div>
+              <div className="flex items-center gap-2 text-emerald-600 font-bold"><CheckCircle2 className="w-4 h-4" /> 4. Verrouillage / Déverrouillage de la période</div>
             </div>
-            <button
-              onClick={() => { setClotureModalOpen(false); setSuccessMessage('Période comptable clôturée et archivée en toute sécurité selon la norme SYSCOHADA.'); }}
-              className="w-full py-2.5 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
-            >
-              Exécuter la clôture définitive
-            </button>
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button
+                onClick={() => {
+                  api.toggleExerciceStatus(true).then(() => {
+                    setClotureModalOpen(false);
+                    setSuccessMessage('Période comptable clôturée et archivée selon la norme SYSCOHADA.');
+                  });
+                }}
+                className="py-2.5 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+              >
+                🔒 Clôturer l'exercice
+              </button>
+              <button
+                onClick={() => {
+                  handleReopenExercice();
+                  setClotureModalOpen(false);
+                }}
+                className="py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+              >
+                🔓 Réouvrir l'exercice
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -584,12 +610,23 @@ export const AccountingModule: React.FC = () => {
 
       {/* Messages d'alerte ou succès */}
       {errorMessage && (
-        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center justify-between">
+        <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-rose-600" />
+            <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0" />
             <span>{errorMessage}</span>
           </div>
-          <button onClick={() => setErrorMessage(null)} className="text-rose-500 hover:text-rose-800">✕</button>
+          <div className="flex items-center gap-2">
+            {errorMessage.includes('clôturé') && (
+              <button
+                type="button"
+                onClick={handleReopenExercice}
+                className="px-3 py-1 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 transition-colors shadow-sm"
+              >
+                🔓 Réouvrir l'exercice comptable
+              </button>
+            )}
+            <button onClick={() => setErrorMessage(null)} className="text-rose-500 hover:text-rose-800">✕</button>
+          </div>
         </div>
       )}
 
