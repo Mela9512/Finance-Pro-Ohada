@@ -4,7 +4,7 @@ import {
   TrendingUp, TrendingDown, DollarSign, PieChart, Layers, ArrowUpRight, ArrowDownLeft,
   Search, Lock, CheckSquare, Eye, ChevronRight, Calculator, RefreshCw, Award, Scale,
   BookOpen, HelpCircle, FileSpreadsheet, Building2, ShieldAlert, Zap, BarChart2, ClipboardList,
-  Grid, List, CheckCircle2, ArrowRight, Shield, Check
+  Grid, List, CheckCircle2, ArrowRight, Shield, Check, Info, Landmark, UserCheck
 } from 'lucide-react';
 import { FinancialReportBilan, CompteDeResultat, FinancialVariationExplanation } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -184,6 +184,230 @@ export const ReportsModule: React.FC = () => {
     { id: 15, title: 'Rapports pour la Direction', icon: '📜' },
     { id: 16, title: 'Assistant IA FinancePro', icon: 'Sparkles' },
   ];
+
+  // Render specific content for each of the 36 Tax Tables when selected
+  const renderLiasseTableContent = (tableId: number) => {
+    switch (tableId) {
+      case 1: // TAB-01 : Fiche d'identification
+        return (
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl p-5 border border-slate-200 space-y-3">
+              <h5 className="font-extrabold text-xs text-slate-900 uppercase border-b pb-2">Renseignements Généraux de l'Entreprise</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs font-mono">
+                <div className="p-2.5 bg-slate-50 rounded-lg">
+                  <span className="text-slate-400 block text-[10px]">RAISON SOCIALE</span>
+                  <span className="font-bold text-slate-900">MELARO GROUP SARL</span>
+                </div>
+                <div className="p-2.5 bg-slate-50 rounded-lg">
+                  <span className="text-slate-400 block text-[10px]">NUMÉRO RCCM</span>
+                  <span className="font-bold text-slate-900">CM-DOU-2026-B-14529</span>
+                </div>
+                <div className="p-2.5 bg-slate-50 rounded-lg">
+                  <span className="text-slate-400 block text-[10px]">NUMÉRO NIF (IDENTIFIANT FISCAL)</span>
+                  <span className="font-bold text-slate-900">M082612345678A</span>
+                </div>
+                <div className="p-2.5 bg-slate-50 rounded-lg">
+                  <span className="text-slate-400 block text-[10px]">CAPITAL SOCIAL LIBÉRÉ</span>
+                  <span className="font-bold text-emerald-600 font-mono">10 000 000 FCFA</span>
+                </div>
+                <div className="p-2.5 bg-slate-50 rounded-lg">
+                  <span className="text-slate-400 block text-[10px]">RÉGIME FISCAL APPLICABLE</span>
+                  <span className="font-bold text-violet-700">Réel Normal d'Imposition (Système Normal)</span>
+                </div>
+                <div className="p-2.5 bg-slate-50 rounded-lg">
+                  <span className="text-slate-400 block text-[10px]">CENTRE DES IMPÔTS</span>
+                  <span className="font-bold text-slate-900">CIME Douala I - Littoral</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 2: // TAB-02 : Bilan Actif
+        return (
+          <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-slate-900 text-white uppercase text-[10px] font-extrabold">
+                <tr>
+                  <th className="p-3">Réf. Code</th>
+                  <th className="p-3">Libellé de l'Actif</th>
+                  <th className="p-3 text-right">Brut (N)</th>
+                  <th className="p-3 text-right">Amort./Prov.</th>
+                  <th className="p-3 text-right font-black text-emerald-400">Net (N)</th>
+                  <th className="p-3 text-right text-slate-400">Net (N-1)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr><td className="p-3 font-bold">AA-211</td><td>Immobilisations Incorporelles (Logiciels/Frais)</td><td className="p-3 text-right">3 000 000 FCFA</td><td className="p-3 text-right">500 000 FCFA</td><td className="p-3 text-right font-bold text-emerald-600">2 500 000 FCFA</td><td className="p-3 text-right text-slate-500">2 000 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">AB-241</td><td>Immobilisations Corporelles (Matériels & Équipements)</td><td className="p-3 text-right">14 500 000 FCFA</td><td className="p-3 text-right">1 700 000 FCFA</td><td className="p-3 text-right font-bold text-emerald-600">12 800 000 FCFA</td><td className="p-3 text-right text-slate-500">11 200 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">BA-311</td><td>Stocks de Marchandises & Matières Premières</td><td className="p-3 text-right">4 800 000 FCFA</td><td className="p-3 text-right">0 FCFA</td><td className="p-3 text-right font-bold text-emerald-600">4 800 000 FCFA</td><td className="p-3 text-right text-slate-500">3 900 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">BB-411</td><td>Créances Clients & Comptes Rattachés</td><td className="p-3 text-right">8 900 000 FCFA</td><td className="p-3 text-right">0 FCFA</td><td className="p-3 text-right font-bold text-emerald-600">8 900 000 FCFA</td><td className="p-3 text-right text-slate-500">7 400 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">DA-521</td><td>Trésorerie-Actif (Banques, Caisses, Mobile Money)</td><td className="p-3 text-right">6 000 000 FCFA</td><td className="p-3 text-right">0 FCFA</td><td className="p-3 text-right font-bold text-emerald-600">6 000 000 FCFA</td><td className="p-3 text-right text-slate-500">4 500 000 FCFA</td></tr>
+                <tr className="bg-slate-50 font-extrabold"><td className="p-3 text-slate-900 font-black">TOTAL ACTIF</td><td>TOTAL GÉNÉRAL ACTIF DU BILAN</td><td className="p-3 text-right font-black">37 200 000 FCFA</td><td className="p-3 text-right">2 200 000 FCFA</td><td className="p-3 text-right text-emerald-600 font-black">{formatMoney(totalActif)}</td><td className="p-3 text-right text-slate-500">29 000 000 FCFA</td></tr>
+              </tbody>
+            </table>
+          </div>
+        );
+
+      case 3: // TAB-03 : Bilan Passif
+        return (
+          <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-slate-900 text-white uppercase text-[10px] font-extrabold">
+                <tr>
+                  <th className="p-3">Réf. Code</th>
+                  <th className="p-3">Libellé du Passif</th>
+                  <th className="p-3 text-right font-black text-indigo-400">Net Exercice (N)</th>
+                  <th className="p-3 text-right text-slate-400">Net Exercice (N-1)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr><td className="p-3 font-bold">CA-101</td><td>Capital Social Souscrit et Libéré</td><td className="p-3 text-right font-bold text-slate-900">10 000 000 FCFA</td><td className="p-3 text-right text-slate-500">10 000 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">CB-121</td><td>Réserves Légales et Statutaires</td><td className="p-3 text-right font-bold text-slate-900">3 000 000 FCFA</td><td className="p-3 text-right text-slate-500">2 500 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold text-indigo-700">CD-131</td><td>Résultat Net de l'Exercice (Bénéfice N)</td><td className="p-3 text-right font-black text-indigo-600">{formatMoney(resultatNet)}</td><td className="p-3 text-right text-slate-500">2 800 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">DA-162</td><td>Emprunts auprès des Établissements de Crédit</td><td className="p-3 text-right font-bold text-slate-900">{formatMoney(dettesFinancieres)}</td><td className="p-3 text-right text-slate-500">5 000 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">DB-401</td><td>Dettes Fournisseurs & Comptes Rattachés</td><td className="p-3 text-right font-bold text-rose-600">6 500 000 FCFA</td><td className="p-3 text-right text-slate-500">6 200 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">DC-442</td><td>Dettes Fiscales et Sociales (TVA, AIR, CNPS)</td><td className="p-3 text-right font-bold text-rose-600">2 550 000 FCFA</td><td className="p-3 text-right text-slate-500">2 500 000 FCFA</td></tr>
+                <tr className="bg-slate-50 font-extrabold"><td className="p-3 text-slate-900 font-black">TOTAL PASSIF</td><td>TOTAL GÉNÉRAL PASSIF DU BILAN</td><td className="p-3 text-right text-indigo-600 font-black">{formatMoney(totalPassif)}</td><td className="p-3 text-right text-slate-500">29 000 000 FCFA</td></tr>
+              </tbody>
+            </table>
+          </div>
+        );
+
+      case 7: // TAB-07 : Tableau des Immobilisations
+        return (
+          <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-slate-900 text-white uppercase text-[10px] font-extrabold">
+                <tr>
+                  <th className="p-3">Rubrique Immobilisation</th>
+                  <th className="p-3 text-right">Valeur Début N</th>
+                  <th className="p-3 text-right">Acquisitions N</th>
+                  <th className="p-3 text-right">Cessions N</th>
+                  <th className="p-3 text-right font-black text-emerald-400">Valeur Fin N</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr><td className="p-3 font-bold">Frais de Développement & Logiciels</td><td className="p-3 text-right">2 000 000 FCFA</td><td className="p-3 text-right">1 000 000 FCFA</td><td className="p-3 text-right">0 FCFA</td><td className="p-3 text-right font-bold">3 000 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">Matériel Industriel & Outillage</td><td className="p-3 text-right">8 000 000 FCFA</td><td className="p-3 text-right">2 500 000 FCFA</td><td className="p-3 text-right">0 FCFA</td><td className="p-3 text-right font-bold">10 500 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold">Matériel de Transport (Véhicules)</td><td className="p-3 text-right">4 000 000 FCFA</td><td className="p-3 text-right">0 FCFA</td><td className="p-3 text-right">0 FCFA</td><td className="p-3 text-right font-bold">4 000 000 FCFA</td></tr>
+              </tbody>
+            </table>
+          </div>
+        );
+
+      case 13: // TAB-13 : Passage au Résultat Fiscal (IS)
+        return (
+          <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-slate-900 text-white uppercase text-[10px] font-extrabold">
+                <tr>
+                  <th className="p-3">Poste de Retraitement Fiscal</th>
+                  <th className="p-3 text-right">Réintégrations (+)</th>
+                  <th className="p-3 text-right">Déductions (-)</th>
+                  <th className="p-3 text-right font-black text-indigo-400">Montant Fiscal (FCFA)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr><td className="p-3 font-bold">Résultat Comptable Avant Impôt</td><td className="p-3 text-right">-</td><td className="p-3 text-right">-</td><td className="p-3 text-right font-bold">{formatMoney(resultatNet + 1500000)}</td></tr>
+                <tr><td className="p-3 font-bold text-rose-700">Amortissements Excéderont les Plafonds Fiscaux Admis</td><td className="p-3 text-right font-bold text-rose-600">+450 000 FCFA</td><td className="p-3 text-right">-</td><td className="p-3 text-right">+450 000 FCFA</td></tr>
+                <tr><td className="p-3 font-bold text-rose-700">Amendes, Pénalités de Retard et Dépenses Non Déductibles</td><td className="p-3 text-right font-bold text-rose-600">+150 000 FCFA</td><td className="p-3 text-right">-</td><td className="p-3 text-right">+150 000 FCFA</td></tr>
+                <tr className="bg-emerald-50 font-black"><td className="p-3 text-emerald-950 font-black">RÉSULTAT FISCAL NET IMPOSABLE (BASE IS)</td><td className="p-3 text-right">-</td><td className="p-3 text-right">-</td><td className="p-3 text-right text-emerald-700 font-black">{formatMoney(resultatNet + 2100000)}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        );
+
+      case 14: // TAB-14 : Calcul de l'IS / Minimum de Perception
+        return (
+          <div className="p-5 bg-white rounded-xl border border-slate-200 space-y-3 font-mono text-xs">
+            <h5 className="font-extrabold text-slate-900 uppercase border-b pb-2">Détermination de l'Impôt sur les Sociétés (IS / IMF)</h5>
+            <div className="flex justify-between p-2.5 bg-slate-50 rounded-lg">
+              <span>Base Imposable (Résultat Fiscal Net) :</span>
+              <span className="font-bold">{formatMoney(resultatNet + 2100000)}</span>
+            </div>
+            <div className="flex justify-between p-2.5 bg-slate-50 rounded-lg">
+              <span>Taux Réglementaire IS (30%) + Centimes Additionnels (10%) :</span>
+              <span className="font-bold text-slate-900">33.0 %</span>
+            </div>
+            <div className="flex justify-between p-2.5 bg-slate-50 rounded-lg">
+              <span>Minimum de Perception / Impôt Minimum Forfaitaire (1.5% CA) :</span>
+              <span className="font-bold">{formatMoney(chiffreAffaires * 0.015)}</span>
+            </div>
+            <div className="flex justify-between p-3.5 bg-slate-900 text-white rounded-xl font-black text-sm">
+              <span>NET IMPÔT SUR LES SOCIÉTÉS DU A LA DGI :</span>
+              <span className="text-emerald-400">{formatMoney(Math.max((resultatNet + 2100000) * 0.33, chiffreAffaires * 0.015))}</span>
+            </div>
+          </div>
+        );
+
+      case 36: // TAB-36 : Visa & Certification de l'Expert
+        return (
+          <div className="p-6 bg-white rounded-xl border border-slate-200 space-y-4 text-xs">
+            <div className="flex items-center gap-3 border-b pb-3">
+              <UserCheck className="w-8 h-8 text-emerald-600" />
+              <div>
+                <h5 className="font-extrabold text-slate-900 uppercase">Visa de Conformité & Attestation de l'Expert-Comptable</h5>
+                <p className="text-slate-500">Attestation certifiée conforme aux principes du SYSCOHADA Révisé 2017</p>
+              </div>
+            </div>
+            <div className="p-4 bg-slate-50 rounded-2xl font-mono text-[11px] leading-relaxed space-y-2">
+              <p>« Je soussigné, Expert-Comptable agréé ONECCA / CEMAC, certifie que les présents états financiers (comportant les 36 tableaux de la Liasse Fiscale) ont été établis en stricte conformité avec le droit comptable OHADA. »</p>
+              <div className="pt-3 border-t font-bold text-slate-900 flex justify-between">
+                <span>Visa N° : ONECCA-2026-8812</span>
+                <span>Fait à Douala, le 03/08/2026</span>
+              </div>
+            </div>
+          </div>
+        );
+
+      default:
+        // Render dynamic table rows for any other selected table (4, 5, 6, 8, 9, 10, 11, 12, 15..35)
+        const curTable = liasseTablesList.find(t => t.id === tableId);
+        return (
+          <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
+            <table className="w-full text-left text-xs font-mono">
+              <thead className="bg-slate-900 text-white uppercase text-[10px] font-extrabold">
+                <tr>
+                  <th className="p-3">Réf. Code</th>
+                  <th className="p-3">Libellé du Poste — {curTable?.title}</th>
+                  <th className="p-3 text-right">Montant Brut (N)</th>
+                  <th className="p-3 text-right">Amort./Prov.</th>
+                  <th className="p-3 text-right font-black text-emerald-400">Montant Net (N)</th>
+                  <th className="p-3 text-right text-slate-400">Montant Net (N-1)</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                <tr>
+                  <td className="p-3 font-bold text-slate-900">RF-01</td>
+                  <td className="p-3 font-sans font-bold text-slate-900">Principaux éléments constitutifs du {curTable?.title}</td>
+                  <td className="p-3 text-right">12 500 000 FCFA</td>
+                  <td className="p-3 text-right">0 FCFA</td>
+                  <td className="p-3 text-right font-bold text-emerald-600">12 500 000 FCFA</td>
+                  <td className="p-3 text-right text-slate-500">11 000 000 FCFA</td>
+                </tr>
+                <tr>
+                  <td className="p-3 font-bold text-slate-900">RF-02</td>
+                  <td className="p-3 font-sans font-bold text-slate-900">Ajustements et Régularisations d'Exercice</td>
+                  <td className="p-3 text-right">2 400 000 FCFA</td>
+                  <td className="p-3 text-right">0 FCFA</td>
+                  <td className="p-3 text-right font-bold text-emerald-600">2 400 000 FCFA</td>
+                  <td className="p-3 text-right text-slate-500">2 100 000 FCFA</td>
+                </tr>
+                <tr className="bg-slate-50 font-extrabold">
+                  <td className="p-3 text-slate-900 font-black">TOTAL</td>
+                  <td className="p-3 font-sans font-black text-slate-900">TOTAL DU {curTable?.code}</td>
+                  <td className="p-3 text-right font-black">14 900 000 FCFA</td>
+                  <td className="p-3 text-right">0 FCFA</td>
+                  <td className="p-3 text-right text-emerald-600 font-black">14 900 000 FCFA</td>
+                  <td className="p-3 text-right text-slate-500">13 100 000 FCFA</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
@@ -903,7 +1127,7 @@ export const ReportsModule: React.FC = () => {
         </div>
       )}
 
-      {/* PILIER 13 : LIASSE FISCALE OFFICIELLE (MODULE COMPLET DES 36 TABLEAUX) */}
+      {/* PILIER 13 : LIASSE FISCALE OFFICIELLE (MODULE DYNAMIQUE PAR TABLEAU SELECTIONNE) */}
       {activeTab === 13 && (
         <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-6">
           <div className="flex items-center justify-between border-b pb-4 flex-wrap gap-3">
@@ -987,63 +1211,8 @@ export const ReportsModule: React.FC = () => {
                 </span>
               </div>
 
-              {/* Exemple dynamique de grille OHADA pour le tableau sélectionné */}
-              <div className="overflow-x-auto bg-white rounded-xl border border-slate-200">
-                <table className="w-full text-left text-xs font-mono">
-                  <thead className="bg-slate-900 text-white uppercase text-[10px] font-extrabold">
-                    <tr>
-                      <th className="p-3">Réf. Code</th>
-                      <th className="p-3">Libellé du Poste Liasse</th>
-                      <th className="p-3 text-right">Montant Brut (N)</th>
-                      <th className="p-3 text-right">Amort./Prov.</th>
-                      <th className="p-3 text-right font-black text-emerald-400">Montant Net (N)</th>
-                      <th className="p-3 text-right text-slate-400">Montant Net (N-1)</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    <tr>
-                      <td className="p-3 font-bold text-slate-900">AB-101</td>
-                      <td className="p-3 font-sans font-bold text-slate-900">Capital Souscrit et Libéré</td>
-                      <td className="p-3 text-right">10 000 000 FCFA</td>
-                      <td className="p-3 text-right">0 FCFA</td>
-                      <td className="p-3 text-right font-bold text-emerald-600">10 000 000 FCFA</td>
-                      <td className="p-3 text-right text-slate-500">10 000 000 FCFA</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold text-slate-900">BJ-211</td>
-                      <td className="p-3 font-sans font-bold text-slate-900">Immobilisations Corporelles (Net)</td>
-                      <td className="p-3 text-right">14 500 000 FCFA</td>
-                      <td className="p-3 text-right">1 700 000 FCFA</td>
-                      <td className="p-3 text-right font-bold text-emerald-600">12 800 000 FCFA</td>
-                      <td className="p-3 text-right text-slate-500">11 200 000 FCFA</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold text-slate-900">CL-411</td>
-                      <td className="p-3 font-sans font-bold text-slate-900">Créances Clients & Comptes Rattachés</td>
-                      <td className="p-3 text-right">8 900 000 FCFA</td>
-                      <td className="p-3 text-right">0 FCFA</td>
-                      <td className="p-3 text-right font-bold text-emerald-600">8 900 000 FCFA</td>
-                      <td className="p-3 text-right text-slate-500">7 400 000 FCFA</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold text-slate-900">CR-701</td>
-                      <td className="p-3 font-sans font-bold text-slate-900">Chiffre d'Affaires Net de l'Exercice</td>
-                      <td className="p-3 text-right">{formatMoney(chiffreAffaires)}</td>
-                      <td className="p-3 text-right">0 FCFA</td>
-                      <td className="p-3 text-right font-bold text-emerald-600">{formatMoney(chiffreAffaires)}</td>
-                      <td className="p-3 text-right text-slate-500">22 250 000 FCFA</td>
-                    </tr>
-                    <tr>
-                      <td className="p-3 font-bold text-indigo-700">RN-131</td>
-                      <td className="p-3 font-sans font-bold text-indigo-900">Résultat Net Comptable (Bénéfice)</td>
-                      <td className="p-3 text-right font-bold">{formatMoney(resultatNet)}</td>
-                      <td className="p-3 text-right">0 FCFA</td>
-                      <td className="p-3 text-right font-black text-indigo-700">{formatMoney(resultatNet)}</td>
-                      <td className="p-3 text-right text-slate-500">2 800 000 FCFA</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              {/* Rendu Dynamique des Contenus du Tableau Sélectionné */}
+              {renderLiasseTableContent(selectedLiasseTable)}
             </div>
           </div>
         </div>
