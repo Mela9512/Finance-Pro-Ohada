@@ -72,8 +72,18 @@ export class AccountingService {
     }
 
     const year = new Date(dto.date).getFullYear();
-    const seqNumber = await this.sequenceService.next(companyId, `${dto.journalType}-${year}`);
-    const entryNumber = `${JOURNAL_PREFIX[dto.journalType]}-${year}-${String(seqNumber).padStart(4, '0')}`;
+    let seqNumber = await this.sequenceService.next(companyId, `${dto.journalType}-${year}`);
+    let entryNumber = `${JOURNAL_PREFIX[dto.journalType]}-${year}-${String(seqNumber).padStart(4, '0')}`;
+
+    // Sécurisation anti-collision : Vérification d'existence préalable
+    let existing = await this.entryRepo.findOne({ where: { companyId, entryNumber } });
+    let attempts = 0;
+    while (existing && attempts < 50) {
+      attempts++;
+      seqNumber += 1;
+      entryNumber = `${JOURNAL_PREFIX[dto.journalType]}-${year}-${String(seqNumber).padStart(4, '0')}`;
+      existing = await this.entryRepo.findOne({ where: { companyId, entryNumber } });
+    }
 
     const entry = this.entryRepo.create({
       entryNumber,
