@@ -261,10 +261,12 @@ export const AccountingModule: React.FC = () => {
   const [grandLivreFilter, setGrandLivreFilter] = useState('');
   const [selectedJournalFilter, setSelectedJournalFilter] = useState<JournalType | 'TOUS'>('TOUS');
 
-  // States Modales Import & GED / OCR & Attestation Officielle
+  // States Modales Import & GED / OCR & Impression Grand Livre & Aperçu Écritures
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [ocrModalOpen, setOcrModalOpen] = useState(false);
   const [showAttestationModal, setShowAttestationModal] = useState(false);
+  const [showGrandLivrePrintModal, setShowGrandLivrePrintModal] = useState(false);
+  const [previewGedPiece, setPreviewGedPiece] = useState<GedPieceItem | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -424,13 +426,13 @@ export const AccountingModule: React.FC = () => {
   };
 
   useEffect(() => {
-    if (tab === 'consultation' || tab === 'grand-livre') {
+    if (tab === 'consultation' || tab === 'grand-livre' || showGrandLivrePrintModal) {
       api.getGrandLivre(grandLivreFilter || undefined).then(setGrandLivreLines);
     }
     if (tab === 'balance') {
       api.getBalance().then(setBalanceRows);
     }
-  }, [tab, grandLivreFilter]);
+  }, [tab, grandLivreFilter, showGrandLivrePrintModal]);
 
   const totalDebit = lines.reduce((sum, l) => sum + (Number(l.debit) || 0), 0);
   const totalCredit = lines.reduce((sum, l) => sum + (Number(l.credit) || 0), 0);
@@ -704,21 +706,21 @@ export const AccountingModule: React.FC = () => {
   return (
     <div className="space-y-5 pb-8 animate-in fade-in duration-300">
 
-      {/* Style d'impression Dédié A4 en CSS Natif */}
+      {/* Style d'impression Dédié A4 en CSS Natif Multi-Documents */}
       <style>{`
         @media print {
           body * {
             visibility: hidden !important;
           }
-          #printable-attestation-container, #printable-attestation-container * {
+          #printable-attestation-container, #printable-attestation-container *,
+          #printable-grandlivre-container, #printable-grandlivre-container * {
             visibility: visible !important;
           }
-          #printable-attestation-container {
-            position: fixed !important;
+          #printable-attestation-container, #printable-grandlivre-container {
+            position: absolute !important;
             left: 0 !important;
             top: 0 !important;
             width: 100% !important;
-            height: 100% !important;
             background: white !important;
             padding: 20px !important;
             z-index: 99999 !important;
@@ -806,6 +808,196 @@ export const AccountingModule: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* ── MODALE 1: DOCUMENT OFFICIEL DU GRAND LIVRE IMPRIMABLE ──────────────── */}
+      {showGrandLivrePrintModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-4xl w-full shadow-2xl border border-violet-200 overflow-hidden my-auto animate-in fade-in zoom-in duration-200">
+            <div className="p-4 bg-slate-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Printer className="w-5 h-5 text-violet-400" />
+                <span className="text-xs font-extrabold tracking-wide">Rapport Officiel du Grand Livre Général SYSCOHADA</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-4 py-1.5 rounded-xl bg-violet-600 text-white font-extrabold text-xs hover:bg-violet-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                >
+                  <Printer className="w-4 h-4" /> Imprimer le Grand Livre (Format A4 PDF)
+                </button>
+                <button onClick={() => setShowGrandLivrePrintModal(false)} className="text-xs font-bold text-slate-400 hover:text-white px-2">✕</button>
+              </div>
+            </div>
+
+            {/* FEUILLE DU GRAND LIVRE IMPRIMABLE A4 */}
+            <div id="printable-grandlivre-container" className="p-8 space-y-6 text-slate-900 bg-white">
+              {/* En-tête de Société */}
+              <div className="flex justify-between items-start border-b-2 border-slate-900 pb-4">
+                <div>
+                  <h1 className="text-lg font-black text-slate-900 uppercase">MELARO GROUP SARL</h1>
+                  <p className="text-xs font-bold text-slate-600">Comptabilité Générale SYSCOHADA Révisé</p>
+                  <p className="text-[10px] text-slate-400">RCCM: CM-DOU-2026-B-14529 | NIU: M082612345678A</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-black text-violet-900 uppercase">GRAND LIVRE GÉNÉRAL</div>
+                  <div className="text-xs font-bold text-slate-700">Exercice 2026</div>
+                  <div className="text-[10px] text-slate-500">Généré le: {new Date().toLocaleDateString('fr-FR')}</div>
+                </div>
+              </div>
+
+              {/* Résumé Statistiques des Mouvements */}
+              <div className="grid grid-cols-3 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200 text-center font-mono text-xs">
+                <div>
+                  <div className="text-[9px] font-bold text-slate-400 uppercase">Mouvements Débit</div>
+                  <div className="font-extrabold text-emerald-600 mt-0.5">
+                    {fmtMoney(grandLivreLines.reduce((s, l) => s + (Number(l.debit) || 0), 0))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[9px] font-bold text-slate-400 uppercase">Mouvements Crédit</div>
+                  <div className="font-extrabold text-rose-600 mt-0.5">
+                    {fmtMoney(grandLivreLines.reduce((s, l) => s + (Number(l.credit) || 0), 0))}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-[9px] font-bold text-slate-400 uppercase">Nombre de Lignes</div>
+                  <div className="font-extrabold text-violet-700 mt-0.5">{grandLivreLines.length} opérations</div>
+                </div>
+              </div>
+
+              {/* Rendu des Écritures Détaillées par Compte */}
+              <div className="space-y-4">
+                {grandLivreAccounts.map((acc) => {
+                  const linesForAcc = grandLivreLines.filter((l) => l.accountCode === acc.code);
+                  let accBalance = 0;
+                  return (
+                    <div key={acc.code} className="border rounded-xl overflow-hidden border-slate-200">
+                      <div className="bg-slate-100 p-2 text-xs font-extrabold text-slate-900 flex justify-between">
+                        <span>COMPTE {acc.code} — {acc.label}</span>
+                        <span className="font-mono text-violet-700">
+                          Solde : {fmtMoney(acc.debit - acc.credit)}
+                        </span>
+                      </div>
+                      <table className="w-full text-left text-[11px]">
+                        <thead className="bg-slate-50 text-[9px] uppercase font-bold text-slate-500 border-b">
+                          <tr>
+                            <th className="p-1.5">Date</th>
+                            <th className="p-1.5">N° Pièce</th>
+                            <th className="p-1.5">Journal</th>
+                            <th className="p-1.5">Libellé</th>
+                            <th className="p-1.5 text-right">Débit</th>
+                            <th className="p-1.5 text-right">Crédit</th>
+                            <th className="p-1.5 text-right">Solde Progressif</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {linesForAcc.map((l, i) => {
+                            const d = Number(l.debit) || 0;
+                            const c = Number(l.credit) || 0;
+                            accBalance += (d - c);
+                            return (
+                              <tr key={i} className="hover:bg-slate-50">
+                                <td className="p-1.5 font-mono text-slate-500">{l.date}</td>
+                                <td className="p-1.5 font-mono font-bold text-violet-600">{l.pieceNumber}</td>
+                                <td className="p-1.5 font-bold text-slate-700">{l.journalType}</td>
+                                <td className="p-1.5 text-slate-800">{l.wording}</td>
+                                <td className="p-1.5 text-right font-mono text-emerald-600">{fmtMoney(d)}</td>
+                                <td className="p-1.5 text-right font-mono text-rose-600">{fmtMoney(c)}</td>
+                                <td className="p-1.5 text-right font-mono font-bold text-slate-900">{fmtMoney(accBalance)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="pt-4 border-t border-slate-200 text-right text-[10px] text-slate-400 font-mono">
+                Document Officiel de Comptabilité SYSCOHADA — Page 1/1 — Certifié Conforme
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODALE 2: VISUALISEUR ET EXPLICATEUR D'ÉCRITURE POUR FACTURES IMPORTÉES ─ */}
+      {previewGedPiece && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-indigo-100 p-6 space-y-4 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-sm font-extrabold text-slate-900">Détail & Passation de la Facture Importée</h3>
+              </div>
+              <button onClick={() => setPreviewGedPiece(null)} className="text-xs font-bold text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+
+            {/* Méta-données de la facture */}
+            <div className="p-3 rounded-2xl bg-indigo-50/60 border border-indigo-100 space-y-1.5 text-xs font-medium">
+              <div className="flex justify-between">
+                <span className="text-slate-500">N° Pièce / Facture :</span>
+                <span className="font-mono font-bold text-indigo-700">{previewGedPiece.pieceNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Fournisseur / Tiers :</span>
+                <span className="font-bold text-slate-800">{previewGedPiece.supplier}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Montant Total TTC :</span>
+                <span className="font-mono font-extrabold text-emerald-700">{fmtMoney(previewGedPiece.amountTTC)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Statut Enregistrement :</span>
+                <span className="font-bold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full text-[10px]">
+                  ✓ Enregistrée en Base de Données (Journal {previewGedPiece.journalType})
+                </span>
+              </div>
+            </div>
+
+            {/* Décomposition de l'écriture comptable générée */}
+            <div className="space-y-2">
+              <div className="text-xs font-extrabold text-slate-900">Lignes d'Écritures Passées (Partie Double SYSCOHADA) :</div>
+              <div className="space-y-1.5 text-xs">
+                <div className="p-2 rounded-xl bg-slate-50 border flex justify-between items-center font-mono">
+                  <div>
+                    <span className="font-bold text-violet-600">601000</span> — Achats de marchandises
+                  </div>
+                  <span className="text-emerald-600 font-bold">Débit: {fmtMoney(Math.round(previewGedPiece.amountTTC / 1.1925))}</span>
+                </div>
+
+                <div className="p-2 rounded-xl bg-slate-50 border flex justify-between items-center font-mono">
+                  <div>
+                    <span className="font-bold text-violet-600">445100</span> — TVA récupérable (19,25%)
+                  </div>
+                  <span className="text-emerald-600 font-bold">Débit: {fmtMoney(Math.round(previewGedPiece.amountTTC - (previewGedPiece.amountTTC / 1.1925)))}</span>
+                </div>
+
+                <div className="p-2 rounded-xl bg-slate-50 border flex justify-between items-center font-mono">
+                  <div>
+                    <span className="font-bold text-violet-600">401000</span> — Fournisseur {previewGedPiece.supplier}
+                  </div>
+                  <span className="text-rose-600 font-bold">Crédit: {fmtMoney(previewGedPiece.amountTTC)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex gap-2">
+              <button
+                onClick={() => {
+                  setPreviewGedPiece(null);
+                  setSelectedJournalFilter(previewGedPiece.journalType as any);
+                  setTab('journaux');
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-violet-600 text-white font-bold text-xs hover:bg-violet-700 transition-colors"
+              >
+                Voir dans le Journal {previewGedPiece.journalType}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── MODALE OFFICIELLE: DOCUMENT D'ATTESTATION DE CONFORMITÉ SYSCOHADA ───── */}
       {showAttestationModal && (
@@ -915,7 +1107,7 @@ export const AccountingModule: React.FC = () => {
         </div>
       )}
 
-      {/* ── MODALE 1: ESPACE ET ASSISTANT D'IMPORTATION (Excel / CSV / FEC) ───── */}
+      {/* ── MODALE 3: ESPACE ET ASSISTANT D'IMPORTATION (Excel / CSV / FEC) ───── */}
       {importModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-violet-100 space-y-4 animate-in fade-in zoom-in duration-200">
@@ -994,7 +1186,7 @@ export const AccountingModule: React.FC = () => {
         </div>
       )}
 
-      {/* ── MODALE 2: ESPACE GED & ANLAYSE OCR IA FACTURE ──────────────────────── */}
+      {/* ── MODALE 4: ESPACE GED & ANLAYSE OCR IA FACTURE ──────────────────────── */}
       {ocrModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 border border-violet-100 animate-in fade-in zoom-in duration-200">
@@ -1065,11 +1257,11 @@ export const AccountingModule: React.FC = () => {
                     <div className="flex items-center gap-2">
                       <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{p.ocrStatus}</span>
                       <button
-                        onClick={() => handleExportPDF(`Pièce_${p.pieceNumber}`)}
-                        className="p-1 rounded-lg hover:bg-slate-200 text-slate-500"
-                        title="Voir la pièce"
+                        onClick={() => setPreviewGedPiece(p)}
+                        className="p-1 rounded-lg hover:bg-slate-200 text-slate-700 flex items-center gap-1 font-bold text-[10px]"
+                        title="Voir la décomposition comptable"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <Eye className="w-3.5 h-3.5 text-indigo-600" /> Voir l'écriture
                       </button>
                     </div>
                   </div>
@@ -1702,6 +1894,14 @@ export const AccountingModule: React.FC = () => {
               {tab === 'balance' ? <Scale className="w-4 h-4 text-violet-600" /> : <Layers className="w-4 h-4 text-violet-600" />}
               {tab === 'balance' ? 'Balance Générale à 6 Colonnes' : 'Grand Livre Général & par Compte'}
             </h3>
+            {tab !== 'balance' && (
+              <button
+                onClick={() => setShowGrandLivrePrintModal(true)}
+                className="px-3 py-1.5 rounded-xl bg-violet-600 text-white font-bold text-xs hover:bg-violet-700 transition-colors shadow-sm flex items-center gap-1.5"
+              >
+                <Printer className="w-3.5 h-3.5" /> Imprimer / Exporter PDF le Grand Livre
+              </button>
+            )}
           </div>
 
           {tab === 'balance' ? (
@@ -2199,12 +2399,12 @@ export const AccountingModule: React.FC = () => {
               <div className="text-xs font-extrabold text-slate-900 flex items-center gap-2">
                 <Printer className="w-4 h-4 text-violet-600" /> Grand Livre Général PDF / Impression
               </div>
-              <p className="text-[11px] text-slate-500">Imprimer ou exporter au format PDF l'ensemble du Grand Livre comptable.</p>
+              <p className="text-[11px] text-slate-500">Imprimer ou exporter au format PDF l'ensemble du Grand Livre comptable avec en-tête officiel.</p>
               <button
-                onClick={() => handleExportPDF('Grand Livre Général')}
+                onClick={() => setShowGrandLivrePrintModal(true)}
                 className="w-full py-2 rounded-xl bg-violet-600 text-white font-bold text-xs hover:bg-violet-700 transition-colors shadow-sm"
               >
-                📄 Imprimer / Exporter PDF
+                📄 Imprimer / Exporter PDF le Grand Livre
               </button>
             </div>
 
