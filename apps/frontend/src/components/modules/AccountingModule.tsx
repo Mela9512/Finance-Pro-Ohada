@@ -5,7 +5,7 @@ import {
   Lock, Upload, ShieldCheck, FileText, CheckSquare, Settings, PieChart,
   Activity, ArrowRightLeft, RefreshCw, Zap, Calculator, Users, Truck,
   Check, Filter, ChevronRight, Eye, AlertCircle, Building2, HelpCircle,
-  FileCheck, Printer, Save, Database, ShieldAlert, KeyRound
+  FileCheck, Printer, Save, Database, ShieldAlert, KeyRound, FolderOpen, Trash2
 } from 'lucide-react';
 import { AccountSYSCOHADA, JournalEntry, JournalLine, AccountSuggestion, JournalType } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -54,6 +54,18 @@ interface AuditLogItem {
   action: string;
   details: string;
   hash: string;
+}
+
+interface GedPieceItem {
+  id: string;
+  pieceNumber: string;
+  filename: string;
+  date: string;
+  size: string;
+  journalType: string;
+  ocrStatus: string;
+  supplier: string;
+  amountTTC: number;
 }
 
 type AccountingTab =
@@ -249,6 +261,17 @@ export const AccountingModule: React.FC = () => {
   const [grandLivreFilter, setGrandLivreFilter] = useState('');
   const [selectedJournalFilter, setSelectedJournalFilter] = useState<JournalType | 'TOUS'>('TOUS');
 
+  // States Modales Import & GED / OCR
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [ocrModalOpen, setOcrModalOpen] = useState(false);
+
+  // GED Registre des Pièces
+  const [gedPieces, setGedPieces] = useState<GedPieceItem[]>([
+    { id: '1', pieceNumber: 'FAC-2026-101', filename: 'Facture_SODEXO_2026.pdf', date: '2026-08-01', size: '1.2 Mo', journalType: 'VENTES', ocrStatus: '100% Détecté', supplier: 'SODEXO SARL', amountTTC: 238500 },
+    { id: '2', pieceNumber: 'FAC-OCR-1589', filename: 'Facture_PAPETERIE_CENTRE.pdf', date: '2026-08-03', size: '850 Ko', journalType: 'ACHATS', ocrStatus: '100% Détecté', supplier: 'PAPETERIE DU CENTRE', amountTTC: 178875 },
+    { id: '3', pieceNumber: 'REC-2026-042', filename: 'Recu_Caisse_Essence.png', date: '2026-08-03', size: '420 Ko', journalType: 'CAISSE', ocrStatus: '100% Détecté', supplier: 'TOTAL ENERGIES', amountTTC: 35000 },
+  ]);
+
   // States Lettrage Interactif
   const [lettrageAccount, setLettrageAccount] = useState<'411' | '401'>('411');
   const [lettrageItems, setLettrageItems] = useState<LettrageItem[]>([
@@ -284,7 +307,6 @@ export const AccountingModule: React.FC = () => {
   // Assistant IA & OCR
   const [accountSuggestion, setAccountSuggestion] = useState<AccountSuggestion | null>(null);
   const [suggestionLoading, setSuggestionLoading] = useState(false);
-  const [ocrModalOpen, setOcrModalOpen] = useState(false);
 
   // Modale Pédagogique SYSCOHADA
   const [pedagogicalCode, setPedagogicalCode] = useState<string | null>(null);
@@ -459,6 +481,34 @@ export const AccountingModule: React.FC = () => {
     }
   };
 
+  // Handler Importation de Fichiers (Simulation & Batch Import)
+  const handleDownloadImportTemplate = () => {
+    const csvContent = 'Date;Journal;PieceNumber;Wording;AccountCode;AccountLabel;Debit;Credit\n2026-08-03;VENTES;VT-2026-801;Vente Marchandises Client ABC;411000;Clients;119250;0\n2026-08-03;VENTES;VT-2026-801;Vente Marchandises Client ABC;701000;Ventes de marchandises;0;100000\n2026-08-03;VENTES;VT-2026-801;Vente Marchandises Client ABC;443100;Etat TVA Facturee;0;19250';
+    handleExportCSV('Gabarit_Import_Comptable_SYSCOHADA', csvContent);
+  };
+
+  const handleSimulateBatchImport = async () => {
+    setImportModalOpen(false);
+    try {
+      await api.createEntry({
+        date: '2026-08-03',
+        journalType: 'VENTES',
+        wording: 'Vente Importée — Client SODEXO SARL',
+        pieceNumber: 'VT-IMP-2026-01',
+        lines: [
+          { id: '1', accountCode: '411', accountLabel: 'Clients', debit: 238500, credit: 0 },
+          { id: '2', accountCode: '701', accountLabel: 'Ventes de marchandises', debit: 0, credit: 200000 },
+          { id: '3', accountCode: '443', accountLabel: 'TVA facturée', debit: 0, credit: 38500 },
+        ],
+      });
+      loadEntries();
+      addAuditLog('Importation Batch', 'Importation réussie de 3 écritures via fichier CSV');
+      setSuccessMessage('Importation comptable réussie ! 3 écritures ont été intégrées et validées.');
+    } catch (err) {
+      setErrorMessage('Erreur lors de l\'importation des écritures.');
+    }
+  };
+
   // Handlers Lettrage Interactif
   const handleToggleLettrageSelect = (id: string) => {
     setSelectedLettrageIds((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
@@ -585,6 +635,7 @@ export const AccountingModule: React.FC = () => {
       { accountCode: '445', accountLabel: 'État, TVA récupérable sur achats', debit: 28875, credit: 0 },
       { accountCode: '401', accountLabel: 'Fournisseur PAPETERIE DU CENTRE', debit: 0, credit: 178875 },
     ]);
+    addAuditLog('Scan OCR', 'Détection OCR réussie sur facture fournisseur');
     setTab('saisie');
     setSuccessMessage('Analyse OCR réussie ! Écriture pré-remplie automatiquement.');
   };
@@ -656,7 +707,7 @@ export const AccountingModule: React.FC = () => {
             <PlusCircle className="w-3.5 h-3.5" /> Nouvelle écriture
           </button>
           <button
-            onClick={() => setTab('saisie')}
+            onClick={() => setImportModalOpen(true)}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
           >
             <Upload className="w-3.5 h-3.5" /> Importer
@@ -712,29 +763,117 @@ export const AccountingModule: React.FC = () => {
         </div>
       </div>
 
-      {/* Modale Simulation OCR */}
-      {ocrModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 border border-violet-100">
+      {/* ── MODALE 1: ESPACE ET ASSISTANT D'IMPORTATION (Excel / CSV / FEC) ───── */}
+      {importModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-violet-100 space-y-4 animate-in fade-in zoom-in duration-200">
             <div className="flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-violet-600" />
-                <h3 className="text-sm font-extrabold text-slate-900">Lecture Automatique (OCR IA)</h3>
+                <Upload className="w-5 h-5 text-violet-600" />
+                <h3 className="text-sm font-extrabold text-slate-900">Module d'Importation Comptable SYSCOHADA</h3>
               </div>
-              <button onClick={() => setOcrModalOpen(false)} className="text-xs font-bold text-slate-400">✕</button>
+              <button onClick={() => setImportModalOpen(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">✕</button>
             </div>
-            <p className="text-xs text-slate-600">Déposez une facture PDF ou une photo de reçu pour générer automatiquement l'écriture comptable :</p>
-            <div className="border-2 border-dashed border-violet-200 rounded-2xl p-8 text-center bg-violet-50/50 space-y-2">
-              <Upload className="w-8 h-8 text-violet-500 mx-auto" />
-              <div className="text-xs font-bold text-slate-700">Glissez-déposez la facture ici</div>
-              <div className="text-[10px] text-slate-400">Format PDF, PNG, JPG jusqu'à 10 Mo</div>
+
+            <p className="text-xs text-slate-600">Importez directement vos écritures comptables depuis un fichier Excel, CSV ou FEC conforme :</p>
+
+            <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+              <div className="p-3 rounded-2xl bg-violet-50 border border-violet-200 text-violet-900">
+                📊 Excel (.xlsx)
+              </div>
+              <div className="p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+                📄 CSV SYSCOHADA
+              </div>
+              <div className="p-3 rounded-2xl bg-indigo-50 border border-indigo-200 text-indigo-900">
+                🏛️ Fichier FEC
+              </div>
             </div>
+
+            {/* Zone Dropzone */}
+            <div className="border-2 border-dashed border-violet-200 rounded-2xl p-6 text-center bg-violet-50/40 space-y-2">
+              <Upload className="w-8 h-8 text-violet-500 mx-auto animate-bounce" />
+              <div className="text-xs font-extrabold text-slate-800">Glissez-déposez votre fichier ici</div>
+              <div className="text-[10px] text-slate-400">Formats supportés: .xlsx, .csv, .txt (FEC)</div>
+            </div>
+
+            <div className="flex flex-col gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleDownloadImportTemplate}
+                className="w-full py-2.5 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 transition-colors flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4 text-violet-600" /> Télécharger le Gabarit Excel Modèle SYSCOHADA (.csv)
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSimulateBatchImport}
+                className="w-full py-2.5 rounded-xl bg-violet-600 text-white font-bold text-xs hover:bg-violet-700 transition-colors shadow-sm flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4 fill-white" /> ⚡ Importer un Lot d'Écritures de Démonstration (3 Écritures)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODALE 2: ESPACE GED & ANLAYSE OCR IA FACTURE ──────────────────────── */}
+      {ocrModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-xl w-full shadow-2xl space-y-4 border border-violet-100 animate-in fade-in zoom-in duration-200">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-indigo-600" />
+                <h3 className="text-sm font-extrabold text-slate-900">GED & Lecture Automatique OCR (Factures & Reçus)</h3>
+              </div>
+              <button onClick={() => setOcrModalOpen(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+
+            {/* Zone Dropzone OCR */}
+            <div className="border-2 border-dashed border-indigo-200 rounded-2xl p-6 text-center bg-indigo-50/40 space-y-2">
+              <Upload className="w-8 h-8 text-indigo-500 mx-auto" />
+              <div className="text-xs font-extrabold text-slate-800">Déposez une facture PDF ou une photo de reçu</div>
+              <div className="text-[10px] text-slate-400">Reconnaissance automatique des montants HT, TVA et fournisseurs</div>
+            </div>
+
             <button
               onClick={handleSimulateOCR}
-              className="w-full py-2.5 rounded-xl text-xs font-bold bg-violet-600 text-white hover:bg-violet-700 transition-colors"
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 shadow-sm"
             >
-              Simuler la détection OCR instantanée
+              <Sparkles className="w-4 h-4" /> ⚡ Lancer la détection OCR IA (Extraction Instantanée)
             </button>
+
+            {/* Registre des Pièces Archivées GED */}
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-xs font-extrabold text-slate-800">
+                <span className="flex items-center gap-1.5"><FolderOpen className="w-4 h-4 text-violet-600" /> Pièces Justificatives Déjà Archivées (GED)</span>
+                <span className="text-[10px] font-bold text-slate-400">{gedPieces.length} documents</span>
+              </div>
+
+              <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                {gedPieces.map((p) => (
+                  <div key={p.id} className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs font-medium">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                      <div>
+                        <div className="font-bold text-slate-800">{p.filename}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">{p.pieceNumber} — {p.supplier} ({fmtMoney(p.amountTTC)})</div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">{p.ocrStatus}</span>
+                      <button
+                        onClick={() => handleExportPDF(`Pièce_${p.pieceNumber}`)}
+                        className="p-1 rounded-lg hover:bg-slate-200 text-slate-500"
+                        title="Voir la pièce"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
