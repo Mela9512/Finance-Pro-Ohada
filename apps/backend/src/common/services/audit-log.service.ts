@@ -12,6 +12,7 @@ export interface AuditLogQuery {
   userId?: string;
   from?: string;
   to?: string;
+  search?: string;
 }
 
 @Injectable()
@@ -38,6 +39,7 @@ export class AuditLogService {
 
     const qb = this.repo
       .createQueryBuilder('log')
+      .leftJoin(UserEntity, 'user', 'user.id = log.userId')
       .where('log.companyId = :companyId', { companyId })
       .orderBy('log.createdAt', 'DESC')
       .skip((page - 1) * limit)
@@ -48,6 +50,12 @@ export class AuditLogService {
     if (query.userId) qb.andWhere('log.userId = :userId', { userId: query.userId });
     if (query.from) qb.andWhere('log.createdAt >= :from', { from: query.from });
     if (query.to) qb.andWhere('log.createdAt <= :to', { to: query.to });
+    if (query.search) {
+      qb.andWhere(
+        '(user.name LIKE :search OR user.email LIKE :search OR log.action LIKE :search OR log.entityType LIKE :search)',
+        { search: `%${query.search}%` },
+      );
+    }
 
     const [items, total] = await qb.getManyAndCount();
 

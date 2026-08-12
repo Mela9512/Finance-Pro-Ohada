@@ -34,4 +34,8 @@ export class AuditLogQueryDto {
   @IsOptional()
   @IsString()
   to?: string;
+
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

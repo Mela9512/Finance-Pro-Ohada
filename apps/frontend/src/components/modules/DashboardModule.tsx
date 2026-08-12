@@ -117,11 +117,288 @@ const BarChart: React.FC<{
   );
 };
 
+// ─── SVG Rentabilité Chart (3 bars/month) ──────────────────────────────────────
+const RentabiliteChart: React.FC<{
+  data: { label: string; ca: number; charges: number; net: number }[];
+  height?: number;
+}> = ({ data, height = 110 }) => {
+  if (!data || data.length === 0) return null;
+  const maxV = Math.max(...data.flatMap((d) => [d.ca, d.charges, Math.abs(d.net)]), 1);
+  const W = 360;
+  const barW = 8;
+  const gap = W / data.length;
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${height + 24}`} className="overflow-visible">
+      {data.map((d, i) => {
+        const x = i * gap + gap / 2;
+        const hCA = (d.ca / maxV) * height;
+        const hCharges = (d.charges / maxV) * height;
+        const hNet = (Math.abs(d.net) / maxV) * height;
+        const isNetNegative = d.net < 0;
+
+        return (
+          <g key={i}>
+            {/* CA Bar - Green */}
+            <rect
+              x={x - 14}
+              y={height - hCA}
+              width={barW}
+              height={Math.max(hCA, 2)}
+              rx="1.5"
+              fill="#10B981"
+              opacity="0.88"
+            />
+            {/* Charges Bar - Orange */}
+            <rect
+              x={x - 4}
+              y={height - hCharges}
+              width={barW}
+              height={Math.max(hCharges, 2)}
+              rx="1.5"
+              fill="#F59E0B"
+              opacity="0.88"
+            />
+            {/* Net Income Bar - Violet/Red */}
+            <rect
+              x={x + 6}
+              y={height - hNet}
+              width={barW}
+              height={Math.max(hNet, 2)}
+              rx="1.5"
+              fill={isNetNegative ? "#EF4444" : "#6B4EFF"}
+              opacity="0.88"
+            />
+            <text x={x} y={height + 16} textAnchor="middle" fontSize="8.5" fill="#9CA3AF" fontWeight="600" fontFamily="system-ui">
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+// ─── SVG Budget Comparison Chart ────────────────────────────────────────────────
+const BudgetComparisonChart: React.FC<{
+  data: { label: string; budget: number; real: number }[];
+  height?: number;
+}> = ({ data, height = 110 }) => {
+  if (!data || data.length === 0) return null;
+  const maxV = Math.max(...data.flatMap((d) => [d.budget, d.real]), 1);
+  const W = 360;
+  const barW = 10;
+  const gap = W / data.length;
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${height + 24}`} className="overflow-visible">
+      {data.map((d, i) => {
+        const x = i * gap + gap / 2;
+        const hBudget = (d.budget / maxV) * height;
+        const hReal = (d.real / maxV) * height;
+
+        return (
+          <g key={i}>
+            {/* Budget Bar - Slate */}
+            <rect
+              x={x - 12}
+              y={height - hBudget}
+              width={barW}
+              height={Math.max(hBudget, 2)}
+              rx="2"
+              fill="#94A3B8"
+              opacity="0.5"
+            />
+            {/* Real Bar - Violet */}
+            <rect
+              x={x + 2}
+              y={height - hReal}
+              width={barW}
+              height={Math.max(hReal, 2)}
+              rx="2"
+              fill="#6B4EFF"
+              opacity="0.9"
+            />
+            <text x={x} y={height + 16} textAnchor="middle" fontSize="8.5" fill="#9CA3AF" fontWeight="600" fontFamily="system-ui">
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
 // ─── Alert Style Helper ───────────────────────────────────────────────────────
 const alertStyle = (severity: 'LOW' | 'MEDIUM' | 'HIGH') => {
   if (severity === 'HIGH') return { bg: '#FEF2F2', border: '#FECACA', color: '#B91C1C', dot: '#EF4444' };
   if (severity === 'MEDIUM') return { bg: '#FFFBEB', border: '#FDE68A', color: '#92400E', dot: '#F59E0B' };
   return { bg: '#F0FDF4', border: '#BBF7D0', color: '#166534', dot: '#22C55E' };
+};
+
+// ─── Categorized Alerts Center Widget ──────────────────────────────────────────
+const AlertsCenterWidget: React.FC<{ alertes: DashboardAlert[] }> = ({ alertes }) => {
+  const [filter, setFilter] = useState<'ALL' | 'HIGH' | 'MEDIUM' | 'LOW'>('ALL');
+
+  if (!alertes || alertes.length === 0) return null;
+
+  const filtered = alertes.filter((a) => {
+    if (filter === 'ALL') return true;
+    return a.severity === filter;
+  });
+
+  const countFor = (sev: 'HIGH' | 'MEDIUM' | 'LOW') => alertes.filter((a) => a.severity === sev).length;
+
+  return (
+    <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3 pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <Bell className="w-4.5 h-4.5 text-amber-500 animate-swing" />
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+            Centre des Alertes & Échéanciers ({alertes.length})
+          </h3>
+        </div>
+        <div className="flex gap-1.5 flex-wrap">
+          {(
+            [
+              { id: 'ALL', label: 'Toutes', count: alertes.length },
+              { id: 'HIGH', label: '🔴 Critique', count: countFor('HIGH') },
+              { id: 'MEDIUM', label: '🟠 Attention', count: countFor('MEDIUM') },
+              { id: 'LOW', label: '🟢 Info', count: countFor('LOW') },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setFilter(tab.id)}
+              className={`text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all flex items-center gap-1.5 border ${
+                filter === tab.id
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className="font-mono bg-slate-100 px-1 py-0.2 rounded text-[9px] text-slate-700">{tab.count}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {filtered.length === 0 ? (
+        <div className="text-xs italic text-center py-6 text-slate-400">Aucune alerte dans cette catégorie.</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {filtered.map((alert, i) => {
+            const s = alertStyle(alert.severity);
+            return (
+              <div key={i} className="flex items-start gap-2.5 rounded-xl p-3 border hover:shadow-md transition-shadow" style={{ background: s.bg, borderColor: s.border }}>
+                <div className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{ background: s.dot }} />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs font-extrabold" style={{ color: s.color }}>{alert.label}</div>
+                    {alert.daysLeft !== undefined && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/60" style={{ color: s.color }}>
+                        dans {alert.daysLeft}j
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[10px] mt-0.5 font-medium opacity-90" style={{ color: s.color }}>{alert.detail}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Temporal Analysis Spreadsheet Widget ──────────────────────────────────────
+const TemporalAnalysisWidget: React.FC<{ metrics: any }> = ({ metrics }) => {
+  const m = metrics;
+  const months = m.caParMoisGraph.slice(-6).map((d) => d.month);
+
+  const getCA = (month: string) => m.caParMoisGraph.find((d) => d.month === month)?.ca ?? 0;
+  const getCharges = (month: string) => m.chargesParMoisGraph.find((d) => d.month === month)?.charges ?? 0;
+  const getNet = (month: string) => m.resultatMensuelGraph.find((d) => d.month === month)?.resultat ?? (getCA(month) - getCharges(month));
+  const getCashFlow = (month: string) => {
+    const flow = m.fluxTrésorerieGraph.find((f) => f.month === month);
+    return flow ? (flow.encaissements - flow.decaissements) : getNet(month);
+  };
+
+  return (
+    <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-4">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4.5 h-4.5 text-violet-600" />
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
+            Analyse Temporelle Synthétique (6 derniers mois)
+          </h3>
+        </div>
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">Exercice Courant</span>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs font-semibold">
+          <thead>
+            <tr className="border-b border-slate-100 text-slate-400 text-[10px] uppercase">
+              <th className="py-2.5">Indicateurs Financiers</th>
+              {months.map((m) => (
+                <th key={m} className="py-2.5 text-right px-2">{m}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50 text-slate-700">
+            {/* Chiffre d'Affaires */}
+            <tr>
+              <td className="py-3 font-bold text-slate-900 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" /> Chiffre d'Affaires (70x)
+              </td>
+              {months.map((m) => (
+                <td key={m} className="py-3 text-right font-mono px-2 text-emerald-600 font-bold">{fmtMoney(getCA(m), true)}</td>
+              ))}
+            </tr>
+            {/* Charges */}
+            <tr>
+              <td className="py-3 font-bold text-slate-900 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-500" /> Charges d'Exploitation (6x)
+              </td>
+              {months.map((m) => (
+                <td key={m} className="py-3 text-right font-mono px-2 text-amber-600">{fmtMoney(getCharges(m), true)}</td>
+              ))}
+            </tr>
+            {/* Résultat Net */}
+            <tr>
+              <td className="py-3 font-bold text-slate-900 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-violet-600" /> Résultat Net comptable
+              </td>
+              {months.map((m) => {
+                const val = getNet(m);
+                return (
+                  <td key={m} className={`py-3 text-right font-mono px-2 font-bold ${val >= 0 ? 'text-violet-600' : 'text-rose-600'}`}>
+                    {fmtMoney(val, true)}
+                  </td>
+                );
+              })}
+            </tr>
+            {/* Trésorerie Nette */}
+            <tr>
+              <td className="py-3 font-bold text-slate-900 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-sky-500" /> Flux Net de Trésorerie
+              </td>
+              {months.map((m) => {
+                const val = getCashFlow(m);
+                return (
+                  <td key={m} className={`py-3 text-right font-mono px-2 ${val >= 0 ? 'text-sky-600' : 'text-rose-600'}`}>
+                    {fmtMoney(val, true)}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 };
 
 // ─── Pedagogical Tooltip Modal ("Pourquoi ?") ──────────────────────────────────
@@ -194,18 +471,20 @@ const PedagogicalExplanationModal: React.FC<{
   );
 };
 
-// ─── Score Breakdown Component (5 axes /20) ──────────────────────────────────
+// ─── Score Breakdown Component (7 axes /100) ──────────────────────────────────
 const DetailedScoreWidget: React.FC<{ scoreDetaille: ScoreDetaille }> = ({ scoreDetaille }) => {
   const total = scoreDetaille?.total ?? 50;
   const color = total >= 80 ? '#10B981' : total >= 60 ? '#F59E0B' : '#EF4444';
   const label = total >= 80 ? 'Excellente' : total >= 60 ? 'Satisfaisante' : 'Risquée';
 
   const axes = [
-    { label: 'Liquidité', score: scoreDetaille?.liquidite ?? 10, max: 20 },
-    { label: 'Rentabilité', score: scoreDetaille?.rentabilite ?? 10, max: 20 },
-    { label: 'Solvabilité', score: scoreDetaille?.solvabilite ?? 10, max: 20 },
-    { label: 'Croissance', score: scoreDetaille?.croissance ?? 10, max: 20 },
-    { label: 'Risque', score: scoreDetaille?.risque ?? 10, max: 20 },
+    { label: 'Comptabilité', score: scoreDetaille?.comptabilite ?? 95, max: 100 },
+    { label: 'Trésorerie', score: scoreDetaille?.tresorerie ?? 75, max: 100 },
+    { label: 'Fiscalité', score: scoreDetaille?.fiscalite ?? 85, max: 100 },
+    { label: 'Rentabilité', score: scoreDetaille?.rentabilite ? (scoreDetaille.rentabilite <= 20 ? scoreDetaille.rentabilite * 5 : scoreDetaille.rentabilite) : 75, max: 100 },
+    { label: 'Créances Clients', score: scoreDetaille?.creances ?? 90, max: 100 },
+    { label: 'Conformité', score: scoreDetaille?.conformite ?? 98, max: 100 },
+    { label: 'Contrôle Interne', score: scoreDetaille?.controleInterne ?? 85, max: 100 },
   ];
 
   return (
@@ -239,7 +518,7 @@ const DetailedScoreWidget: React.FC<{ scoreDetaille: ScoreDetaille }> = ({ score
         </div>
       </div>
 
-      {/* 5 Sous-jauges */}
+      {/* 7 Sous-jauges */}
       <div className="flex-1 w-full space-y-2">
         <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">
           Décomposition du Score Financier
@@ -258,7 +537,7 @@ const DetailedScoreWidget: React.FC<{ scoreDetaille: ScoreDetaille }> = ({ score
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${(axe.score / axe.max) * 100}%`,
-                    background: axe.score >= 15 ? '#10B981' : axe.score >= 10 ? '#F59E0B' : '#EF4444',
+                    background: axe.score >= 80 ? '#10B981' : axe.score >= 60 ? '#F59E0B' : '#EF4444',
                   }}
                 />
               </div>
@@ -271,13 +550,27 @@ const DetailedScoreWidget: React.FC<{ scoreDetaille: ScoreDetaille }> = ({ score
 };
 
 // ─── Diagnostic IA Widget ─────────────────────────────────────────────────────
-const DiagnosticIAWidget: React.FC<{ diagnostic: DiagnosticIA }> = ({ diagnostic }) => {
+const DiagnosticIAWidget: React.FC<{ diagnostic: DiagnosticIA; onNavigate?: (module: ModuleId) => void }> = ({ diagnostic, onNavigate }) => {
   if (!diagnostic) return null;
 
   const statusColor = (s: string) => {
     if (['Forte', 'Excellente', 'Bon', 'Solide', 'Faible'].includes(s)) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     if (['Moyenne', 'Satisfaisante', 'Modéré', 'Saine', 'Moyen'].includes(s)) return 'bg-amber-50 text-amber-700 border-amber-200';
     return 'bg-rose-50 text-rose-700 border-rose-200';
+  };
+
+  const getActionForRec = (rec: string) => {
+    const lower = rec.toLowerCase();
+    if (lower.includes('relancer') || lower.includes('facture')) {
+      return { label: 'Relancer les clients ➡️', action: () => onNavigate?.('invoicing') };
+    }
+    if (lower.includes('liquidité') || lower.includes('trésorerie') || lower.includes('surplus')) {
+      return { label: 'Gérer la trésorerie ➡️', action: () => onNavigate?.('treasury') };
+    }
+    if (lower.includes('budget') || lower.includes('charges')) {
+      return { label: 'Ajuster les budgets ➡️', action: () => onNavigate?.('budget') };
+    }
+    return null;
   };
 
   return (
@@ -288,7 +581,7 @@ const DiagnosticIAWidget: React.FC<{ diagnostic: DiagnosticIA }> = ({ diagnostic
             <Sparkles className="w-4 h-4 text-violet-300 animate-pulse" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold tracking-wide text-white">Diagnostic FinancePro IA</h3>
+            <h3 className="text-sm font-extrabold tracking-wide text-white">Diagnostic & Recommandations IA</h3>
             <p className="text-[10px] text-violet-300">Analyse automatisée de votre santé financière et préconisations</p>
           </div>
         </div>
@@ -320,12 +613,25 @@ const DiagnosticIAWidget: React.FC<{ diagnostic: DiagnosticIA }> = ({ diagnostic
           <ShieldCheck className="w-3.5 h-3.5" /> Recommandations Stratégiques Actionnables
         </div>
         <div className="space-y-1">
-          {diagnostic.recommandations.map((rec, i) => (
-            <div key={i} className="text-xs text-slate-200 flex items-start gap-2">
-              <span className="text-violet-400 font-bold">•</span>
-              <span>{rec}</span>
-            </div>
-          ))}
+          {diagnostic.recommandations.map((rec, i) => {
+            const act = getActionForRec(rec);
+            return (
+              <div key={i} className="text-xs text-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-white/5 transition-colors">
+                <div className="flex items-start gap-2">
+                  <span className="text-violet-400 font-bold">•</span>
+                  <span>{rec}</span>
+                </div>
+                {act && (
+                  <button
+                    onClick={act.action}
+                    className="px-2.5 py-1 text-[9px] font-extrabold bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors flex-shrink-0"
+                  >
+                    {act.label}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -499,13 +805,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
   // ─── 8 KPI Cards ──────────────────────────────────────────────────────────
   const kpiCards = [
     {
-      key: 'tresorerie', label: 'Trésorerie Nette', sublabel: 'Comptes 521/541', value: m.tresorerieNetteTotal,
-      compN1: m.comparatifN1.tresorerie,
-      sparkData: m.fluxTrésorerieGraph.map(f => f.encaissements - f.decaissements),
-      color: '#6B4EFF', bg: '#F3F0FF', border: '#DDD6FE',
-    },
-    {
-      key: 'ca', label: "CA Mensuel", sublabel: "Compte 701", value: m.chiffreAffairesMois,
+      key: 'ca', label: "Chiffre d'Affaires", sublabel: "CA Mensuel (Compte 70x)", value: m.chiffreAffairesMois,
       compN1: m.comparatifN1.ca,
       sparkData: m.caParMoisGraph.slice(-6).map(d => d.ca),
       color: '#10B981', bg: '#ECFDF5', border: '#A7F3D0',
@@ -520,31 +820,42 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
       border: m.resultatNet >= 0 ? '#A7F3D0' : '#FECACA',
     },
     {
-      key: 'margeNette', label: 'Marge Nette', sublabel: "Résultat Net / CA", value: m.margeNette,
+      key: 'tresorerie', label: 'Trésorerie Disponible', sublabel: 'Caisse & Banques', value: m.tresorerieNetteTotal,
+      compN1: m.comparatifN1.tresorerie,
+      sparkData: m.fluxTrésorerieGraph.map(f => f.encaissements - f.decaissements),
+      color: '#6B4EFF', bg: '#F3F0FF', border: '#DDD6FE',
+    },
+    {
+      key: 'creances', label: 'Créances Clients', sublabel: 'Compte 411 (encours)', value: m.creancesClientsTotal,
+      sparkData: [],
+      color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A',
+    },
+    {
+      key: 'dettes', label: 'Dettes Fournisseurs', sublabel: 'Compte 401 (encours)', value: m.dettesFournisseursTotal,
+      sparkData: [],
+      color: '#EF4444', bg: '#FEF2F2', border: '#FECACA',
+    },
+    {
+      key: 'margeNette', label: 'Marge Nette', sublabel: "Résultat / CA", value: m.margeNette,
       isPercent: true,
       sparkData: [],
       color: m.margeNette >= 10 ? '#10B981' : m.margeNette >= 0 ? '#F59E0B' : '#EF4444',
       bg: '#FFFBEB', border: '#FDE68A',
     },
     {
-      key: 'creances', label: 'Créances Clients', sublabel: 'Compte 411', value: m.creancesClientsTotal,
-      sparkData: [],
-      color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A',
-    },
-    {
-      key: 'dettes', label: 'Dettes Fournisseurs', sublabel: 'Compte 401', value: m.dettesFournisseursTotal,
-      sparkData: [],
-      color: '#EF4444', bg: '#FEF2F2', border: '#FECACA',
-    },
-    {
-      key: 'capitauxPropres', label: 'Capitaux Propres', sublabel: 'Classe 1 bilan', value: m.capitauxPropres,
-      sparkData: [],
-      color: '#8B5CF6', bg: '#F5F3FF', border: '#DDD6FE',
-    },
-    {
-      key: 'totalActif', label: 'Total Actif', sublabel: 'Bilan SYSCOHADA', value: m.totalActif,
+      key: 'soldeBancaire', label: 'Solde Bancaire', sublabel: 'Banques uniquement',
+      value: m.cashDisponible.filter(c => c.type === 'BANQUE').reduce((s, c) => s + c.solde, 0),
       sparkData: [],
       color: '#0EA5E9', bg: '#F0F9FF', border: '#BAE6FD',
+    },
+    {
+      key: 'risques', label: 'Risques Détectés', sublabel: 'Alertes et anomalies',
+      value: m.alertes.length,
+      isCount: true,
+      sparkData: [],
+      color: m.alertes.length > 0 ? '#EF4444' : '#10B981',
+      bg: m.alertes.length > 0 ? '#FEF2F2' : '#ECFDF5',
+      border: m.alertes.length > 0 ? '#FECACA' : '#A7F3D0',
     },
   ];
 
@@ -751,7 +1062,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
 
         {visibleWidgets.diagnosticIA && (
           <div className={`${visibleWidgets.meteoIA ? 'lg:col-span-8' : 'lg:col-span-12'}`}>
-            <DiagnosticIAWidget diagnostic={m.diagnosticIA} />
+            <DiagnosticIAWidget diagnostic={m.diagnosticIA} onNavigate={onNavigate} />
           </div>
         )}
       </div>
@@ -949,7 +1260,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
 
               <div>
                 <div className="text-lg font-extrabold font-mono leading-tight" style={{ color: kpi.color }}>
-                  {kpi.isPercent ? `${fmtDec(kpi.value)} %` : fmtMoney(kpi.value, true)}
+                  {kpi.isPercent ? `${fmtDec(kpi.value)} %` : kpi.isCount ? fmtNum(kpi.value) : fmtMoney(kpi.value, true)}
                 </div>
 
                 {/* Affichage Comparatif N vs N-1 si activé */}
@@ -995,8 +1306,8 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
                   <div className="w-8 h-8 rounded-lg flex items-center justify-center mx-auto" style={{ background: card.bg }}>
                     <Icon className="w-4 h-4" style={{ color: card.color }} />
                   </div>
-                  <div className="text-sm font-extrabold font-mono text-slate-900">{card.value}</div>
-                  <div className="text-[9px] font-semibold text-slate-400 leading-tight">{card.label}</div>
+                  <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{card.label}</div>
+                  <div className="text-xs font-black text-slate-800 font-mono">{card.value}</div>
                 </div>
               );
             })}
@@ -1004,185 +1315,119 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         </div>
       )}
 
-      {/* ── 8. Alertes & Calendrier Fiscal ────────────────────────────────── */}
-      {visibleWidgets.alertes && m.alertes.length > 0 && (
-        <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <Bell className="w-4 h-4 text-amber-500" />
-            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">
-              Calendrier Fiscal & Notifications ({m.alertes.length})
-            </h3>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {m.alertes.map((alert: DashboardAlert, i) => {
-              const s = alertStyle(alert.severity);
-              return (
-                <div key={i} className="flex items-start gap-2.5 rounded-xl p-3 border" style={{ background: s.bg, borderColor: s.border }}>
-                  <div className="w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0" style={{ background: s.dot }} />
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-extrabold" style={{ color: s.color }}>{alert.label}</div>
-                      {alert.daysLeft !== undefined && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-white/60" style={{ color: s.color }}>
-                          dans {alert.daysLeft}j
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[10px] mt-0.5 font-medium opacity-90" style={{ color: s.color }}>{alert.detail}</div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* ── 9. Graphiques Financiers - Grille 4 Graphiques Cockpit ────────── */}
+      {visibleWidgets.graphiques && (() => {
+        // Préparation des données de rentabilité
+        const rentabiliteData = m.caParMoisGraph.slice(-6).map((caItem) => {
+          const label = caItem.month;
+          const chargesItem = m.chargesParMoisGraph.find(c => c.month === label);
+          const netItem = m.resultatMensuelGraph.find(r => r.month === label);
+          const caValue = caItem.ca;
+          const chargesValue = chargesItem ? chargesItem.charges : 0;
+          const netValue = netItem ? netItem.resultat : (caValue - chargesValue);
+          return { label, ca: caValue, charges: chargesValue, net: netValue };
+        });
 
-      {/* ── 9. Graphiques Financiers (Pack Enrichi SVG) ───────────────────── */}
-      {visibleWidgets.graphiques && (
-        <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-slate-100">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-violet-600" />
-              <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Graphiques & Évolutions Financières</h3>
-            </div>
-            <div className="flex gap-1 flex-wrap">
-              {(
-                [
-                  { id: 'ca', label: 'CA 12m' },
-                  { id: 'flux', label: 'Flux Tréso.' },
-                  { id: 'resultat', label: 'Résultat' },
-                  { id: 'bfr', label: 'BFR' },
-                  { id: 'charges', label: 'Charges' },
-                  { id: 'produits', label: 'Produits' },
-                  { id: 'agee', label: 'Balance Âgée' },
-                ] as const
-              ).map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveGraphTab(tab.id as any)}
-                  className={`text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all ${
-                    activeGraphTab === tab.id ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
+        // Préparation des données de budget
+        const lastCharges = m.chargesParMoisGraph.slice(-1)[0]?.charges || 0;
+        const lastCA = m.chiffreAffairesMois || 0;
+        const lastEBE = m.excédentBrutExploitation || 0;
+        const budgetData = [
+          { label: 'Chiffre d\'Affaires', real: lastCA, budget: lastCA / ((m.performanceBudget.caPct || 100) / 100) },
+          { label: 'Charges', real: lastCharges, budget: lastCharges / ((m.performanceBudget.chargesPct || 100) / 100) },
+          { label: 'EBITDA (EBE)', real: lastEBE, budget: lastEBE / ((m.performanceBudget.resultatPct || 100) / 100) },
+        ];
 
-          {activeGraphTab === 'ca' && (
-            <div>
-              <div className="text-[10px] font-bold text-slate-400 mb-3">Évolution du Chiffre d'Affaires — 12 derniers mois</div>
-              {m.caParMoisGraph.every((d) => d.ca === 0) ? (
-                <div className="text-xs italic text-center py-8 text-slate-400">Aucun CA enregistré sur cette période.</div>
-              ) : (
-                <BarChart data={m.caParMoisGraph.map((d) => ({ label: d.month, value: d.ca }))} color="#6B4EFF" height={100} />
-              )}
-            </div>
-          )}
-
-          {activeGraphTab === 'flux' && (
-            <div>
-              <div className="flex gap-4 text-[10px] font-bold mb-3">
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-emerald-500 inline-block" />Encaissements</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded bg-rose-500 inline-block" />Décaissements</span>
-              </div>
-              {m.fluxTrésorerieGraph.every((f) => f.encaissements === 0 && f.decaissements === 0) ? (
-                <div className="text-xs italic text-center py-8 text-slate-400">Aucun flux de trésorerie enregistré.</div>
-              ) : (
-                <BarChart
-                  data={m.fluxTrésorerieGraph.map((f) => ({ label: f.month, value: f.encaissements, value2: f.decaissements }))}
-                  color="#10B981"
-                  color2="#EF4444"
-                  height={100}
-                />
-              )}
-            </div>
-          )}
-
-          {activeGraphTab === 'resultat' && (
-            <div>
-              <div className="text-[10px] font-bold text-slate-400 mb-3">Évolution du Résultat Net Mensuel — 6 derniers mois</div>
-              <BarChart data={m.resultatMensuelGraph.map((d) => ({ label: d.month, value: d.resultat }))} color="#10B981" height={100} />
-            </div>
-          )}
-
-          {activeGraphTab === 'bfr' && (
-            <div>
-              <div className="text-[10px] font-bold text-slate-400 mb-3">Besoin en Fonds de Roulement (BFR) — 6 derniers mois</div>
-              <BarChart data={m.bfrParMoisGraph.map((d) => ({ label: d.month, value: d.bfr }))} color="#F59E0B" height={100} />
-            </div>
-          )}
-
-          {activeGraphTab === 'charges' && (
-            <div>
-              <div className="text-[10px] font-bold text-slate-400 mb-3">Répartition des Charges (Classe 6 SYSCOHADA)</div>
-              {m.chargesRepartitionGraph.length === 0 ? (
-                <div className="text-xs italic text-center py-6 text-slate-400">Aucune charge comptabilisée.</div>
-              ) : (
-                <div className="space-y-2">
-                  {m.chargesRepartitionGraph.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-slate-700 w-64 truncate">{item.category}</span>
-                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-rose-500 rounded-full" style={{ width: `${item.percentage}%` }} />
-                      </div>
-                      <span className="text-xs font-extrabold font-mono text-slate-900 w-24 text-right">{fmtMoney(item.amount, true)}</span>
-                      <span className="text-[10px] font-bold text-slate-400 w-12 text-right">{item.percentage}%</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeGraphTab === 'produits' && (
-            <div>
-              <div className="text-[10px] font-bold text-slate-400 mb-3">Répartition des Produits (Classe 7 SYSCOHADA)</div>
-              {m.produitsRepartitionGraph.length === 0 ? (
-                <div className="text-xs italic text-center py-6 text-slate-400">Aucun produit comptabilisé.</div>
-              ) : (
-                <div className="space-y-2">
-                  {m.produitsRepartitionGraph.map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-xs font-bold text-slate-700 w-64 truncate">{item.category}</span>
-                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${item.percentage}%` }} />
-                      </div>
-                      <span className="text-xs font-extrabold font-mono text-slate-900 w-24 text-right">{fmtMoney(item.amount, true)}</span>
-                      <span className="text-[10px] font-bold text-slate-400 w-12 text-right">{item.percentage}%</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeGraphTab === 'agee' && (
-            <div>
-              <div className="text-[10px] font-bold text-slate-400 mb-3">Balance Âgée des Créances Clients</div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-                  <div className="text-[10px] font-bold text-emerald-700">0 – 30 jours</div>
-                  <div className="text-sm font-extrabold font-mono text-emerald-900 mt-1">{fmtMoney(m.balanceAgee.moins30j, true)}</div>
-                </div>
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
-                  <div className="text-[10px] font-bold text-amber-700">31 – 60 jours</div>
-                  <div className="text-sm font-extrabold font-mono text-amber-900 mt-1">{fmtMoney(m.balanceAgee.entre31et60j, true)}</div>
-                </div>
-                <div className="p-3 rounded-xl bg-orange-50 border border-orange-200">
-                  <div className="text-[10px] font-bold text-orange-700">61 – 90 jours</div>
-                  <div className="text-sm font-extrabold font-mono text-orange-900 mt-1">{fmtMoney(m.balanceAgee.entre61et90j, true)}</div>
-                </div>
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
-                  <div className="text-[10px] font-bold text-rose-700">+ 90 jours (!)</div>
-                  <div className="text-sm font-extrabold font-mono text-rose-900 mt-1">{fmtMoney(m.balanceAgee.plus90j, true)}</div>
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Graph 1: Évolution du Chiffre d'Affaires */}
+            <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-violet-600" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Évolution du CA (12 mois)</h3>
                 </div>
               </div>
+              <div className="h-[120px] flex items-center justify-center">
+                {m.caParMoisGraph.every((d) => d.ca === 0) ? (
+                  <div className="text-xs italic text-center py-8 text-slate-400">Aucun CA enregistré sur cette période.</div>
+                ) : (
+                  <BarChart data={m.caParMoisGraph.map((d) => ({ label: d.month, value: d.ca }))} color="#6B4EFF" height={100} />
+                )}
+              </div>
             </div>
-          )}
-        </div>
+
+            {/* Graph 2: Rentabilité CA vs Charges vs Net */}
+            <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-violet-600" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Rentabilité (CA / Charges / Net)</h3>
+                </div>
+                <div className="flex gap-2 text-[8px] font-bold">
+                  <span className="text-emerald-600">● CA</span>
+                  <span className="text-amber-500">● Charges</span>
+                  <span className="text-violet-600">● Net</span>
+                </div>
+              </div>
+              <div className="h-[120px] flex items-center justify-center">
+                <RentabiliteChart data={rentabiliteData} height={100} />
+              </div>
+            </div>
+
+            {/* Graph 3: Flux de Trésorerie */}
+            <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Wallet className="w-4 h-4 text-violet-600" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Flux de Trésorerie (6 mois)</h3>
+                </div>
+                <div className="flex gap-2 text-[8px] font-bold">
+                  <span className="text-emerald-600">● Encaissements</span>
+                  <span className="text-rose-500">● Décaissements</span>
+                </div>
+              </div>
+              <div className="h-[120px] flex items-center justify-center">
+                {m.fluxTrésorerieGraph.every((f) => f.encaissements === 0 && f.decaissements === 0) ? (
+                  <div className="text-xs italic text-center py-8 text-slate-400">Aucun flux de trésorerie enregistré.</div>
+                ) : (
+                  <BarChart
+                    data={m.fluxTrésorerieGraph.map((f) => ({ label: f.month, value: f.encaissements, value2: f.decaissements }))}
+                    color="#10B981"
+                    color2="#EF4444"
+                    height={100}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Graph 4: Budget vs Réalisé */}
+            <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-violet-600" />
+                  <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Budget vs Réalisé</h3>
+                </div>
+                <div className="flex gap-2 text-[8px] font-bold">
+                  <span className="text-slate-400">● Budget</span>
+                  <span className="text-violet-600">● Réalisé</span>
+                </div>
+              </div>
+              <div className="h-[120px] flex items-center justify-center">
+                <BudgetComparisonChart data={budgetData} height={100} />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Centre des Alertes Catégorisé */}
+      {visibleWidgets.alertes && (
+        <AlertsCenterWidget alertes={m.alertes} />
       )}
+
+      {/* Analyse Temporelle */}
+      <TemporalAnalysisWidget metrics={m} />
 
       {/* ── 10. Tableau des Flux de Trésorerie OIF + Indicateurs OHADA ─────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

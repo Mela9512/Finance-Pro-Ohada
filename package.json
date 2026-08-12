@@ -8,9 +8,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "npm --prefix apps/frontend run dev",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "dev:frontend": "npm --prefix apps/frontend run dev",
-    "dev:backend": "node apps/backend/dist/main.js",
+    "dev:backend": "npx nodemon --watch apps/backend/src --ext ts --exec \"ts-node apps/backend/src/main.ts\"",
     "build": "npm --prefix packages/shared run build && npm --prefix apps/backend run build && npm --prefix apps/frontend run build",
     "start": "node apps/backend/dist/main.js",
     "lint": "eslint apps/backend/src apps/frontend/src packages/shared/src",
@@ -31,6 +31,7 @@
   "license": "MIT",
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "concurrently": "^10.0.4",
     "eslint": "^9.39.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "typescript-eslint": "^8.65.0"

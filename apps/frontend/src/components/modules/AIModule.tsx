@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Bot, Send, ScanLine, AlertTriangle, TrendingUp, Loader2 } from 'lucide-react';
 import { ExtractedInvoiceDraft, AnomalyReport, CashflowForecast } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -25,6 +25,7 @@ export const AIModule: React.FC = () => {
   const [question, setQuestion] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
+  const [copiloteMode, setCopiloteMode] = useState<'comptable' | 'controleur' | 'analyste' | 'fiscaliste' | 'conseiller'>('comptable');
 
   const [forecast, setForecast] = useState<CashflowForecast | null>(null);
   const [forecastError, setForecastError] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export const AIModule: React.FC = () => {
     setChatError(null);
     setChatLoading(true);
     try {
-      const { answer } = await api.aiChat(q);
+      const { answer } = await api.aiChat(q, `copilote_${copiloteMode}`);
       setMessages((prev) => [...prev, { role: 'assistant', content: answer }]);
     } catch (err) {
       setChatError(err instanceof ApiError ? err.message : "Erreur lors de l'appel à l'assistant IA");
@@ -93,6 +94,14 @@ export const AIModule: React.FC = () => {
   const formatMoney = (val: number) =>
     new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 }).format(val);
 
+  const getPlaceholderForMode = () => {
+    if (copiloteMode === 'comptable') return "Ex: Comment comptabiliser une facture d'achat de marchandises ?";
+    if (copiloteMode === 'controleur') return "Ex: Analyse la balance générale pour trouver des anomalies.";
+    if (copiloteMode === 'analyste') return "Ex: Explique la variation du Besoin en Fonds de Roulement (BFR).";
+    if (copiloteMode === 'fiscaliste') return "Ex: Quel est le taux standard de TVA et son échéance ?";
+    return "Ex: Quelles sont mes priorités stratégiques d'après mes chiffres ?";
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl p-6 border border-[#EDE9FE] shadow-sm">
@@ -107,11 +116,49 @@ export const AIModule: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl p-6 space-y-4 border border-[#EDE9FE] shadow-sm flex flex-col h-[480px]">
-          <h3 className="text-sm font-bold text-[#1E1060]">Assistant Conversationnel</h3>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <h3 className="text-sm font-bold text-[#1E1060]">Copilote IA de Décision</h3>
+            <span className="text-[9px] font-extrabold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5 rounded-full">
+              Mode actif : {copiloteMode}
+            </span>
+          </div>
+
+          {/* Sélecteur de mode 5 copilotes */}
+          <div className="flex gap-1 overflow-x-auto pb-1.5 border-b border-[#EDE9FE] pr-1">
+            {(
+              [
+                { id: 'comptable', label: 'Comptable', icon: '📝' },
+                { id: 'controleur', label: 'Contrôleur', icon: '🔍' },
+                { id: 'analyste', label: 'Analyste', icon: '📊' },
+                { id: 'fiscaliste', label: 'Fiscaliste', icon: '⚖️' },
+                { id: 'conseiller', label: 'Dirigeant', icon: '🎯' },
+              ] as const
+            ).map((mode) => (
+              <button
+                key={mode.id}
+                onClick={() => {
+                  setCopiloteMode(mode.id);
+                  setMessages([]); // clean screen when switching mode for clarity
+                }}
+                className={`text-[10px] px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition-all flex-shrink-0 ${
+                  copiloteMode === mode.id
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-slate-50 text-slate-600 border border-slate-100 hover:bg-slate-100'
+                }`}
+              >
+                <span>{mode.icon}</span>
+                <span>{mode.label}</span>
+              </button>
+            ))}
+          </div>
+
           <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {messages.length === 0 && (
-              <div className="text-xs text-slate-500 italic">
-                Posez une question sur votre Bilan, votre Compte de Résultat ou vos écarts budgétaires...
+              <div className="text-xs text-slate-500 italic p-4 bg-[#F5F3FF] border border-[#DDD6FE] rounded-xl space-y-1.5">
+                <div className="font-extrabold text-slate-700">Posez une question à votre Copilote :</div>
+                <div className="font-semibold text-indigo-600 cursor-pointer hover:underline" onClick={() => setQuestion(getPlaceholderForMode().replace("Ex: ", ""))}>
+                  {getPlaceholderForMode()}
+                </div>
               </div>
             )}
             {messages.map((m, i) => (
@@ -121,7 +168,7 @@ export const AIModule: React.FC = () => {
             ))}
             {chatLoading && (
               <div className="flex items-center gap-2 text-xs text-slate-400">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Réflexion en cours...
+                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Réflexion du copilote en cours...
               </div>
             )}
           </div>
@@ -131,7 +178,7 @@ export const AIModule: React.FC = () => {
               type="text"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Ex: Quel est mon résultat net actuel ?"
+              placeholder={getPlaceholderForMode()}
               className="flex-1 glass-input rounded-lg px-3 py-2 text-xs"
             />
             <button type="submit" disabled={chatLoading} className="p-2.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg">

@@ -34,6 +34,8 @@ import { BonLivraisonEntity } from './entities/bon-livraison.entity';
 import { BonLivraisonItemEntity } from './entities/bon-livraison-item.entity';
 import { EmployeeEntity } from './entities/employee.entity';
 import { BulletinPaieEntity } from './entities/bulletin-paie.entity';
+import { DocumentEntity } from './entities/document.entity';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 import { SequenceService } from './common/services/sequence.service';
 import { AuditLogService } from './common/services/audit-log.service';
@@ -106,8 +108,10 @@ import { PaieService } from './modules/paie/paie.service';
       BonLivraisonItemEntity,
       EmployeeEntity,
       BulletinPaieEntity,
+      DocumentEntity,
     ]),
     AuthModule,
+    DocumentsModule,
   ],
   controllers: [
     DashboardController,

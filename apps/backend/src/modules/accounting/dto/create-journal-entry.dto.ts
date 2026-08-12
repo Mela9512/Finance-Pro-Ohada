@@ -17,14 +17,38 @@ export class JournalLineDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  costCenter?: string;
+
+  @IsOptional()
+  @IsString()
+  project?: string;
+
+  @IsOptional()
+  @IsString()
+  currency?: string;
+
+  @IsOptional()
+  @IsNumber()
+  exchangeRate?: number;
+
+  @IsOptional()
+  @IsString()
+  reference?: string;
+
+  @IsOptional()
+  @IsString()
+  dueDate?: string;
 }
 
 export class CreateJournalEntryDto {
   @IsString()
   date: string;
 
-  @IsIn(['ACHATS', 'VENTES', 'BANQUE', 'CAISSE', 'OD'])
-  journalType: 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD';
+  @IsIn(['ACHATS', 'VENTES', 'BANQUE', 'CAISSE', 'OD', 'SALAIRES'])
+  journalType: 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD' | 'SALAIRES';
 
   @IsString()
   wording: string;

@@ -14,7 +14,7 @@ export class JournalEntryEntity {
   date: string;
 
   @Column()
-  journalType: 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD';
+  journalType: 'ACHATS' | 'VENTES' | 'BANQUE' | 'CAISSE' | 'OD' | 'SALAIRES';
 
   @Column()
   wording: string; // Libellé de l'écriture

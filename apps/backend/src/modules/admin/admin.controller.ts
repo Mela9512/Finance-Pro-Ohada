@@ -17,6 +17,7 @@ export class AdminController {
   }
 
   @Get('users')
+  @Roles('ADMIN')
   getUsers(@CurrentUser() user: AuthenticatedUser) {
     return this.adminService.getUsers(user.companyId);
   }

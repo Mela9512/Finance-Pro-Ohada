@@ -9,6 +9,7 @@ import {
   StockArticle, StockArticleDetail, CreateArticleDto, CreateMouvementDto, StockSynthese,
   Commande, BonLivraison, CreateCommandeDto,
   Employee, CreateEmployeeDto, BulletinPaie, CreateBulletinDto,
+  GedDocument, GedStats, DocumentCategory,
 } from '@financepro/shared';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -123,12 +124,17 @@ export const api = {
   getBalance: () => request<any[]>('/accounting/balance'),
   toggleExerciceStatus: (isClosed: boolean) =>
     request<Company>('/accounting/toggle-exercice', { method: 'POST', body: JSON.stringify({ isClosed }) }),
+  getNextEntryNumber: (journalType: string, date: string) =>
+    request<{ entryNumber: string }>(
+      `/accounting/next-entry-number?journalType=${encodeURIComponent(journalType)}&date=${encodeURIComponent(date)}`
+    ),
 
   getBilan: () => request<FinancialReportBilan>('/reports/bilan'),
   getCompteResultat: () => request<CompteDeResultat>('/reports/compte-resultat'),
   getTFT: () => request<any>('/reports/tft'),
   downloadBilanPdf: () => downloadFile('/reports/bilan/pdf', 'bilan.pdf'),
   downloadCompteResultatPdf: () => downloadFile('/reports/compte-resultat/pdf', 'compte-resultat.pdf'),
+  downloadManagementReportPdf: () => downloadFile('/reports/management-report/pdf', 'rapport-gestion.pdf'),
 
   getFiscalDeclaration: (year: number, month: number) =>
     request<FiscalDeclaration>(`/reports/declaration-fiscale?year=${year}&month=${month}`),
@@ -182,6 +188,8 @@ export const api = {
   aiExtractInvoice: (fileBase64: string, mimeType: string) =>
     request<ExtractedInvoiceDraft>('/ai/invoice-ocr', { method: 'POST', body: JSON.stringify({ fileBase64, mimeType }) }),
   aiSuggestAccount: (wording: string) => request<AccountSuggestion>(`/ai/suggest-account?wording=${encodeURIComponent(wording)}`),
+  aiSuggestEntry: (wording: string, amount?: number) =>
+    request<any>('/ai/suggest-entry', { method: 'POST', body: JSON.stringify({ wording, amount }) }),
   aiGetAnomalies: () => request<AnomalyReport>('/ai/anomalies'),
   aiChat: (question: string, currentScreen?: string) =>
     request<{ answer: string }>('/ai/chat', { method: 'POST', body: JSON.stringify({ question, currentScreen }) }),
@@ -205,7 +213,7 @@ export const api = {
       body: JSON.stringify({ companyName, sector, legalFormOptions, taxRegimeOptions, moduleOptions }),
     }),
 
-  getAuditLog: (params: { page?: number; limit?: number; action?: string; entityType?: string; userId?: string; from?: string; to?: string } = {}) => {
+  getAuditLog: (params: { page?: number; limit?: number; action?: string; entityType?: string; userId?: string; from?: string; to?: string; search?: string } = {}) => {
     const qs = new URLSearchParams();
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== '') qs.set(k, String(v));
@@ -262,4 +270,36 @@ export const api = {
   suggestBusinessPlanHypotheses: (title: string, description: string) =>
     request<SuggestedHypotheses>('/business-plan/suggest-hypotheses', { method: 'POST', body: JSON.stringify({ title, description }) }),
   downloadBusinessPlanPdf: (id: string) => downloadFile(`/business-plan/${id}/pdf`, `business-plan-${id}.pdf`),
+
+  // ─── GED — Gestion Électronique de Documents ─────────────────────────────
+  getDocuments: (category?: string) =>
+    request<GedDocument[]>(`/documents${category && category !== 'ALL' ? `?category=${category}` : ''}`),
+  getDocumentStats: () => request<GedStats>('/documents/stats'),
+  getDocumentDownloadUrl: (id: string) => request<{ url: string }>(`/documents/${id}/download-url`),
+  uploadDocument: async (
+    file: File,
+    opts: { name?: string; category?: DocumentCategory; tags?: string[]; linkedPieceNumber?: string }
+  ): Promise<GedDocument> => {
+    const token = await ensureCsrfToken();
+    const formData = new FormData();
+    formData.append('file', file);
+    if (opts.name) formData.append('name', opts.name);
+    if (opts.category) formData.append('category', opts.category);
+    if (opts.tags?.length) formData.append('tags', opts.tags.join(','));
+    if (opts.linkedPieceNumber) formData.append('linkedPieceNumber', opts.linkedPieceNumber);
+    const res = await fetch(`${API_BASE}/documents/upload`, {
+      method: 'POST',
+      headers: {
+        'X-CSRF-Token': token,
+      },
+      body: formData,
+      credentials: 'include',
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({ message: res.statusText }));
+      throw new ApiError(res.status, body.message || res.statusText);
+    }
+    return res.json();
+  },
+  deleteDocument: (id: string) => request<void>(`/documents/${id}`, { method: 'DELETE' }),
 };

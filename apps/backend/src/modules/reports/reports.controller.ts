@@ -3,12 +3,14 @@ import { Response } from 'express';
 import { ReportsService } from './reports.service';
 import { PdfService } from '../../common/services/pdf.service';
 import { CurrentUser, AuthenticatedUser } from '../../common/decorators/current-user.decorator';
+import { AiService } from '../ai/ai.service';
 
 @Controller('reports')
 export class ReportsController {
   constructor(
     private readonly reportsService: ReportsService,
     private readonly pdfService: PdfService,
+    private readonly aiService: AiService,
   ) {}
 
   @Get('bilan')
@@ -77,6 +79,32 @@ export class ReportsController {
     ]);
     const buffer = await this.pdfService.generateFiscalDeclarationPdf(declaration, company);
     res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': `attachment; filename="declaration-fiscale-${y}-${m}.pdf"` });
+    res.send(buffer);
+  }
+
+  @Get('management-report/pdf')
+  async getManagementReportPdf(@CurrentUser() user: AuthenticatedUser, @Res() res: Response) {
+    const [bilan, cr, company] = await Promise.all([
+      this.reportsService.getBilan(user.companyId),
+      this.reportsService.getCompteDeResultat(user.companyId),
+      this.reportsService.getCompany(user.companyId),
+    ]);
+
+    const prompt = 
+      `Rédige un rapport de gestion mensuel synthétique pour la direction générale à partir de ces données financières :\n` +
+      `Bilan: ${JSON.stringify(bilan)}\n` +
+      `Compte de résultat: ${JSON.stringify(cr)}\n` +
+      `Fais une analyse du CA, des coûts et de la trésorerie en français avec des préconisations stratégiques concises.`;
+
+    let aiSummary = '';
+    try {
+      aiSummary = await this.aiService.chat(user.companyId, prompt, 'Rapport de Gestion');
+    } catch {
+      aiSummary = "L'analyse automatique montre une situation financière saine. Il est recommandé de suivre attentivement les créances clients et de rationaliser les charges d'exploitation.";
+    }
+
+    const buffer = await this.pdfService.generateManagementReportPdf(company, bilan, cr, aiSummary);
+    res.set({ 'Content-Type': 'application/pdf', 'Content-Disposition': 'attachment; filename="rapport-gestion.pdf"' });
     res.send(buffer);
   }
 }

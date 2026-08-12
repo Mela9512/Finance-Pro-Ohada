@@ -157,6 +157,36 @@ export const AdminModule: React.FC = () => {
     }
   };
 
+  const handleCountryChange = (c: string) => {
+    if (!company) return;
+    const countryDefaults: Record<string, { currency: string; vatRate: number }> = {
+      'Cameroun': { currency: 'XAF', vatRate: 19.25 },
+      'Côte d\'Ivoire': { currency: 'XOF', vatRate: 18 },
+      'Sénégal': { currency: 'XOF', vatRate: 18 },
+      'Gabon': { currency: 'XAF', vatRate: 18 },
+      'Congo': { currency: 'XAF', vatRate: 18.9 },
+      'RDC': { currency: 'CDF', vatRate: 16 },
+      'Togo': { currency: 'XOF', vatRate: 18 },
+      'Bénin': { currency: 'XOF', vatRate: 18 },
+      'Burkina Faso': { currency: 'XOF', vatRate: 18 },
+      'Mali': { currency: 'XOF', vatRate: 18 },
+      'Niger': { currency: 'XOF', vatRate: 18 },
+      'Tchad': { currency: 'XAF', vatRate: 18 },
+      'Centrafrique': { currency: 'XAF', vatRate: 19 },
+      'Guinée': { currency: 'GNF', vatRate: 18 },
+      'Guinée Bissau': { currency: 'XOF', vatRate: 15 },
+      'Comores': { currency: 'KMF', vatRate: 15 },
+      'Guinée Équatoriale': { currency: 'XAF', vatRate: 15 }
+    };
+    const defaults = countryDefaults[c] || { currency: 'XAF', vatRate: 18 };
+    setCompany({
+      ...company,
+      country: c,
+      currency: defaults.currency,
+      vatRate: defaults.vatRate
+    });
+  };
+
   const toggleModule = (modId: string) => {
     if (!company) return;
     const current = company.enabledModules || [];
@@ -504,7 +534,7 @@ export const AdminModule: React.FC = () => {
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Pays de l'Espace OHADA</label>
                 <select
                   value={company.country || 'Cameroun'}
-                  onChange={(e) => setCompany({ ...company, country: e.target.value })}
+                  onChange={(e) => handleCountryChange(e.target.value)}
                   className="w-full mt-1 p-2.5 rounded-xl border border-slate-200 text-xs font-bold bg-white"
                 >
                   {PAYS_OHADA.map((p) => (

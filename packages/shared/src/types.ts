@@ -109,6 +109,12 @@ export interface JournalLine {
   debit: number;
   credit: number;
   description?: string;
+  costCenter?: string;
+  project?: string;
+  currency?: string;
+  exchangeRate?: number;
+  reference?: string;
+  dueDate?: string;
 }
 
 export interface JournalEntry {
@@ -758,6 +764,13 @@ export interface ScoreDetaille {
   croissance: number; // /20
   risque: number;     // /20
   total: number;      // /100
+  // Nouveaux axes de score
+  comptabilite?: number; // /100
+  tresorerie?: number;   // /100
+  fiscalite?: number;    // /100
+  creances?: number;     // /100
+  conformite?: number;   // /100
+  controleInterne?: number; // /100
 }
 
 export interface DiagnosticIA {
@@ -866,6 +879,8 @@ export interface DashboardMetrics {
   roe: number;                     // résultat net / capitaux propres (%)
   roa: number;                     // résultat net / total actif (%)
   endettement: number;             // dettes financières / capitaux propres
+  dso?: number;                    // Days Sales Outstanding (Créances clients)
+  dpo?: number;                    // Days Payable Outstanding (Dettes fournisseurs)
 
   // ─── Bilan OHADA ─────────────────────────────────────────
   capitauxPropres: number;
@@ -990,6 +1005,43 @@ export interface SIGSyscohada {
   impotSocietes: number;
   resultatNet: number;
 }
+
+// ─── GED — Gestion Électronique de Documents ──────────────────────────────
+
+export type DocumentCategory =
+  | 'FACTURE_ACHAT'
+  | 'FACTURE_VENTE'
+  | 'RELEVE_BANCAIRE'
+  | 'CONTRAT'
+  | 'BULLETIN_PAIE'
+  | 'FISCAL_DSF'
+  | 'IMMOBILISATION'
+  | 'DIVERS';
+
+export interface GedDocument {
+  id: string;
+  companyId: string;
+  name: string;
+  originalName: string;
+  category: DocumentCategory;
+  tags: string[];
+  storagePath: string;
+  storageUrl?: string;
+  size: number;
+  mimeType: string;
+  uploadedBy: string;
+  linkedPieceNumber?: string;
+  linkedEntryId?: string;
+  sha256?: string;
+  isDeleted: boolean;
+  createdAt: string;
+}
+
+export interface GedStats {
+  count: number;
+  totalSize: number;
+}
+
 
 
 

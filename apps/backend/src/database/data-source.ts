@@ -28,6 +28,7 @@ import { BonLivraisonEntity } from '../entities/bon-livraison.entity';
 import { BonLivraisonItemEntity } from '../entities/bon-livraison-item.entity';
 import { EmployeeEntity } from '../entities/employee.entity';
 import { BulletinPaieEntity } from '../entities/bulletin-paie.entity';
+import { DocumentEntity } from '../entities/document.entity';
 
 dotenv.config();
 
@@ -39,7 +40,7 @@ export const dataSourceOptions: DataSourceOptions = {
   ssl: isSupabase || process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
   extra: {
     max: 10,
-    connectionTimeoutMillis: 5000,
+    connectionTimeoutMillis: 30000,
     // Sans ces réglages, une connexion coupée côté pooler Supabase (idle) reste
     // "vivante" dans le pool node-pg et toute requête qui la réutilise reste
     // bloquée indéfiniment (pas d'erreur, pas de timeout — juste un hang).
@@ -77,9 +78,10 @@ export const dataSourceOptions: DataSourceOptions = {
     BonLivraisonItemEntity,
     EmployeeEntity,
     BulletinPaieEntity,
+    DocumentEntity,
   ],
   migrations: [__dirname + '/migrations/*{.ts,.js}'],
-  synchronize: false,
+  synchronize: true,
 };
 
 const dataSource = new DataSource(dataSourceOptions);

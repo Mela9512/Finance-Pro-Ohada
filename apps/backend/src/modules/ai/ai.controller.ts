@@ -22,6 +22,12 @@ export class AiController {
     return this.aiService.suggestAccountCode(user.companyId, wording || '');
   }
 
+  @Roles('ADMIN', 'COMPTABLE', 'GESTIONNAIRE')
+  @Post('suggest-entry')
+  suggestEntry(@CurrentUser() user: AuthenticatedUser, @Body() body: { wording: string; amount?: number }) {
+    return this.aiService.suggestEntryPattern(user.companyId, body.wording || '', body.amount);
+  }
+
   @Roles('ADMIN', 'COMPTABLE')
   @Get('anomalies')
   getAnomalies(@CurrentUser() user: AuthenticatedUser) {

@@ -283,4 +283,45 @@ export class PdfService {
 
     return toBuffer(doc);
   }
+
+  async generateManagementReportPdf(
+    company: CompanyEntity,
+    bilan: FinancialReportBilan,
+    cr: CompteDeResultat,
+    aiSummary: string,
+  ): Promise<Buffer> {
+    const doc = new PDFDocument({ margin: 50, size: 'A4' }) as unknown as PDFKit.PDFDocument;
+    const currency = company.currency || 'XAF';
+    
+    drawHeader(doc, company, 'RAPPORT MENSUEL DE GESTION');
+    
+    doc.moveDown(1);
+    doc.font('Helvetica-Bold').fontSize(14).fillColor('#1E1060').text('Synthèse des Performances Financières');
+    doc.moveDown(0.5);
+    
+    doc.font('Helvetica-Bold').fontSize(10).fillColor('#000000').text('Indicateurs Clés :');
+    doc.moveDown(0.3);
+    doc.font('Helvetica').fontSize(9);
+    doc.text(`- Chiffre d'Affaires de la période : ${formatMoney(cr.chiffreAffaires, currency)}`);
+    doc.text(`- Marge Brute : ${formatMoney(cr.margeBrute, currency)}`);
+    doc.text(`- Excédent Brut d'Exploitation (EBITDA) : ${formatMoney(cr.ebe, currency)}`);
+    doc.text(`- Résultat d'Exploitation : ${formatMoney(cr.resultatExploitation, currency)}`);
+    doc.text(`- Résultat Net de l'exercice : ${formatMoney(cr.resultatNet, currency)}`);
+    
+    doc.moveDown(1.5);
+    doc.font('Helvetica-Bold').fontSize(14).fillColor('#1E1060').text('Analyse Stratégique & Recommandations IA');
+    doc.moveDown(0.5);
+    
+    doc.font('Helvetica').fontSize(9.5).fillColor('#333333');
+    doc.text(aiSummary.replace(/\*\*/g, ''), { align: 'justify', width: 495 });
+    
+    doc.fontSize(8).fillColor('#888888').text(
+      'Document confidentiel à usage interne généré automatiquement par FinancePro IA.',
+      50,
+      doc.page.height - 60,
+      { align: 'center', width: 495 },
+    );
+
+    return toBuffer(doc);
+  }
 }

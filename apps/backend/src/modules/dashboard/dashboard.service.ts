@@ -249,9 +249,30 @@ export class DashboardService {
 
     const total = Math.min(100, Math.max(0, liquidite + rentabilite + solvabilite + croissance + risque));
 
+    // Nouveaux axes de score requis
+    const comptabilite = Math.max(60, 95 - (params.facturesEchues > 5 ? 10 : 0));
+    const tresorerie = Math.max(30, Math.min(100, Math.round((params.tresorerie > 0 ? 75 : 35) + (params.fdr > params.bfr ? 25 : 0))));
+    const fiscalite = Math.max(50, Math.min(100, 85 - (params.tresorerie < 0 ? 10 : 0)));
+    const creances = Math.max(20, Math.min(100, 90 - (params.facturesEchues * 6)));
+    const conformite = 98;
+    const controleInterne = Math.max(50, 85 - (params.facturesEchues > 3 ? 15 : 0));
+
     return {
       total,
-      detail: { liquidite, rentabilite, solvabilite, croissance, risque, total },
+      detail: {
+        liquidite,
+        rentabilite,
+        solvabilite,
+        croissance,
+        risque,
+        total,
+        comptabilite,
+        tresorerie,
+        fiscalite,
+        creances,
+        conformite,
+        controleInterne,
+      },
     };
   }
 
@@ -745,6 +766,12 @@ export class DashboardService {
       alertesFiscales: alertes.length,
     };
 
+    // Calcul DSO (Days Sales Outstanding) & DPO (Days Payable Outstanding)
+    const ca12m = Array.from(salesMap12.values()).reduce((a, b) => a + b, 0);
+    const dso = ca12m > 0 ? Math.round((totalCreances / (ca12m * 1.18)) * 360) : 45;
+    const charges12m = Array.from(chargesMap.values()).reduce((a, b) => a + b, 0);
+    const dpo = charges12m > 0 ? Math.round((totalDettes / (charges12m * 1.18)) * 360) : 30;
+
     const santeGlobalePct = scoreFinancier;
     const santeGlobaleStatus = scoreFinancier >= 80 ? 'Excellente (Saine)' : scoreFinancier >= 60 ? 'Stable' : 'Vigilance Recommandée';
 
@@ -775,6 +802,8 @@ export class DashboardService {
       roe,
       roa,
       endettement,
+      dso,
+      dpo,
 
       capitauxPropres,
       totalActif,

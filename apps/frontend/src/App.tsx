@@ -28,6 +28,7 @@ import { BusinessPlanModule } from './components/modules/BusinessPlanModule';
 import { AdminModule } from './components/modules/AdminModule';
 import { AuthModule } from './components/modules/AuthModule';
 import { AuditModule } from './components/modules/AuditModule';
+import DocumentsModule from './components/modules/DocumentsModule';
 import { LandingPage } from './components/LandingPage';
 import { useAuth } from './context/AuthContext';
 
@@ -81,6 +82,7 @@ const AppShell: React.FC = () => {
       case 'admin': return 'Administration & paramètres d\'entreprise';
       case 'auth': return 'Authentification JWT & sécurité RBAC';
       case 'audit': return "Piste d'audit — historique des actions sensibles";
+      case 'documents': return 'GED — Gestionnaire Électronique de Documents';
     }
   };
 
@@ -100,7 +102,9 @@ const AppShell: React.FC = () => {
           onLogout={logout}
         />
 
-        <main className="flex-1 overflow-y-auto p-6 bg-[#F8F7FF]">
+        <main className={`flex-1 bg-[#F8F7FF] ${
+            activeModule === 'documents' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto p-6'
+          }`}>
           {activeModule === 'dashboard' && <DashboardModule onNavigate={setActiveModule} />}
           {activeModule === 'accounting' && <AccountingModule />}
           {activeModule === 'treasury' && <TreasuryModule />}
@@ -119,6 +123,7 @@ const AppShell: React.FC = () => {
           {activeModule === 'admin' && <AdminModule />}
           {activeModule === 'auth' && <AuthModule currentUser={user} />}
           {activeModule === 'audit' && (user.role === 'ADMIN' || user.role === 'COMPTABLE') && <AuditModule />}
+          {activeModule === 'documents' && <DocumentsModule />}
         </main>
       </div>
 

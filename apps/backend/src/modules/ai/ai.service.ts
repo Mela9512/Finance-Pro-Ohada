@@ -114,6 +114,30 @@ const ACCOUNT_SUGGESTION_SCHEMA = {
   required: ['accountCode', 'confidence'],
 };
 
+const ENTRY_SUGGESTION_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    journalType: { type: 'STRING', description: 'Une valeur parmi VENTES, ACHATS, BANQUE, CAISSE, OD, SALAIRES' },
+    wording: { type: 'STRING', description: 'Libellé de l\'écriture' },
+    lines: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          accountCode: { type: 'STRING', description: 'Numéro de compte SYSCOHADA (ex: 601100, 445200, 401100)' },
+          accountLabel: { type: 'STRING', description: 'Nom de compte' },
+          debit: { type: 'NUMBER' },
+          credit: { type: 'NUMBER' },
+        },
+        required: ['accountCode', 'debit', 'credit'],
+      },
+    },
+    explanation: { type: 'STRING', description: 'Explication des règles comptables appliquées selon le SYSCOHADA' },
+  },
+  required: ['journalType', 'wording', 'lines', 'explanation'],
+};
+
+
 const BUDGET_VARIANCE_THRESHOLD_PERCENT = 20;
 
 // Le LLM reproduit parfois un tiret (– U+2013 vs — U+2014) ou des espaces différents
@@ -189,6 +213,36 @@ export class AiService {
     }
     if (!result.label) {
       result.label = `Compte ${result.accountCode}`;
+    }
+    return result;
+  }
+
+  async suggestEntryPattern(companyId: string, wording: string, amount?: number): Promise<any> {
+    const accounts = await this.accountRepo.find({ order: { code: 'ASC' } });
+    const planText = accounts.map((a) => `${a.code} - ${a.label}`).join('\n');
+
+    const prompt =
+      `En tant qu'expert comptable SYSCOHADA (OHADA), analyse la demande suivante :\n` +
+      `Libellé/Description : "${wording}"\n` +
+      `Montant global indicatif : ${amount !== undefined ? amount + ' FCFA' : 'non spécifié'}\n\n` +
+      `Plan comptable SYSCOHADA de l'entreprise :\n${planText}\n\n` +
+      `Génère le modèle d'écriture comptable équilibré le plus approprié en double partie (Total Débit = Total Crédit) en utilisant les comptes exacts du plan comptable.\n` +
+      `S'il y a de la TVA (généralement 19.25% ou 18% selon la description), décompose le montant HT, la TVA, et le montant TTC.\n` +
+      `Réponds uniquement sous forme d'un objet JSON valide conforme au schéma demandé.`;
+
+    const result = await this.aiProvider.generateJson<any>(prompt, ENTRY_SUGGESTION_SCHEMA);
+    
+    // Map account labels if missing
+    if (result.lines && Array.isArray(result.lines)) {
+      result.lines = result.lines.map((line: any) => {
+        const acc = accounts.find((a) => a.code === line.accountCode);
+        return {
+          accountCode: line.accountCode,
+          accountLabel: acc?.label || line.accountLabel || `Compte ${line.accountCode}`,
+          debit: Number(line.debit) || 0,
+          credit: Number(line.credit) || 0,
+        };
+      });
     }
     return result;
   }
@@ -317,10 +371,32 @@ export class AiService {
     ]);
 
     const context = JSON.stringify({ bilan, compteDeResultat, balanceGenerale, budgetVsReel: budgetComparison });
-    const screenHint = currentScreen ? `\n\nL'utilisateur consulte actuellement l'écran : "${currentScreen}". Privilégie une réponse pertinente pour ce contexte si la question est ambiguë.` : '';
+    
+    let personaPrompt = 'Tu es un assistant comptable pour une entreprise utilisant le référentiel SYSCOHADA (OHADA).';
+    
+    if (currentScreen === 'copilote_comptable') {
+      personaPrompt = 
+        "Tu es un expert comptable spécialisé dans le référentiel SYSCOHADA (OHADA). Ton rôle est d'assister l'utilisateur dans l'enregistrement de ses écritures, la codification comptable (classes 1 à 8), et le respect des principes comptables (coût historique, prudence, etc.). Explique clairement les schémas de comptabilisation.";
+    } else if (currentScreen === 'copilote_controleur') {
+      personaPrompt = 
+        "Tu es un contrôleur de gestion et auditeur de comptes de l'espace OHADA. Ton rôle est d'auditer la balance générale, de pointer les anomalies et d'évaluer le contrôle interne de l'entreprise. Concentre-toi sur la détection des déséquilibres, des omissions et des écritures atypiques.";
+    } else if (currentScreen === 'copilote_analyste') {
+      personaPrompt = 
+        "Tu es un analyste financier chevronné. Ton rôle est d'expliquer les soldes intermédiaires de gestion (SIG), d'analyser la structure du BFR (Besoin en Fonds de Roulement) et du FDR (Fonds de Roulement), et de commenter les ratios de rentabilité (EBITDA, ROE, ROA) et d'endettement.";
+    } else if (currentScreen === 'copilote_fiscaliste') {
+      personaPrompt = 
+        "Tu es un conseiller fiscal spécialisé dans l'espace OHADA (régime d'imposition, TVA standard à 18%, acomptes IS, etc.). Ton rôle est d'orienter l'utilisateur sur la conformité fiscale, les dates limites de déclaration, et les mécanismes de déductibilité.";
+    } else if (currentScreen === 'copilote_conseiller') {
+      personaPrompt = 
+        "Tu es le conseiller stratégique du dirigeant (CEO). Ton rôle est de synthétiser les données financières complexes en conseils de gestion simples, directs et orientés action (gestion du cash flow, urgence de recouvrement, réduction des charges d'exploitation, opportunités d'investissement).";
+    }
+
+    const screenHint = currentScreen && !currentScreen.startsWith('copilote_')
+      ? `\n\nL'utilisateur consulte actuellement l'écran : "${currentScreen}". Privilégie une réponse pertinente pour ce contexte si la question est ambiguë.` 
+      : '';
 
     const systemInstruction =
-      'Tu es un assistant comptable pour une entreprise utilisant le référentiel SYSCOHADA (OHADA). ' +
+      `${personaPrompt} ` +
       "Réponds UNIQUEMENT à partir des données JSON fournies ci-dessous, qui reflètent l'état réel et à jour de la comptabilité de l'entreprise. " +
       "N'invente JAMAIS un chiffre absent de ces données. Si la question porte sur une donnée absente, dis-le clairement plutôt que d'estimer. " +
       `Réponds en français, de façon concise.${screenHint}\n\nDonnées réelles de l'entreprise :\n${context}`;

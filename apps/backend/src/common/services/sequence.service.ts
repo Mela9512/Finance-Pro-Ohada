@@ -21,4 +21,9 @@ export class SequenceService {
       return seq.lastNumber;
     });
   }
+
+  async peek(companyId: string, key: string): Promise<number> {
+    const seq = await this.repo.findOne({ where: { companyId, key } });
+    return (seq?.lastNumber || 0) + 1;
+  }
 }

@@ -247,4 +247,13 @@ export class AccountingService {
     if (!company) throw new BadRequestException('Entreprise non trouvée');
     return company;
   }
+
+  async getNextEntryNumber(companyId: string, journalType: string, dateStr: string): Promise<{ entryNumber: string }> {
+    const year = new Date(dateStr).getFullYear();
+    const key = `${journalType}-${year}`;
+    const nextSeq = await this.sequenceService.peek(companyId, key);
+    const prefix = JOURNAL_PREFIX[journalType] || 'JR';
+    const entryNumber = `${prefix}-${year}-${String(nextSeq).padStart(4, '0')}`;
+    return { entryNumber };
+  }
 }

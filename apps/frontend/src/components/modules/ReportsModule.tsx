@@ -1248,7 +1248,7 @@ export const ReportsModule: React.FC = () => {
               Dossiers & Rapports Financiers pour la Direction
             </h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs">
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
               <div className="font-extrabold text-slate-900">Dossier Banque / Crédit</div>
               <div className="text-[10px] text-slate-500">Pour demandes de financement bancaire.</div>
@@ -1260,6 +1260,20 @@ export const ReportsModule: React.FC = () => {
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
               <div className="font-extrabold text-slate-900">Dossier Investisseurs</div>
               <div className="text-[10px] text-slate-500">Plaquette financière pour levée de fonds.</div>
+            </div>
+            <div className="p-4 rounded-2xl bg-[#F5F3FF] border border-[#DDD6FE] space-y-2 flex flex-col justify-between">
+              <div className="space-y-1">
+                <div className="font-extrabold text-indigo-950 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-indigo-600 animate-pulse" /> Rapport de Gestion IA
+                </div>
+                <div className="text-[10px] text-indigo-700">Synthèse mensuelle augmentée par l'IA (PDF).</div>
+              </div>
+              <button
+                onClick={() => handleDownload(api.downloadManagementReportPdf)}
+                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-[10px] flex items-center justify-center gap-1 transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" /> Générer & Télécharger
+              </button>
             </div>
           </div>
         </div>

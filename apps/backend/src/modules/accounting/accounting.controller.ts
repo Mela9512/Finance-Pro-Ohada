@@ -37,4 +37,13 @@ export class AccountingController {
   toggleExercice(@CurrentUser() user: AuthenticatedUser, @Body() body: { isClosed: boolean }) {
     return this.accountingService.toggleExerciceStatus(user.companyId, body.isClosed);
   }
+
+  @Get('next-entry-number')
+  getNextEntryNumber(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('journalType') journalType: string,
+    @Query('date') date: string,
+  ) {
+    return this.accountingService.getNextEntryNumber(user.companyId, journalType, date);
+  }
 }

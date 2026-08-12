@@ -33,6 +33,7 @@ export const AuditModule: React.FC = () => {
   const [actionFilter, setActionFilter] = useState('');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [data, setData] = useState<AuditLogPage | null>(null);
   const [availableActions, setAvailableActions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,10 +45,10 @@ export const AuditModule: React.FC = () => {
   useEffect(() => {
     setLoading(true);
     api
-      .getAuditLog({ page, limit, action: actionFilter || undefined, from: from || undefined, to: to || undefined })
+      .getAuditLog({ page, limit, action: actionFilter || undefined, from: from || undefined, to: to || undefined, search: searchTerm || undefined })
       .then(setData)
       .finally(() => setLoading(false));
-  }, [page, limit, actionFilter, from, to]);
+  }, [page, limit, actionFilter, from, to, searchTerm]);
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / data.limit)) : 1;
 
@@ -77,6 +78,13 @@ export const AuditModule: React.FC = () => {
 
       <div className="flex flex-wrap items-center gap-2 bg-white p-3 rounded-2xl border border-[#EDE9FE] shadow-sm">
         <Filter className="w-4 h-4 text-slate-400 ml-1" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => handleFilterChange(setSearchTerm)(e.target.value)}
+          placeholder="Rechercher (utilisateur, action...)"
+          className="glass-input rounded-lg px-3 py-1.5 text-xs w-48"
+        />
         <select
           value={actionFilter}
           onChange={(e) => handleFilterChange(setActionFilter)(e.target.value)}
@@ -101,9 +109,9 @@ export const AuditModule: React.FC = () => {
           className="glass-input rounded-lg px-3 py-1.5 text-xs"
           title="Jusqu'au"
         />
-        {(actionFilter || from || to) && (
+        {(actionFilter || from || to || searchTerm) && (
           <button
-            onClick={() => { setActionFilter(''); setFrom(''); setTo(''); setPage(1); }}
+            onClick={() => { setActionFilter(''); setFrom(''); setTo(''); setSearchTerm(''); setPage(1); }}
             className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-100"
           >
             Réinitialiser

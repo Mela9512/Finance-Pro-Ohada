@@ -2,7 +2,7 @@ import React from 'react';
 import {
   LayoutDashboard, BookOpenCheck, Wallet, Users, Truck,
   FileSpreadsheet, BarChart3, Settings, ShieldCheck, Target,
-  Bot, Rocket, ChevronRight, Landmark, FileClock, Building2, Package, ClipboardList, Users2
+  Bot, Rocket, ChevronRight, Landmark, FileClock, Building2, Package, ClipboardList, Users2, FolderOpen
 } from 'lucide-react';
 import { UserRole } from '@financepro/shared';
 
@@ -24,7 +24,8 @@ export type ModuleId =
   | 'business-plan'
   | 'admin'
   | 'auth'
-  | 'audit';
+  | 'audit'
+  | 'documents';
 
 interface SidebarProps {
   activeModule: ModuleId;
@@ -50,6 +51,7 @@ const menuGroups = [
       { id: 'stocks' as ModuleId, label: 'Stocks & Inventaire', icon: Package },
       { id: 'paie' as ModuleId, label: 'Paie', icon: Users2 },
       { id: 'budget' as ModuleId, label: 'Budget Prévisionnel', icon: Target },
+      { id: 'documents' as ModuleId, label: 'GED & Pièces Justif.', icon: FolderOpen },
     ],
   },
   {
