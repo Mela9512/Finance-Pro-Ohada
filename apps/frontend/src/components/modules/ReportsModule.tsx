@@ -4,7 +4,7 @@ import {
   TrendingUp, TrendingDown, DollarSign, PieChart, Layers, ArrowUpRight, ArrowDownLeft,
   Search, Lock, CheckSquare, Eye, ChevronRight, Calculator, RefreshCw, Award, Scale,
   BookOpen, HelpCircle, FileSpreadsheet, Building2, ShieldAlert, Zap, BarChart2, ClipboardList,
-  Grid, List, CheckCircle2, ArrowRight, Shield, Check, Info, Landmark, UserCheck
+  Grid, List, CheckCircle2, ArrowRight, Shield, Check, Info, Landmark, UserCheck, X
 } from 'lucide-react';
 import { FinancialReportBilan, CompteDeResultat, FinancialVariationExplanation } from '@financepro/shared';
 import { api, ApiError } from '../../services/api';
@@ -19,10 +19,24 @@ interface DrillDownData {
   entries: { date: string; journal: string; piece: string; wording: string; debit: number; credit: number }[];
 }
 
-export const ReportsModule: React.FC = () => {
+interface ReportsModuleProps {
+  initialTab?: number;
+}
+
+export const ReportsModule: React.FC<ReportsModuleProps> = ({ initialTab = 2 }) => {
   // ── States principaux ────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<number>(1);
+  const [activeTab, setActiveTab] = useState<number>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [bilanMode, setBilanMode] = useState<'synthetique' | 'detaille'>('synthetique');
+  const [bilanViewMode, setBilanViewMode] = useState<'comptable' | 'direction'>('comptable');
+  const [showNvsN1, setShowNvsN1] = useState(false);
+  const [explainPosteData, setExplainPosteData] = useState<{ title: string; code: string; amount: number; analysis: string; risk: string } | null>(null);
+  const [showClotureConfirm, setShowClotureConfirm] = useState(false);
 
   const [bilanData, setBilanData] = useState<FinancialReportBilan | null>(null);
   const [crData, setCrData] = useState<CompteDeResultat | null>(null);
@@ -165,24 +179,17 @@ export const ReportsModule: React.FC = () => {
     { id: 36, code: 'TAB-36', title: 'Attestation de Conformité Comptable & Visa de l\'Expert' }
   ];
 
-  // 16 Pillars Navigation Tabs
+  // 9 Pillars Navigation Tabs (Regulatory Compliance Focus)
   const pillars = [
-    { id: 1, title: 'Tableau de Bord Financier', icon: '📊' },
     { id: 2, title: 'Bilan SYSCOHADA (A/P)', icon: '🏛️' },
     { id: 3, title: 'Compte de Résultat (CR)', icon: '📑' },
     { id: 4, title: 'Flux de Trésorerie (TFT)', icon: '💰' },
     { id: 5, title: 'Variation Capitaux Propres', icon: '📈' },
     { id: 6, title: 'Notes Annexes OHADA', icon: '📚' },
     { id: 7, title: 'Soldes SIG Détaillés', icon: '📐' },
-    { id: 8, title: 'Ratios Financiers (15)', icon: '📉' },
-    { id: 9, title: 'Comparaison Multi-Exercices', icon: '🔄' },
-    { id: 10, title: 'Analyse Financière IA (SWOT)', icon: '🤖' },
-    { id: 11, title: 'Prévisions & Simulations', icon: '🔮' },
     { id: 12, title: 'Contrôle Conformité OHADA', icon: '🛡️' },
     { id: 13, title: 'Liasse Fiscale Officielles', icon: '📋' },
     { id: 14, title: 'Historique & Clôtures', icon: '🔒' },
-    { id: 15, title: 'Rapports pour la Direction', icon: '📜' },
-    { id: 16, title: 'Assistant IA FinancePro', icon: 'Sparkles' },
   ];
 
   // Render specific content for each of the 36 Tax Tables when selected
@@ -434,90 +441,34 @@ export const ReportsModule: React.FC = () => {
             </div>
           </div>
 
-          {/* 12 Boutons d'Action Recommandés */}
+          {/* Actions principales épurées */}
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={() => setActiveTab(1)}
-              className="px-3.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs transition-all shadow-sm flex items-center gap-1.5"
+              onClick={() => setActiveTab(13)}
+              className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-extrabold text-xs transition-all shadow-sm flex items-center gap-1.5"
             >
-              <BarChart2 className="w-3.5 h-3.5" /> 📊 Générer États Financiers
+              <BarChart2 className="w-3.5 h-3.5" /> 📊 Générer la Liasse
             </button>
 
             <button
-              onClick={() => setActiveTab(2)}
-              className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 font-bold text-xs transition-all flex items-center gap-1.5"
+              onClick={() => setActiveTab(12)}
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs transition-all flex items-center gap-1.5"
             >
-              <FileText className="w-3.5 h-3.5 text-emerald-600" /> 📄 Bilan
-            </button>
-
-            <button
-              onClick={() => setActiveTab(3)}
-              className="px-3.5 py-2 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 font-bold text-xs transition-all flex items-center gap-1.5"
-            >
-              <FileText className="w-3.5 h-3.5 text-indigo-600" /> 📑 Compte de Résultat
-            </button>
-
-            <button
-              onClick={() => setActiveTab(4)}
-              className="px-3.5 py-2 rounded-xl bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 font-bold text-xs transition-all flex items-center gap-1.5"
-            >
-              <DollarSign className="w-3.5 h-3.5 text-cyan-600" /> 💰 Flux Trésorerie (TFT)
-            </button>
-
-            <button
-              onClick={() => setActiveTab(7)}
-              className="px-3.5 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 font-bold text-xs transition-all flex items-center gap-1.5"
-            >
-              <TrendingUp className="w-3.5 h-3.5 text-amber-600" /> 📈 SIG
-            </button>
-
-            <button
-              onClick={() => setActiveTab(8)}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition-all flex items-center gap-1.5"
-            >
-              <Calculator className="w-3.5 h-3.5 text-slate-600" /> 📉 Ratios Financiers
-            </button>
-
-            <button
-              onClick={() => setActiveTab(6)}
-              className="px-3.5 py-2 rounded-xl bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 font-bold text-xs transition-all flex items-center gap-1.5"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-violet-600" /> 📚 Notes Annexes
-            </button>
-
-            <button
-              onClick={() => setActiveTab(15)}
-              className="px-3.5 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
-            >
-              <ClipboardList className="w-3.5 h-3.5" /> 📋 Rapport Financier
+              <ShieldCheck className="w-3.5 h-3.5 text-violet-600" /> Contrôle Conformité
             </button>
 
             <button
               onClick={() => handleDownload(() => api.downloadBilanPdf())}
-              className="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 font-bold text-xs transition-all flex items-center gap-1.5"
+              className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-bold text-xs transition-all flex items-center gap-1.5"
             >
-              <Download className="w-3.5 h-3.5 text-rose-600" /> 📤 Export PDF A4
+              <Download className="w-3.5 h-3.5 text-rose-600" /> Exporter PDF / Excel
             </button>
 
             <button
-              onClick={() => alert("Génération de l'export Excel normalisé SYSCOHADA (36 tableaux)...")}
-              className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 font-bold text-xs transition-all flex items-center gap-1.5"
+              onClick={() => alert("Clôture annuelle réglementaire SYSCOHADA...")}
+              className="px-3.5 py-2 rounded-xl bg-slate-900 text-white hover:bg-slate-800 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" /> 📥 Export Excel
-            </button>
-
-            <button
-              onClick={() => alert("Clôture annuelle sécurisée SYSCOHADA...")}
-              className="px-3.5 py-2 rounded-xl bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold text-xs transition-all flex items-center gap-1.5"
-            >
-              <Lock className="w-3.5 h-3.5" /> 🔒 Clôturer l'Exercice
-            </button>
-
-            <button
-              onClick={() => setActiveTab(10)}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-extrabold text-xs hover:opacity-90 transition-all shadow-md flex items-center gap-1.5"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" /> 🤖 Analyser avec l'IA
+              <Lock className="w-3.5 h-3.5" /> Clôturer l'Exercice
             </button>
           </div>
         </div>
@@ -606,256 +557,1360 @@ export const ReportsModule: React.FC = () => {
         </div>
       )}
 
-      {/* PILIER 2 : BILAN SYSCOHADA (ACTIF / PASSIF + DRILL-DOWN) */}
-      {activeTab === 2 && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-violet-100 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🏛️</span>
-              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-                Bilan Synthétique & Détaillé (Système Normal SYSCOHADA)
-              </h3>
-            </div>
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* PILIER 2 : BILAN SYSCOHADA — COCKPIT PROFESSIONNEL                   */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === 2 && (() => {
+        // ── Données statiques enrichies N et N-1 ─────────────────────────────
+        const actifPostes = [
+          { section: 'A — ACTIF IMMOBILISÉ', items: [
+            { code: '211', label: 'Immobilisations incorporelles', brut: 3000000, amort: 500000, net: 2500000, n1: 2000000 },
+            { code: '241', label: 'Immobilisations corporelles', brut: 14500000, amort: 1700000, net: 12800000, n1: 11200000 },
+            { code: '251', label: 'Immobilisations financières', brut: 1000000, amort: 0, net: 1000000, n1: 800000 },
+          ]},
+          { section: 'B — ACTIF CIRCULANT', items: [
+            { code: '311', label: 'Stocks de marchandises', brut: 4800000, amort: 0, net: 4800000, n1: 3900000 },
+            { code: '411', label: 'Clients & Comptes rattachés', brut: 8900000, amort: 0, net: 8900000, n1: 7400000 },
+            { code: '471', label: 'Autres créances & débiteurs', brut: 1500000, amort: 0, net: 1500000, n1: 1200000 },
+          ]},
+          { section: 'C — TRÉSORERIE-ACTIF', items: [
+            { code: '521/571', label: 'Banques, Caisses, Mobile Money', brut: 6000000, amort: 0, net: 6000000, n1: 4500000 },
+          ]},
+        ];
+        const passifPostes = [
+          { section: 'A — CAPITAUX PROPRES', items: [
+            { code: '101', label: 'Capital social', net: 10000000, n1: 10000000 },
+            { code: '111', label: 'Réserves légales & facultatives', net: 2500000, n1: 2000000 },
+            { code: '120', label: 'Report à nouveau', net: 1200000, n1: 800000 },
+            { code: '131', label: 'Résultat net de l\'exercice', net: resultatNet, n1: 2800000 },
+          ]},
+          { section: 'B — DETTES FINANCIÈRES', items: [
+            { code: '162', label: 'Emprunts établissements de crédit', net: 4500000, n1: 5200000 },
+            { code: '181', label: 'Dettes de crédit-bail', net: 800000, n1: 1000000 },
+          ]},
+          { section: 'C — PASSIF CIRCULANT', items: [
+            { code: '401', label: 'Fournisseurs & Comptes rattachés', net: 6500000, n1: 5300000 },
+            { code: '432', label: 'Dettes fiscales (TVA, IS…)', net: 1800000, n1: 1400000 },
+            { code: '434', label: 'Dettes sociales (CNPS…)', net: 1050000, n1: 900000 },
+            { code: '471', label: 'Autres dettes & créditeurs', net: 600000, n1: 500000 },
+          ]},
+        ];
 
-            <div className="flex items-center gap-2">
-              <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                <button
-                  onClick={() => setBilanMode('synthetique')}
-                  className={`px-3 py-1 rounded-lg transition-all ${bilanMode === 'synthetique' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-600'}`}
-                >
-                  Vue Synthétique
-                </button>
-                <button
-                  onClick={() => setBilanMode('detaille')}
-                  className={`px-3 py-1 rounded-lg transition-all ${bilanMode === 'detaille' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-600'}`}
-                >
-                  Vue Détaillée (Postes SYSCOHADA)
-                </button>
-              </div>
+        const totalActifReel = actifPostes.flatMap(s => s.items).reduce((s, i) => s + i.net, 0);
+        const totalPassifReel = passifPostes.flatMap(s => s.items).reduce((s, i) => s + i.net, 0);
+        const ecartBilan = Math.abs(totalActifReel - totalPassifReel);
+        const bilanEquilibre = ecartBilan === 0;
 
-              <button
-                onClick={() => handleDownload(() => api.downloadBilanPdf())}
-                className="px-3.5 py-1.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 flex items-center gap-1.5"
-              >
-                <Printer className="w-3.5 h-3.5" /> PDF A4
-              </button>
-            </div>
-          </div>
+        const controles = [
+          { label: 'Écritures validées', status: 'ok' },
+          { label: 'Balance équilibrée', status: 'ok' },
+          { label: 'Bilan équilibré', status: bilanEquilibre ? 'ok' : 'error' },
+          { label: 'Compte de résultat', status: 'ok' },
+          { label: 'Contrôle TVA', status: 'warn' },
+          { label: 'Contrôle OHADA', status: 'ok' },
+          { label: 'Liasse fiscale', status: 'pending' },
+        ];
+        const scoreConformite = Math.round((controles.filter(c => c.status === 'ok').length / controles.length) * 100);
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* ACTIF */}
-            <div className="bg-white rounded-3xl p-6 space-y-4 border border-violet-100 shadow-sm">
-              <div className="flex justify-between items-center border-b pb-3">
-                <h3 className="text-sm font-extrabold text-emerald-600 uppercase tracking-wider">ACTIF DU BILAN</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">Exercice N</span>
-              </div>
+        const statusIcon = (s: string) => s === 'ok' ? '🟢' : s === 'warn' ? '🟠' : s === 'pending' ? '🟡' : '🔴';
+        const statusLabel = (s: string) => s === 'ok' ? 'Conforme' : s === 'warn' ? 'À vérifier' : s === 'pending' ? 'En préparation' : 'Anomalie';
 
-              <div className="space-y-3 text-xs">
-                <div className="font-extrabold text-slate-700 uppercase text-[10px] border-b pb-1">I. ACTIF IMMOBILISÉ</div>
-                <div
-                  onClick={() => handleOpenDrillDown('Immobilisations Incorporelles', '211', 2500000)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">211 - Immobilisations Incorporelles</span>
-                  <span className="font-mono font-bold text-slate-900">{formatMoney(2500000)}</span>
-                </div>
+        const fmtVar = (n: number, n1: number) => {
+          const diff = n - n1;
+          const pct = n1 !== 0 ? ((diff / Math.abs(n1)) * 100).toFixed(1) : '—';
+          const color = diff >= 0 ? 'text-emerald-600' : 'text-rose-600';
+          return <span className={`font-mono text-[11px] font-bold ${color}`}>{diff >= 0 ? '+' : ''}{formatMoney(diff)} ({diff >= 0 ? '+' : ''}{pct}%)</span>;
+        };
 
-                <div
-                  onClick={() => handleOpenDrillDown('Immobilisations Corporelles', '241', 12800000)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">241 - Immobilisations Corporelles</span>
-                  <span className="font-mono font-bold text-slate-900">{formatMoney(12800000)}</span>
-                </div>
+        const handleExplainPoste = (code: string, label: string, amount: number) => {
+          const analyses: Record<string, { analysis: string; risk: string }> = {
+            '211': { analysis: '2 logiciels & licences amortissables · Durée résiduelle : 3 ans', risk: 'Faible' },
+            '241': { analysis: '4 équipements & 2 véhicules · Taux amortissement moyen : 20 %', risk: 'Faible' },
+            '251': { analysis: 'Participation dans 1 filiale · Valeur d\'usage estimée conforme', risk: 'Moyen' },
+            '311': { analysis: '3 catégories de stocks · Rotation : 45 j · Aucun stock obsolète détecté', risk: 'Faible' },
+            '411': { analysis: '12 clients débiteurs · 3 créances > 90 j · Créance max : 2 400 000 FCFA', risk: 'Moyen' },
+            '471': { analysis: 'Acomptes versés & débiteurs divers · Aucune créance litigieuse', risk: 'Faible' },
+            '521/571': { analysis: '2 comptes bancaires + 1 caisse + Mobile Money · Solde conforme au rapprochement', risk: 'Faible' },
+            '101': { analysis: 'Capital entièrement libéré · RCCM conforme', risk: 'Faible' },
+            '111': { analysis: 'Réserve légale 10 % + réserves facultatives statutaires', risk: 'Faible' },
+            '120': { analysis: 'Report bénéficiaire de l\'exercice N-2 affecté en AG', risk: 'Faible' },
+            '131': { analysis: `Résultat après impôt IS · Marge nette : ${ros.toFixed(1)} %`, risk: resultatNet > 0 ? 'Faible' : 'Élevé' },
+            '162': { analysis: '1 emprunt en cours · Taux : 7 % · Échéance finale : 31/12/N+2', risk: 'Moyen' },
+            '181': { analysis: '2 contrats crédit-bail véhicules · Durée résiduelle : 18 mois', risk: 'Faible' },
+            '401': { analysis: '8 fournisseurs créditeurs · Délai moyen : 39 j · Aucun litige', risk: 'Faible' },
+            '432': { analysis: 'TVA à décaisser + IS provisionné · Déclaration en cours', risk: 'Moyen' },
+            '434': { analysis: 'CNPS & charges sociales à payer · Calendrier à jour', risk: 'Faible' },
+            '471p': { analysis: 'Avances clients & créditeurs divers', risk: 'Faible' },
+          };
+          const a = analyses[code] || { analysis: 'Analyse disponible après synchronisation du grand livre.', risk: 'Non évalué' };
+          setExplainPosteData({ title: label, code, amount, ...a });
+        };
 
-                <div className="font-extrabold text-slate-700 uppercase text-[10px] border-b pb-1 pt-2">II. ACTIF CIRCULANT</div>
-                <div
-                  onClick={() => handleOpenDrillDown('Stocks et encours', '311', 4800000)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">311 - Stocks de Marchandises</span>
-                  <span className="font-mono font-bold text-slate-900">{formatMoney(4800000)}</span>
-                </div>
-
-                <div
-                  onClick={() => handleOpenDrillDown('Créances Clients', '411', 8900000)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">411 - Clients & Comptes Rattachés</span>
-                  <span className="font-mono font-bold text-slate-900">{formatMoney(8900000)}</span>
-                </div>
-
-                <div className="font-extrabold text-slate-700 uppercase text-[10px] border-b pb-1 pt-2">III. TRÉSORERIE ACTIF</div>
-                <div
-                  onClick={() => handleOpenDrillDown('Banques et Caisses', '521', 6000000)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">521 / 571 - Banques, Caisses, MoMo</span>
-                  <span className="font-mono font-extrabold text-emerald-600">{formatMoney(6000000)}</span>
-                </div>
-
-                <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 text-sm font-black text-slate-900 font-mono">
-                  <span>TOTAL GÉNÉRAL ACTIF:</span>
-                  <span className="text-emerald-600">{formatMoney(totalActif)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* PASSIF */}
-            <div className="bg-white rounded-3xl p-6 space-y-4 border border-violet-100 shadow-sm">
-              <div className="flex justify-between items-center border-b pb-3">
-                <h3 className="text-sm font-extrabold text-indigo-600 uppercase tracking-wider">PASSIF DU BILAN</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-100 text-indigo-800">Exercice N</span>
-              </div>
-
-              <div className="space-y-3 text-xs">
-                <div className="font-extrabold text-slate-700 uppercase text-[10px] border-b pb-1">I. CAPITAUX PROPRES & RESSOURCES</div>
-                <div
-                  onClick={() => handleOpenDrillDown('Capital Social', '101', 10000000)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">101 - Capital Social</span>
-                  <span className="font-mono font-bold text-slate-900">{formatMoney(10000000)}</span>
-                </div>
-
-                <div
-                  onClick={() => handleOpenDrillDown('Résultat Net Exercice', '131', resultatNet)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">131 - Résultat Net de l'Exercice</span>
-                  <span className="font-mono font-extrabold text-indigo-600">{formatMoney(resultatNet)}</span>
-                </div>
-
-                <div className="font-extrabold text-slate-700 uppercase text-[10px] border-b pb-1 pt-2">II. DETTES FINANCIÈRES</div>
-                <div
-                  onClick={() => handleOpenDrillDown('Emprunts Bancaires', '162', dettesFinancieres)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">162 - Emprunts auprès des Établissements de Crédit</span>
-                  <span className="font-mono font-bold text-slate-900">{formatMoney(dettesFinancieres)}</span>
-                </div>
-
-                <div className="font-extrabold text-slate-700 uppercase text-[10px] border-b pb-1 pt-2">III. PASSIF CIRCULANT (DETTES TIERS)</div>
-                <div
-                  onClick={() => handleOpenDrillDown('Dettes Fournisseurs', '401', 6500000)}
-                  className="flex justify-between items-center p-2 rounded-xl hover:bg-slate-50 cursor-pointer border border-transparent hover:border-slate-200"
-                >
-                  <span className="font-bold text-slate-800">401 - Fournisseurs & Comptes Rattachés</span>
-                  <span className="font-mono font-bold text-rose-600">{formatMoney(6500000)}</span>
-                </div>
-
-                <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 text-sm font-black text-slate-900 font-mono">
-                  <span>TOTAL GÉNÉRAL PASSIF:</span>
-                  <span className="text-indigo-600">{formatMoney(totalPassif)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PILIER 3 : COMPTE DE RÉSULTAT & SIG */}
-      {activeTab === 3 && (
-        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-              Compte de Résultat & Cascade des Soldes Intermédiaires de Gestion (SIG)
-            </h3>
+        // ── Ligne de bilan cliquable ────────────────────────────────────────
+        const BilanRow = ({ code, label, brut, amort, net, n1, accent = 'slate' }: {
+          code: string; label: string; brut?: number; amort?: number; net: number; n1: number; accent?: string;
+        }) => (
+          <div
+            onClick={() => handleOpenDrillDown(label, code, net)}
+            className="group flex items-center hover:bg-slate-50 rounded-xl px-2 py-1.5 cursor-pointer border border-transparent hover:border-slate-200 transition-all"
+          >
+            <span className="w-14 shrink-0 text-[10px] font-mono font-bold text-slate-400">{code}</span>
+            <span className="flex-1 text-xs font-semibold text-slate-700 truncate">{label}</span>
+            {showNvsN1 && brut !== undefined && (
+              <span className="w-24 text-right text-[11px] font-mono text-slate-400 hidden lg:block">{formatMoney(brut)}</span>
+            )}
+            {showNvsN1 && amort !== undefined && (
+              <span className="w-24 text-right text-[11px] font-mono text-rose-400 hidden lg:block">{amort > 0 ? `-${formatMoney(amort)}` : '—'}</span>
+            )}
+            <span className={`w-28 text-right text-[11px] font-mono font-bold ${accent === 'emerald' ? 'text-emerald-600' : accent === 'rose' ? 'text-rose-600' : 'text-slate-900'}`}>
+              {formatMoney(net)}
+            </span>
+            {showNvsN1 && (
+              <span className="w-36 text-right hidden xl:block">{fmtVar(net, n1)}</span>
+            )}
             <button
-              onClick={handleExplainVariation}
-              disabled={variationLoading}
-              className="px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs hover:bg-indigo-700 flex items-center gap-1.5 disabled:opacity-50"
+              onClick={e => { e.stopPropagation(); handleExplainPoste(code, label, net); }}
+              className="ml-2 opacity-0 group-hover:opacity-100 p-1 rounded-lg hover:bg-violet-100 text-violet-500 transition-all shrink-0"
+              title="Expliquer ce poste (IA)"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              {variationLoading ? 'Analyse...' : 'Expliquer la Variation (IA)'}
+              <Info className="w-3 h-3" />
             </button>
           </div>
+        );
 
-          <div className="space-y-3 font-mono text-xs max-w-4xl">
-            <div className="flex justify-between p-3 bg-slate-900 text-white rounded-2xl">
-              <span className="font-bold">Chiffre d'Affaires (Ventes de Marchandises & Services)</span>
-              <span className="font-black text-emerald-400">{formatMoney(chiffreAffaires)}</span>
+        return (
+          <div className="space-y-5">
+            {/* ── 1. BANNIÈRE CONTRÔLE DE COHÉRENCE ─────────────────────── */}
+            <div className={`flex items-center justify-between p-4 rounded-2xl border-2 ${
+              bilanEquilibre
+                ? 'bg-emerald-50 border-emerald-200'
+                : 'bg-red-50 border-red-300'
+            }`}>
+              <div className="flex items-center gap-3">
+                <span className="text-xl">{bilanEquilibre ? '🟢' : '🔴'}</span>
+                <div>
+                  <div className={`text-sm font-extrabold ${bilanEquilibre ? 'text-emerald-800' : 'text-red-800'}`}>
+                    {bilanEquilibre ? 'Bilan équilibré — Actif = Passif' : 'Anomalie comptable détectée'}
+                  </div>
+                  <div className="text-xs font-medium text-slate-600">
+                    {bilanEquilibre
+                      ? `Actif : ${formatMoney(totalActifReel)} · Passif : ${formatMoney(totalPassifReel)} · Écart : 0 FCFA`
+                      : `Écart Actif / Passif : ${formatMoney(ecartBilan)} · Vérifiez les imputations de clôture`
+                    }
+                  </div>
+                </div>
+              </div>
+              {!bilanEquilibre && (
+                <button
+                  onClick={() => handleOpenDrillDown('Écritures de clôture', '999', ecartBilan)}
+                  className="px-3 py-1.5 rounded-xl bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition-all flex items-center gap-1"
+                >
+                  <Search className="w-3 h-3" /> Voir les écritures concernées
+                </button>
+              )}
             </div>
 
-            <div className="flex justify-between p-2.5 bg-slate-50 rounded-xl">
-              <span className="text-slate-600">- Achats de marchandises & matières premières</span>
-              <span className="text-rose-600">-{formatMoney(10800000)}</span>
+            {/* ── 2. CENTRE DE CONTRÔLE ─────────────────────────────────── */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Statut de production — États Financiers {currentYear}</div>
+                  <div className="text-slate-800 font-bold text-sm mt-0.5">Centre de contrôle SYSCOHADA</div>
+                </div>
+                <div className="flex flex-col items-end">
+                  <div className="text-2xl font-black text-emerald-600 font-mono">{scoreConformite} %</div>
+                  <div className="text-[10px] text-slate-400 font-bold">Score de conformité</div>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+                {controles.map(c => (
+                  <div key={c.label} className={`p-2.5 rounded-xl text-center border ${
+                    c.status === 'ok' ? 'bg-emerald-50 border-emerald-100'
+                    : c.status === 'warn' ? 'bg-amber-50 border-amber-100'
+                    : c.status === 'pending' ? 'bg-slate-50 border-slate-100'
+                    : 'bg-red-50 border-red-200'
+                  }`}>
+                    <div className="text-lg mb-1">{statusIcon(c.status)}</div>
+                    <div className="text-[9px] font-extrabold text-slate-600 leading-tight">{c.label}</div>
+                    <div className={`text-[8px] font-bold mt-0.5 ${
+                      c.status === 'ok' ? 'text-emerald-600' : c.status === 'warn' ? 'text-amber-600' : c.status === 'pending' ? 'text-slate-400' : 'text-red-600'
+                    }`}>{statusLabel(c.status)}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="flex justify-between p-3 bg-emerald-50 text-emerald-950 rounded-2xl font-extrabold border border-emerald-200">
-              <span>= MARGE BRUTE</span>
-              <span>{formatMoney(margeBrute)}</span>
+            {/* ── 3. BARRE D'OUTILS ─────────────────────────────────────── */}
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Mode Comptable / Direction */}
+                <div className="flex bg-slate-100 rounded-xl p-1 text-xs font-bold">
+                  <button onClick={() => setBilanViewMode('comptable')} className={`px-3 py-1.5 rounded-lg transition-all ${ bilanViewMode === 'comptable' ? 'bg-white text-violet-700 shadow-sm' : 'text-slate-500' }`}>
+                    Mode Comptable
+                  </button>
+                  <button onClick={() => setBilanViewMode('direction')} className={`px-3 py-1.5 rounded-lg transition-all ${ bilanViewMode === 'direction' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500' }`}>
+                    Mode Direction
+                  </button>
+                </div>
+                {/* N / N-1 */}
+                <button
+                  onClick={() => setShowNvsN1(!showNvsN1)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                    showNvsN1 ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-slate-700 border-slate-200 hover:border-indigo-300'
+                  }`}
+                >
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  {showNvsN1 ? 'N / N-1 ✓' : 'Afficher N vs N-1'}
+                </button>
+              </div>
+
+              {/* Actions hiérarchisées */}
+              <div className="flex items-center gap-2">
+                <button onClick={() => handleDownload(() => api.downloadBilanPdf())} className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 flex items-center gap-1.5 transition-all">
+                  <Download className="w-3 h-3 text-rose-500" /> PDF
+                </button>
+                <button onClick={() => window.print()} className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 flex items-center gap-1.5 transition-all">
+                  <Printer className="w-3 h-3 text-slate-500" /> Impression
+                </button>
+                <button
+                  onClick={() => setShowClotureConfirm(true)}
+                  disabled={!bilanEquilibre}
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all disabled:opacity-40 disabled:cursor-not-allowed bg-slate-900 text-white hover:bg-slate-800"
+                  title={!bilanEquilibre ? 'Clôture bloquée : anomalie détectée dans le bilan' : 'Clôturer l\'exercice'}
+                >
+                  <Lock className="w-3 h-3" /> Clôturer
+                  {!bilanEquilibre && <AlertTriangle className="w-3 h-3 text-red-400" />}
+                </button>
+              </div>
             </div>
 
-            <div className="flex justify-between p-2.5 bg-slate-50 rounded-xl">
-              <span className="text-slate-600">- Consommations de services extérieurs</span>
-              <span className="text-rose-600">-{formatMoney(3200000)}</span>
+            {/* ── 4. VUE DIRECTION ──────────────────────────────────────── */}
+            {bilanViewMode === 'direction' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[
+                    { label: 'Total Actif', val: totalActifReel, color: 'emerald', sub: 'Ressources économiques contrôlées' },
+                    { label: 'Capitaux propres', val: 10000000 + 2500000 + 1200000 + resultatNet, color: 'violet', sub: 'Financement par fonds propres' },
+                    { label: 'Dettes financières', val: 4500000 + 800000, color: 'amber', sub: 'Endettement bancaire & crédit-bail' },
+                    { label: 'Fonds de Roulement', val: fdr, color: 'indigo', sub: 'Ressources stables - Emplois durables' },
+                    { label: 'BFR', val: bfr, color: 'slate', sub: 'Stocks + Créances - Dettes fournisseurs' },
+                    { label: 'Trésorerie Nette', val: tresorerieNette, color: 'emerald', sub: 'FDR - BFR' },
+                  ].map(k => (
+                    <div key={k.label} className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+                      <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider mb-1">{k.label}</div>
+                      <div className={`text-lg font-black font-mono ${
+                        k.color === 'emerald' ? 'text-emerald-600' : k.color === 'violet' ? 'text-violet-700' : k.color === 'amber' ? 'text-amber-600' : k.color === 'indigo' ? 'text-indigo-700' : 'text-slate-900'
+                      }`}>{formatMoney(k.val)}</div>
+                      <div className="text-[10px] text-slate-400 mt-1">{k.sub}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Ratios */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                  <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-3">Ratios financiers clés</div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                    {[
+                      { label: 'Liquidité générale', val: '1.85', status: 'ok' },
+                      { label: 'Liquidité réduite', val: '1.42', status: 'ok' },
+                      { label: 'Autonomie financière', val: `${ratioAutonomie.toFixed(0)} %`, status: ratioAutonomie > 40 ? 'ok' : 'warn' },
+                      { label: 'Endettement', val: '32 %', status: 'ok' },
+                      { label: 'Délai clients', val: '47 j', status: 'warn' },
+                      { label: 'Délai fournisseurs', val: '39 j', status: 'ok' },
+                    ].map(r => (
+                      <div key={r.label} className="text-center p-3 rounded-xl bg-slate-50 border border-slate-100">
+                        <div className="text-lg font-black font-mono text-slate-900">{r.val}</div>
+                        <div className="text-[9px] font-semibold text-slate-500 mt-1 leading-tight">{r.label}</div>
+                        <div className="mt-1.5">{r.status === 'ok' ? <span className="text-[9px] text-emerald-600 font-bold">🟢 OK</span> : <span className="text-[9px] text-amber-600 font-bold">🟠 Attention</span>}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── 5. VUE COMPTABLE \u2014 FORMAT OFFICIEL SYSCOHADA \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+            {bilanViewMode === 'comptable' && (() => {
+              // \u2500\u2500 Helper : une ligne du tableau \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+              type RowVariant = 'section' | 'subsection' | 'item' | 'total' | 'grandtotal';
+              const BRow = ({
+                label, brut = 0, amort = 0, net = 0, n1 = 0,
+                variant = 'item', code, italic = false,
+              }: {
+                label: string; brut?: number; amort?: number; net?: number; n1?: number;
+                variant?: RowVariant; code?: string; italic?: boolean;
+              }) => {
+                const isSection = variant === 'section';
+                const isSubsection = variant === 'subsection';
+                const isTotal = variant === 'total';
+                const isGrand = variant === 'grandtotal';
+
+                if (isSection) return (
+                  <tr className="bg-[#e8f8fb]">
+                    <td colSpan={5} className="px-3 py-1.5 text-[11px] font-extrabold text-[#00a8c6] uppercase tracking-wider border-b-2 border-[#00a8c6]">
+                      {label}
+                    </td>
+                  </tr>
+                );
+                if (isSubsection) return (
+                  <tr className="bg-slate-50">
+                    <td colSpan={5} className="px-3 py-1 text-[11px] font-bold text-slate-700">{label}</td>
+                  </tr>
+                );
+                if (isTotal) return (
+                  <tr className="border-t-2 border-slate-700">
+                    <td className="px-3 py-2 text-[11px] font-black text-slate-900 uppercase">{label}</td>
+                    <td className="px-3 py-2 text-right text-[11px] font-black text-slate-900 font-mono">{brut !== 0 ? brut.toLocaleString('fr-FR') : '0'}</td>
+                    <td className="px-3 py-2 text-right text-[11px] font-black text-slate-900 font-mono">{amort !== 0 ? amort.toLocaleString('fr-FR') : '0'}</td>
+                    <td className="px-3 py-2 text-right text-[11px] font-black text-[#00a8c6] font-mono">{net !== 0 ? net.toLocaleString('fr-FR') : '0'}</td>
+                    <td className="px-3 py-2 text-right text-[11px] font-black text-slate-500 font-mono">{n1 !== 0 ? n1.toLocaleString('fr-FR') : '0'}</td>
+                  </tr>
+                );
+                if (isGrand) return (
+                  <tr className="bg-[#00a8c6]">
+                    <td className="px-3 py-2 text-[11px] font-black text-white uppercase">{label}</td>
+                    <td className="px-3 py-2 text-right text-[11px] font-black text-white font-mono">{brut !== 0 ? brut.toLocaleString('fr-FR') : '0'}</td>
+                    <td className="px-3 py-2 text-right text-[11px] font-black text-white font-mono">{amort !== 0 ? amort.toLocaleString('fr-FR') : '0'}</td>
+                    <td className="px-3 py-2 text-right text-[11px] font-black text-white font-mono">{net !== 0 ? net.toLocaleString('fr-FR') : '0'}</td>
+                    <td className="px-3 py-2 text-right text-[11px] font-black text-white font-mono">{n1 !== 0 ? n1.toLocaleString('fr-FR') : '0'}</td>
+                  </tr>
+                );
+                // item normal
+                return (
+                  <tr
+                    onClick={() => code ? handleOpenDrillDown(label, code, net) : undefined}
+                    className={`border-b border-slate-100 group transition-colors ${code ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                  >
+                    <td className={`px-3 py-1 text-[11px] ${italic ? 'italic text-slate-500' : 'text-slate-700'} flex items-center gap-1`}>
+                      {italic ? <span className="pl-4">{label}</span> : label}
+                      {code && (
+                        <button
+                          onClick={e => { e.stopPropagation(); handleExplainPoste(code, label, net); }}
+                          className="opacity-0 group-hover:opacity-100 ml-1 p-0.5 rounded text-violet-400 hover:bg-violet-100 transition-all"
+                          title="Expliquer ce poste"
+                        >
+                          <Info className="w-2.5 h-2.5" />
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-3 py-1 text-right text-[11px] font-mono text-slate-600">{brut !== 0 ? brut.toLocaleString('fr-FR') : <span className="text-slate-300">0</span>}</td>
+                    <td className="px-3 py-1 text-right text-[11px] font-mono text-rose-400">{amort !== 0 ? amort.toLocaleString('fr-FR') : <span className="text-slate-300">0</span>}</td>
+                    <td className="px-3 py-1 text-right text-[11px] font-mono font-semibold text-slate-800">{net !== 0 ? net.toLocaleString('fr-FR') : <span className="text-slate-300">0</span>}</td>
+                    <td className="px-3 py-1 text-right text-[11px] font-mono text-slate-400">{n1 !== 0 ? n1.toLocaleString('fr-FR') : <span className="text-slate-300">0</span>}</td>
+                  </tr>
+                );
+              };
+
+              // \u2500\u2500 Totaux calcul\u00e9s \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+              const totalImmoBrut = 3000000 + 14500000 + 1000000;
+              const totalImmoAmort = 500000 + 1700000 + 0;
+              const totalImmoNet = 2500000 + 12800000 + 1000000;
+              const totalImmoN1 = 2000000 + 11200000 + 800000;
+
+              const totalCircBrut = 4800000 + 8900000 + 1500000 + 6000000;
+              const totalCircNet = 4800000 + 8900000 + 1500000 + 6000000;
+              const totalCircN1 = 3900000 + 7400000 + 1200000 + 4500000;
+
+              const totalActifBrut = totalImmoBrut + totalCircBrut;
+              const totalActifAmort = totalImmoAmort;
+              const totalActifNet = totalImmoNet + totalCircNet;
+              const totalActifN1net = totalImmoN1 + totalCircN1;
+
+              // Passif
+              const capPropresNet = 10000000 + 2500000 + 1200000 + resultatNet;
+              const capPropresN1 = 10000000 + 2000000 + 800000 + 2800000;
+              const dettesFinNet = 4500000 + 800000;
+              const dettesFinN1 = 5200000 + 1000000;
+              const passifCircNet = 6500000 + 1800000 + 1050000 + 600000;
+              const passifCircN1 = 5300000 + 1400000 + 900000 + 500000;
+              const totalPassifNet2 = capPropresNet + dettesFinNet + passifCircNet;
+              const totalPassifN1net = capPropresN1 + dettesFinN1 + passifCircN1;
+
+              const TableHeader = ({ side }: { side: 'actif' | 'passif' }) => (
+                <thead>
+                  <tr>
+                    <th className="px-3 py-2 text-left text-[11px] font-extrabold text-slate-700 w-[46%]">
+                      {side === 'actif' ? 'ACTIF' : 'PASSIF'}
+                    </th>
+                    <th colSpan={3} className="px-3 py-1.5 text-center text-[10px] font-bold text-slate-500 border-b border-slate-200">
+                      Année N
+                    </th>
+                    <th className="px-3 py-1.5 text-center text-[10px] font-bold text-slate-400 border-b border-slate-100">
+                      Année N-1
+                    </th>
+                  </tr>
+                  <tr className="bg-slate-50 border-b-2 border-slate-300">
+                    <th className="px-3 py-1.5 text-left text-[10px] font-semibold text-slate-500"></th>
+                    <th className="px-3 py-1.5 text-right text-[10px] font-bold text-slate-600">Brut</th>
+                    <th className="px-3 py-1.5 text-right text-[10px] font-bold text-rose-400">Amort. Prov.</th>
+                    <th className="px-3 py-1.5 text-right text-[10px] font-bold text-[#00a8c6]">Net</th>
+                    <th className="px-3 py-1.5 text-right text-[10px] font-bold text-slate-400">Net</th>
+                  </tr>
+                </thead>
+              );
+
+              return (
+                <div className="space-y-8">
+                  {/* En-t\u00eate Bilan */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print:rounded-none print:border-0 print:shadow-none">
+                    <div className="flex items-center justify-between px-8 py-5 border-b-4 border-[#00a8c6]">
+                      <div>
+                        <div className="text-3xl font-black text-[#00a8c6] leading-tight">Bilan comptable</div>
+                        <div className="text-xs text-slate-500 font-semibold mt-1 uppercase tracking-widest">
+                          Système Normal SYSCOHADA R\u00e9vis\u00e9 — Exercice {currentYear}
+                        </div>
+                        <div className="text-xs text-slate-400 mt-0.5">MELARO GROUP · RCCM : CM-DOU-2026-B-14529 · NIF : M082612345678A</div>
+                      </div>
+                      <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center text-white font-black text-sm shadow-lg">
+                        Logo
+                      </div>
+                    </div>
+
+                    {/* \u2500\u2500 TABLE ACTIF \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <TableHeader side="actif" />
+                        <tbody>
+                          {/* Capital souscrit non appel\u00e9 */}
+                          <BRow label="Capital souscrit \u2013 non appel\u00e9" brut={0} amort={0} net={0} n1={0} />
+
+                          {/* ACTIF IMMOBILIS\u00c9 */}
+                          <BRow label="ACTIF IMMOBILIS\u00c9" variant="section" />
+
+                          <BRow label="Immobilisations incorporelles :" variant="subsection" />
+                          <BRow label="Frais d'\u00e9tablissement" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Frais de recherche & d\u00e9veloppement" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Concessions, brevets, licences, marques, proc\u00e9d\u00e9s, logiciels, droits et valeurs similaires" brut={3000000} amort={500000} net={2500000} n1={2000000} italic code="211" />
+                          <BRow label="Fonds commercial (1)" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Autres" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Immobilisations incorporelles en cours" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Avances et acomptes" brut={0} amort={0} net={0} n1={0} italic />
+
+                          <BRow label="Immobilisations corporelles :" variant="subsection" />
+                          <BRow label="Terrains" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Constructions" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Installations techniques, mat\u00e9riels et outillage industriels" brut={14500000} amort={1700000} net={12800000} n1={11200000} italic code="241" />
+                          <BRow label="Autres" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Immobilisations corporelles en cours" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Avances et acomptes" brut={0} amort={0} net={0} n1={0} italic />
+
+                          <BRow label="Immobilisations financi\u00e8res (2) :" variant="subsection" />
+                          <BRow label="Participations" brut={1000000} amort={0} net={1000000} n1={800000} italic code="251" />
+                          <BRow label="Cr\u00e9ances rattach\u00e9es \u00e0 des participations" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Titres immobilis\u00e9s de l'activit\u00e9 de portefeuille" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Autres titres immobilis\u00e9s" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Pr\u00eats" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Autres" brut={0} amort={0} net={0} n1={0} italic />
+
+                          <BRow label="Total I" brut={totalImmoBrut} amort={totalImmoAmort} net={totalImmoNet} n1={totalImmoN1} variant="total" />
+
+                          {/* ACTIF CIRCULANT */}
+                          <BRow label="ACTIF CIRCULANT" variant="section" />
+
+                          <BRow label="Stocks et en-cours :" variant="subsection" />
+                          <BRow label="Mati\u00e8res premi\u00e8res et autres approvisionnements" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="En cours de production (biens et services)" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Produits interm\u00e9diaires et finis" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Marchandises" brut={4800000} amort={0} net={4800000} n1={3900000} italic code="311" />
+
+                          <BRow label="Avances et acomptes vers\u00e9s sur commandes" brut={0} amort={0} net={0} n1={0} />
+
+                          <BRow label="Cr\u00e9ances :" variant="subsection" />
+                          <BRow label="Cr\u00e9ances clients et comptes rattach\u00e9s" brut={8900000} amort={0} net={8900000} n1={7400000} italic code="411" />
+                          <BRow label="Autres" brut={1500000} amort={0} net={1500000} n1={1200000} italic code="471" />
+                          <BRow label="Capital souscrit \u2013 appel\u00e9, non vers\u00e9" brut={0} amort={0} net={0} n1={0} italic />
+
+                          <BRow label="Valeurs mobili\u00e8res de placement :" variant="subsection" />
+                          <BRow label="Actions propres" brut={0} amort={0} net={0} n1={0} italic />
+                          <BRow label="Autres titres" brut={0} amort={0} net={0} n1={0} italic />
+
+                          <BRow label="Instruments de tr\u00e9sorerie" brut={0} amort={0} net={0} n1={0} />
+                          <BRow label="Disponibilit\u00e9s" brut={6000000} amort={0} net={6000000} n1={4500000} code="521/571" />
+                          <BRow label="Charges constat\u00e9es d'avance (3)" brut={0} amort={0} net={0} n1={0} />
+
+                          <BRow label="Total II" brut={totalCircBrut} amort={0} net={totalCircNet} n1={totalCircN1} variant="total" />
+
+                          {/* Lignes sp\u00e9ciales */}
+                          <BRow label="Charges \u00e0 r\u00e9partir sur plusieurs exercices (III)" brut={0} amort={0} net={0} n1={0} variant="total" />
+                          <BRow label="Primes de remboursement des emprunts (IV)" brut={0} amort={0} net={0} n1={0} variant="total" />
+                          <BRow label="\u00c9carts de conversion Actif (V)" brut={0} amort={0} net={0} n1={0} variant="total" />
+
+                          <BRow label="TOTAL GÉNÉRAL" brut={totalActifBrut} amort={totalActifAmort} net={totalActifNet} n1={totalActifN1net} variant="grandtotal" />
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 text-[10px] text-slate-400 space-y-0.5">
+                      <div>(1) Dont droit au bail</div>
+                      <div>(2) Dont \u00e0 moins d'un an</div>
+                      <div>(3) Dont \u00e0 moins d'un an</div>
+                    </div>
+                  </div>
+
+                  {/* \u2500\u2500 TABLE PASSIF \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div className="px-8 py-4 border-b-4 border-[#00a8c6]">
+                      <div className="text-lg font-black text-[#00a8c6] uppercase tracking-wider">Bilan comptable \u2014 Passif</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">Exercice {currentYear} \u00b7 Syst\u00e8me Normal SYSCOHADA R\u00e9vis\u00e9</div>
+                    </div>
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr>
+                            <th className="px-3 py-2 text-left text-[11px] font-extrabold text-slate-700 w-[46%]">PASSIF</th>
+                            <th className="px-3 py-1.5 text-right text-[10px] font-bold text-[#00a8c6]">Montant N</th>
+                            <th className="px-3 py-1.5 text-right text-[10px] font-bold text-slate-400">Montant N-1</th>
+                          </tr>
+                          <tr className="bg-slate-50 border-b-2 border-slate-300">
+                            <th></th>
+                            <th className="px-3 py-1 text-right text-[9px] font-semibold text-[#00a8c6]">FCFA</th>
+                            <th className="px-3 py-1 text-right text-[9px] font-semibold text-slate-400">FCFA</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* CAPITAUX PROPRES */}
+                          <tr className="bg-[#e8f8fb]">
+                            <td colSpan={3} className="px-3 py-1.5 text-[11px] font-extrabold text-[#00a8c6] uppercase tracking-wider border-b-2 border-[#00a8c6]">
+                              CAPITAUX PROPRES
+                            </td>
+                          </tr>
+                          {[
+                            { label: 'Capital social ou individuel (dont versé)', net: 10000000, n1: 10000000, code: '101' },
+                            { label: 'Primes d\'émission, de fusion, d\'apport\u2026', net: 0, n1: 0 },
+                            { label: 'Écarts de réévaluation', net: 0, n1: 0 },
+                            { label: 'Réserve légale', net: 2500000, n1: 2000000, code: '111' },
+                            { label: 'Réserves statutaires ou contractuelles', net: 0, n1: 0 },
+                            { label: 'Réserves réglementées', net: 0, n1: 0 },
+                            { label: 'Autres réserves', net: 0, n1: 0 },
+                            { label: 'Report à nouveau (solde créditeur)', net: 1200000, n1: 800000, code: '120' },
+                            { label: 'Résultat de l\'exercice (bénéfice ou perte)', net: resultatNet, n1: 2800000, code: '131' },
+                            { label: 'Subventions d\'investissement', net: 0, n1: 0 },
+                            { label: 'Provisions réglementées', net: 0, n1: 0 },
+                          ].map(r => (
+                            <tr key={r.label}
+                              onClick={() => r.code ? handleOpenDrillDown(r.label, r.code, r.net) : undefined}
+                              className={`border-b border-slate-100 group transition-colors ${r.code ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                            >
+                              <td className="px-3 py-1 text-[11px] italic text-slate-500 pl-7 flex items-center gap-1">
+                                {r.label}
+                                {r.code && (
+                                  <button onClick={e => { e.stopPropagation(); handleExplainPoste(r.code!, r.label, r.net); }}
+                                    className="opacity-0 group-hover:opacity-100 ml-1 p-0.5 rounded text-violet-400 hover:bg-violet-100 transition-all" title="Expliquer ce poste">
+                                    <Info className="w-2.5 h-2.5" />
+                                  </button>
+                                )}
+                              </td>
+                              <td className="px-3 py-1 text-right text-[11px] font-mono font-semibold text-slate-800">{r.net !== 0 ? r.net.toLocaleString('fr-FR') : <span className="text-slate-300">0</span>}</td>
+                              <td className="px-3 py-1 text-right text-[11px] font-mono text-slate-400">{r.n1 !== 0 ? r.n1.toLocaleString('fr-FR') : <span className="text-slate-300">0</span>}</td>
+                            </tr>
+                          ))}
+                          <tr className="border-t-2 border-slate-700">
+                            <td className="px-3 py-2 text-[11px] font-black text-slate-900 uppercase">Total I — Capitaux propres</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-[#00a8c6] font-mono">{capPropresNet.toLocaleString('fr-FR')}</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-slate-400 font-mono">{capPropresN1.toLocaleString('fr-FR')}</td>
+                          </tr>
+
+                          {/* PROVISIONS */}
+                          <tr className="bg-[#e8f8fb]">
+                            <td colSpan={3} className="px-3 py-1.5 text-[11px] font-extrabold text-[#00a8c6] uppercase tracking-wider border-b-2 border-[#00a8c6]">
+                              PROVISIONS POUR RISQUES ET CHARGES
+                            </td>
+                          </tr>
+                          {[
+                            { label: 'Provisions pour risques', net: 0, n1: 0 },
+                            { label: 'Provisions pour charges', net: 0, n1: 0 },
+                          ].map(r => (
+                            <tr key={r.label} className="border-b border-slate-100">
+                              <td className="px-3 py-1 text-[11px] italic text-slate-500 pl-7">{r.label}</td>
+                              <td className="px-3 py-1 text-right text-[11px] font-mono text-slate-300">0</td>
+                              <td className="px-3 py-1 text-right text-[11px] font-mono text-slate-300">0</td>
+                            </tr>
+                          ))}
+                          <tr className="border-t-2 border-slate-700">
+                            <td className="px-3 py-2 text-[11px] font-black text-slate-900 uppercase">Total II — Provisions</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-[#00a8c6] font-mono">0</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-slate-400 font-mono">0</td>
+                          </tr>
+
+                          {/* DETTES */}
+                          <tr className="bg-[#e8f8fb]">
+                            <td colSpan={3} className="px-3 py-1.5 text-[11px] font-extrabold text-[#00a8c6] uppercase tracking-wider border-b-2 border-[#00a8c6]">
+                              DETTES
+                            </td>
+                          </tr>
+                          {[
+                            { label: 'Emprunts obligataires convertibles', net: 0, n1: 0 },
+                            { label: 'Autres emprunts obligataires', net: 0, n1: 0 },
+                            { label: 'Emprunts et dettes auprès des établissements de crédit (1)', net: 4500000, n1: 5200000, code: '162' },
+                            { label: 'Emprunts et dettes financières divers (2)', net: 0, n1: 0 },
+                            { label: 'Avances et acomptes reçus sur commandes en cours', net: 0, n1: 0 },
+                            { label: 'Dettes fournisseurs et comptes rattachés', net: 6500000, n1: 5300000, code: '401' },
+                            { label: 'Dettes fiscales et sociales', net: 1800000 + 1050000, n1: 1400000 + 900000, code: '432' },
+                            { label: 'Dettes sur immobilisations et comptes rattachés', net: 800000, n1: 1000000, code: '181' },
+                            { label: 'Autres dettes', net: 600000, n1: 500000, code: '471p' },
+                            { label: 'Produits constatés d\'avance (3)', net: 0, n1: 0 },
+                          ].map(r => (
+                            <tr key={r.label}
+                              onClick={() => r.code ? handleOpenDrillDown(r.label, r.code, r.net) : undefined}
+                              className={`border-b border-slate-100 group transition-colors ${r.code ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+                            >
+                              <td className="px-3 py-1 text-[11px] italic text-slate-500 pl-7 flex items-center gap-1">
+                                {r.label}
+                                {r.code && (
+                                  <button onClick={e => { e.stopPropagation(); handleExplainPoste(r.code!, r.label, r.net); }}
+                                    className="opacity-0 group-hover:opacity-100 ml-1 p-0.5 rounded text-violet-400 hover:bg-violet-100 transition-all" title="Expliquer">
+                                    <Info className="w-2.5 h-2.5" />
+                                  </button>
+                                )}
+                              </td>
+                              <td className="px-3 py-1 text-right text-[11px] font-mono font-semibold text-slate-800">{r.net !== 0 ? r.net.toLocaleString('fr-FR') : <span className="text-slate-300">0</span>}</td>
+                              <td className="px-3 py-1 text-right text-[11px] font-mono text-slate-400">{r.n1 !== 0 ? r.n1.toLocaleString('fr-FR') : <span className="text-slate-300">0</span>}</td>
+                            </tr>
+                          ))}
+                          <tr className="border-t-2 border-slate-700">
+                            <td className="px-3 py-2 text-[11px] font-black text-slate-900 uppercase">Total III — Dettes</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-[#00a8c6] font-mono">{(dettesFinNet + passifCircNet).toLocaleString('fr-FR')}</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-slate-400 font-mono">{(dettesFinN1 + passifCircN1).toLocaleString('fr-FR')}</td>
+                          </tr>
+
+                          {/* Écarts de conversion */}
+                          <tr className="border-b border-slate-100">
+                            <td className="px-3 py-2 text-[11px] font-black text-slate-900 uppercase">Écarts de conversion — Passif (IV)</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-[#00a8c6] font-mono">0</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-slate-400 font-mono">0</td>
+                          </tr>
+
+                          {/* TOTAL GÉNÉRAL */}
+                          <tr className="bg-[#00a8c6]">
+                            <td className="px-3 py-2 text-[11px] font-black text-white uppercase">TOTAL GÉNÉRAL</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-white font-mono">{totalPassifNet2.toLocaleString('fr-FR')}</td>
+                            <td className="px-3 py-2 text-right text-[11px] font-black text-white font-mono">{totalPassifN1net.toLocaleString('fr-FR')}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 text-[10px] text-slate-400 space-y-0.5">
+                      <div>(1) Dont concours bancaires courants et soldes créditeurs de banques</div>
+                      <div>(2) Dont emprunts participatifs</div>
+                      <div>(3) Dont produits constatés d'avance rattachés à des contrats long terme</div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+
+            {/* ── 6. DIAGNOSTIC FINANCIER ───────────────────────────────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Panel Equilibres */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-4">Équilibres financiers</div>
+                <div className="space-y-3">
+                  {[
+                    { label: 'Fonds de Roulement Net Global (FRNG)', val: fdr, status: fdr > 0 ? 'ok' : 'error', desc: 'Ressources stables − Emplois stables' },
+                    { label: 'Besoin en Fonds de Roulement (BFR)', val: bfr, status: bfr < fdr ? 'ok' : 'warn', desc: 'Stocks + Créances − Dettes fournisseurs' },
+                    { label: 'Trésorerie Nette', val: tresorerieNette, status: tresorerieNette > 0 ? 'ok' : 'error', desc: 'FRNG − BFR' },
+                  ].map(e => (
+                    <div key={e.label} className={`flex items-center justify-between p-3 rounded-xl border ${
+                      e.status === 'ok' ? 'bg-emerald-50 border-emerald-100' : e.status === 'warn' ? 'bg-amber-50 border-amber-100' : 'bg-red-50 border-red-100'
+                    }`}>
+                      <div>
+                        <div className="text-xs font-bold text-slate-700">{e.label}</div>
+                        <div className="text-[10px] text-slate-400">{e.desc}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className={`text-sm font-black font-mono ${ e.status === 'ok' ? 'text-emerald-600' : e.status === 'warn' ? 'text-amber-600' : 'text-red-600' }`}>
+                          {formatMoney(e.val)}
+                        </div>
+                        <div className="text-[10px] font-bold">{statusIcon(e.status)}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Panel IA Diagnostic */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Diagnostic FinancePro</div>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 font-bold">4 points d'attention</span>
+                </div>
+                <div className="space-y-2.5">
+                  <div className="flex gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-base shrink-0">{resultatNet > 0 ? '🟢' : '🔴'}</span>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">{resultatNet > 0 ? 'Résultat positif' : 'Résultat déficitaire'}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">Marge nette : {ros.toFixed(1)} % du CA · {resultatNet > 0 ? 'Rentabilité satisfaisante' : 'Action corrective urgente requise'}</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-base shrink-0">🟠</span>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Créances clients à surveiller</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">3 créances &gt; 90 j · Risque de dépréciation estimé à 15 %</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-base shrink-0">🟢</span>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Trésorerie positive</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">Trésorerie nette : {formatMoney(tresorerieNette)} · Couverture &gt; 1 mois de charges</div>
+                    </div>
+                  </div>
+                  <div className="flex gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-base shrink-0">🟢</span>
+                    <div>
+                      <div className="text-xs font-bold text-slate-800">Autonomie financière : {ratioAutonomie.toFixed(0)} %</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">Capitaux propres / Total Actif · Seuil OHADA recommandé : &gt; 30 %</div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={handleExplainVariation}
+                  disabled={variationLoading}
+                  className="w-full mt-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {variationLoading ? 'Analyse en cours…' : 'Voir le diagnostic complet'}
+                </button>
+                {variation && (
+                  <div className="mt-3 p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs text-indigo-900 font-medium leading-relaxed">
+                    {variation.analyseIA}
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-between p-3 bg-indigo-50 text-indigo-950 rounded-2xl font-extrabold border border-indigo-200">
-              <span>= VALEUR AJOUTÉE</span>
-              <span>{formatMoney(margeBrute - 3200000)}</span>
+            {/* ── Modal : Confirmer Clôture ─────────────────────────────── */}
+            {showClotureConfirm && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 overflow-hidden border-2 border-red-200">
+                  <div className="bg-red-50 px-6 py-4 flex items-center gap-3 border-b border-red-100">
+                    <div className="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center">
+                      <Lock className="w-4 h-4 text-red-600" />
+                    </div>
+                    <div>
+                      <div className="font-extrabold text-red-800 text-sm">Clôturer l'Exercice {currentYear}</div>
+                      <div className="text-red-500 text-xs">Opération irréversible — Lecture seule après clôture</div>
+                    </div>
+                  </div>
+                  <div className="px-6 py-5 space-y-3">
+                    <p className="text-sm text-slate-700 leading-relaxed">
+                      Cette opération va <strong>verrouiller toutes les écritures</strong> de l'exercice {currentYear}. Aucune écriture ne pourra être modifiée ou ajoutée après clôture.
+                    </p>
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-xs text-amber-800 font-semibold leading-relaxed">
+                        ⚠️ Avant de clôturer, assurez-vous que :
+                        &nbsp;la balance est équilibrée · les dépréciations sont passées · le résultat est affecté · la liasse fiscale est validée.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">
+                    <button onClick={() => setShowClotureConfirm(false)} className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:bg-slate-50 transition-all">Annuler</button>
+                    <button onClick={() => { setShowClotureConfirm(false); alert(`Exercice ${currentYear} clôturé. Les écritures sont maintenant en lecture seule.`); }} className="px-5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all">
+                      <Lock className="w-3.5 h-3.5" /> Confirmer la clôture
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Modal : Expliquer ce poste ────────────────────────────── */}
+            {explainPosteData && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden border border-violet-100">
+                  <div className="flex items-center justify-between px-5 py-4 bg-violet-50 border-b border-violet-100">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-violet-600" />
+                      <div>
+                        <div className="text-xs font-extrabold text-violet-800">Analyse du poste</div>
+                        <div className="text-[10px] text-violet-500">Compte {explainPosteData.code}</div>
+                      </div>
+                    </div>
+                    <button onClick={() => setExplainPosteData(null)} className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-white transition-all">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <div className="px-5 py-4 space-y-3">
+                    <div>
+                      <div className="text-sm font-extrabold text-slate-900">{explainPosteData.title}</div>
+                      <div className="text-lg font-black font-mono text-violet-700 mt-1">{formatMoney(explainPosteData.amount)}</div>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl">
+                      <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">Composition</div>
+                      <p className="text-xs text-slate-700 leading-relaxed">{explainPosteData.analysis}</p>
+                    </div>
+                    <div className={`p-2.5 rounded-xl flex items-center gap-2 ${
+                      explainPosteData.risk === 'Faible' ? 'bg-emerald-50 border border-emerald-100'
+                      : explainPosteData.risk === 'Moyen' ? 'bg-amber-50 border border-amber-100'
+                      : 'bg-red-50 border border-red-100'
+                    }`}>
+                      <span className="text-base">{explainPosteData.risk === 'Faible' ? '🟢' : explainPosteData.risk === 'Moyen' ? '🟠' : '🔴'}</span>
+                      <div>
+                        <div className="text-[10px] font-bold text-slate-500">Risque estimé</div>
+                        <div className="text-xs font-extrabold text-slate-800">{explainPosteData.risk}</div>
+                      </div>
+                    </div>
+                    <div className="p-3 bg-violet-50 rounded-xl border border-violet-100">
+                      <div className="text-[10px] font-bold text-violet-500 uppercase mb-1">Recommandation FinancePro</div>
+                      <p className="text-xs text-violet-800 font-medium leading-relaxed">
+                        {explainPosteData.risk === 'Faible'
+                          ? 'Aucune action immédiate requise. Suivi trimestriel recommandé.'
+                          : explainPosteData.risk === 'Moyen'
+                          ? 'Surveiller l\'évolution de ce poste. Un examen approfondi est conseillé lors de la prochaine clôture intermédiaire.'
+                          : 'Action corrective urgente requise. Contactez votre expert-comptable.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end px-5 pb-4">
+                    <button
+                      onClick={() => { setExplainPosteData(null); handleOpenDrillDown(explainPosteData.title, explainPosteData.code, explainPosteData.amount); }}
+                      className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-xs font-bold flex items-center gap-1.5 transition-all"
+                    >
+                      <Search className="w-3.5 h-3.5" /> Voir les écritures
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* PILIER 3 : COMPTE DE RÉSULTAT (FORMAT OFFICIEL EN FCFA) */}
+      {activeTab === 3 && (() => {
+        // ── Helper pour l'affichage propre d'une ligne du Compte de Résultat ──
+        type CRRowVariant = 'section' | 'item' | 'total' | 'grandtotal';
+        const CRRow = ({
+          label, val1 = 0, val2 = 0, val3 = 0,
+          variant = 'item', italic = false, isNegative = false
+        }: {
+          label: string; val1?: number; val2?: number; val3?: number;
+          variant?: CRRowVariant; italic?: boolean; isNegative?: boolean;
+        }) => {
+          const fmt = (v: number) => {
+            if (v === 0) return <span className="text-slate-300">— FCFA</span>;
+            const formatted = Math.abs(v).toLocaleString('fr-FR');
+            const sign = v < 0 || isNegative ? '-' : '';
+            return `${sign}${formatted} FCFA`;
+          };
+
+          if (variant === 'section') {
+            return (
+              <tr className="bg-slate-50/80 border-t border-slate-200">
+                <td colSpan={4} className="px-4 py-2 text-[11px] font-bold text-slate-800 uppercase tracking-wide">
+                  {label}
+                </td>
+              </tr>
+            );
+          }
+
+          if (variant === 'total') {
+            return (
+              <tr className="border-t-2 border-b-2 border-[#00a8c6] bg-[#e8f8fb]/60 font-black">
+                <td className="px-4 py-2 text-[11px] text-[#00a8c6] uppercase">{label}</td>
+                <td className="px-4 py-2 text-right text-[11px] text-[#00a8c6] font-mono">{fmt(val1)}</td>
+                <td className="px-4 py-2 text-right text-[11px] text-[#00a8c6] font-mono">{fmt(val2)}</td>
+                <td className="px-4 py-2 text-right text-[11px] text-[#00a8c6] font-mono">{fmt(val3)}</td>
+              </tr>
+            );
+          }
+
+          if (variant === 'grandtotal') {
+            return (
+              <tr className="bg-[#00a8c6] text-white font-black">
+                <td className="px-4 py-3 text-xs uppercase tracking-wider">{label}</td>
+                <td className="px-4 py-3 text-right text-xs font-mono">{fmt(val1)}</td>
+                <td className="px-4 py-3 text-right text-xs font-mono">{fmt(val2)}</td>
+                <td className="px-4 py-3 text-right text-xs font-mono">{fmt(val3)}</td>
+              </tr>
+            );
+          }
+
+          return (
+            <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+              <td className={`px-4 py-1.5 text-[11px] ${italic ? 'italic text-slate-500 pl-7' : 'text-slate-700 font-medium'}`}>
+                {label}
+              </td>
+              <td className={`px-4 py-1.5 text-right text-[11px] font-mono ${isNegative ? 'text-rose-600' : 'text-slate-800'}`}>{fmt(val1)}</td>
+              <td className={`px-4 py-1.5 text-right text-[11px] font-mono ${isNegative ? 'text-rose-500' : 'text-slate-500'}`}>{fmt(val2)}</td>
+              <td className={`px-4 py-1.5 text-right text-[11px] font-mono ${isNegative ? 'text-rose-400' : 'text-slate-400'}`}>{fmt(val3)}</td>
+            </tr>
+          );
+        };
+
+        // Données du compte de résultat sur 3 exercices (en FCFA)
+        const crProduitsN = 28500000;
+        const crProduitsN1 = 24000000;
+        const crProduitsN2 = 20000000;
+
+        const crChargesN = 23250000;
+        const crChargesN1 = 19800000;
+        const crChargesN2 = 16500000;
+
+        const resAvantImpotsN = crProduitsN - crChargesN; // 5 250 000
+        const resAvantImpotsN1 = crProduitsN1 - crChargesN1; // 4 200 000
+        const resAvantImpotsN2 = crProduitsN2 - crChargesN2; // 3 500 000
+
+        const impotN = 1800000;
+        const impotN1 = 1400000;
+        const impotN2 = 1100000;
+
+        const resNetN = resAvantImpotsN - impotN; // 3 450 000
+        const resNetN1 = resAvantImpotsN1 - impotN1; // 2 800 000
+        const resNetN2 = resAvantImpotsN2 - impotN2; // 2 400 000
+
+        return (
+          <div className="space-y-6">
+            {/* Barre d'action supérieure */}
+            <div className="flex items-center justify-between flex-wrap gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm print:hidden">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">📈</span>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+                    Compte de Résultat Officiel (SYSCOHADA)
+                  </h3>
+                  <p className="text-xs text-slate-500">Présentation comparative sur 3 exercices comptables</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleExplainVariation}
+                  disabled={variationLoading}
+                  className="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all disabled:opacity-50"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  {variationLoading ? 'Analyse en cours...' : 'Expliquer les Variations (IA)'}
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all"
+                >
+                  <Printer className="w-3.5 h-3.5" /> Imprimer A4
+                </button>
+              </div>
             </div>
 
-            <div className="flex justify-between p-2.5 bg-slate-50 rounded-xl">
-              <span className="text-slate-600">- Charges de personnel</span>
-              <span className="text-rose-600">-{formatMoney(4200000)}</span>
-            </div>
+            {/* Document Imprimable Compte de Résultat */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print:rounded-none print:border-0 print:shadow-none">
+              {/* En-tête avec titre et Logo */}
+              <div className="flex items-center justify-between px-8 py-6 border-b-4 border-[#00a8c6]">
+                <div>
+                  <h1 className="text-3xl font-black text-[#00a8c6] leading-tight">Compte de résultat</h1>
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">
+                    Système Normal SYSCOHADA Révisé — Exercice {currentYear}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    MELARO GROUP · RCCM : CM-DOU-2026-B-14529 · NIU : M082612345678A
+                  </div>
+                </div>
+                <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center text-white font-black text-sm shadow-lg">
+                  Logo
+                </div>
+              </div>
 
-            <div className="flex justify-between p-3.5 bg-gradient-to-r from-indigo-900 to-violet-950 text-white rounded-2xl font-black text-sm shadow-md">
-              <span>= EXCÉDENT BRUT D'EXPLOITATION (EBE)</span>
-              <span className="text-emerald-400">{formatMoney(ebe)}</span>
-            </div>
+              {/* Tableau du Compte de Résultat */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="border-b-2 border-slate-300 bg-slate-50">
+                      <th className="px-4 py-3 text-left text-[11px] font-extrabold text-slate-700 w-[46%]">
+                        Postes
+                      </th>
+                      <th className="px-4 py-3 text-right text-[11px] font-extrabold text-slate-700">
+                        Exercice 1 (N)
+                      </th>
+                      <th className="px-4 py-3 text-right text-[11px] font-bold text-slate-500">
+                        Exercice 2 (N-1)
+                      </th>
+                      <th className="px-4 py-3 text-right text-[11px] font-bold text-slate-400">
+                        Exercice 3 (N-2)
+                      </th>
+                    </tr>
+                    <tr className="border-b border-slate-200 bg-slate-100/50">
+                      <td colSpan={4} className="px-4 py-1 text-[10px] italic text-slate-500">
+                        (En FCFA)
+                      </td>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* PRODUITS */}
+                    <CRRow label="Chiffres d'affaires" variant="section" />
+                    <CRRow label="Ventes de marchandises" val1={20500000} val2={17500000} val3={14500000} italic />
+                    <CRRow label="Ventes de prestations de services & travaux" val1={8000000} val2={6500000} val3={5500000} italic />
 
-            <div className="flex justify-between p-2.5 bg-slate-50 rounded-xl">
-              <span className="text-slate-600">- Dotations aux amortissements & provisions</span>
-              <span className="text-rose-600">-{formatMoney(1700000)}</span>
-            </div>
+                    <CRRow label="Total des PRODUITS (A)" val1={crProduitsN} val2={crProduitsN1} val3={crProduitsN2} variant="total" />
 
-            <div className="flex justify-between p-3 bg-slate-100 text-slate-900 rounded-2xl font-extrabold border border-slate-200">
-              <span>= RÉSULTAT D'EXPLOITATION</span>
-              <span>{formatMoney(resultatExploitation)}</span>
-            </div>
+                    {/* CHARGES */}
+                    <CRRow label="Achats (variables)" variant="section" />
+                    <CRRow label="marchandises & matières premières" val1={10800000} val2={9200000} val3={7800000} italic isNegative />
+                    <CRRow label="emballages" val1={450000} val2={380000} val3={320000} italic isNegative />
+                    <CRRow label="fournitures diverses" val1={350000} val2={300000} val3={250000} italic isNegative />
 
-            <div className="flex justify-between p-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-2xl font-black text-base shadow-lg">
-              <span>= RÉSULTAT NET DE L'EXERCICE</span>
-              <span>{formatMoney(resultatNet)}</span>
+                    <CRRow label="Charges externes" variant="section" />
+                    <CRRow label="loyers" val1={1200000} val2={1200000} val3={1000000} italic isNegative />
+                    <CRRow label="charges locatives" val1={180000} val2={160000} val3={140000} italic isNegative />
+                    <CRRow label="entretiens et réparations (locaux, matériel)" val1={340000} val2={290000} val3={240000} italic isNegative />
+                    <CRRow label="fournitures non stockées (eau, électricité, gaz)" val1={420000} val2={360000} val3={310000} italic isNegative />
+                    <CRRow label="assurances (locaux, RC prof.)" val1={250000} val2={220000} val3={200000} italic isNegative />
+                    <CRRow label="frais de documentation" val1={60000} val2={50000} val3={40000} italic isNegative />
+                    <CRRow label="honoraires (comptable et juriste)" val1={650000} val2={550000} val3={450000} italic isNegative />
+                    <CRRow label="publicité" val1={480000} val2={400000} val3={320000} italic isNegative />
+                    <CRRow label="transports" val1={320000} val2={280000} val3={230000} italic isNegative />
+                    <CRRow label="frais de déplacement" val1={240000} val2={200000} val3={160000} italic isNegative />
+                    <CRRow label="frais de mission et de réception" val1={190000} val2={150000} val3={120000} italic isNegative />
+                    <CRRow label="frais de poste" val1={45000} val2={40000} val3={35000} italic isNegative />
+                    <CRRow label="frais de téléphone, fax et portable" val1={270000} val2={230000} val3={190000} italic isNegative />
+
+                    <CRRow label="Impôts et taxes" variant="section" />
+                    <CRRow label="Impôts directs, patentes et taxes assimilées" val1={380000} val2={320000} val3={280000} italic isNegative />
+
+                    <CRRow label="Charges de personnel" variant="section" />
+                    <CRRow label="salaires bruts (salaire net + part salariale)" val1={3200000} val2={2700000} val3={2200000} italic isNegative />
+                    <CRRow label="charges sociales (part patronale CNPS)" val1={680000} val2={570000} val3={470000} italic isNegative />
+                    <CRRow label="rémunération du dirigeant" val1={1500000} val2={1300000} val3={1100000} italic isNegative />
+
+                    <CRRow label="Charges financières" variant="section" />
+                    <CRRow label="agios sur découvert bancaire" val1={120000} val2={90000} val3={70000} italic isNegative />
+                    <CRRow label="intérêts sur emprunts" val1={450000} val2={520000} val3={580000} italic isNegative />
+
+                    <CRRow label="Charges exceptionnelles (HAHA)" variant="section" />
+                    <CRRow label="charges exceptionnelles diverses" val1={120000} val2={80000} val3={50000} italic isNegative />
+
+                    <CRRow label="Dotations aux amortissements & provisions" variant="section" />
+                    <CRRow label="dotations aux amortissements des immobilisations" val1={1700000} val2={1500000} val3={1300000} italic isNegative />
+
+                    <CRRow label="Total des CHARGES (B)" val1={crChargesN} val2={crChargesN1} val3={crChargesN2} variant="total" isNegative />
+
+                    <CRRow label="Résultat avant impôt (A)-(B)" val1={resAvantImpotsN} val2={resAvantImpotsN1} val3={resAvantImpotsN2} variant="total" />
+
+                    <tr className="border-b border-slate-200">
+                      <td className="px-4 py-2 text-[11px] font-semibold text-slate-700">Impôt sur les bénéfices (IS / IMF)</td>
+                      <td className="px-4 py-2 text-right text-[11px] font-mono text-rose-600">-{impotN.toLocaleString('fr-FR')} FCFA</td>
+                      <td className="px-4 py-2 text-right text-[11px] font-mono text-rose-500">-{impotN1.toLocaleString('fr-FR')} FCFA</td>
+                      <td className="px-4 py-2 text-right text-[11px] font-mono text-rose-400">-{impotN2.toLocaleString('fr-FR')} FCFA</td>
+                    </tr>
+
+                    <CRRow label="RÉSULTAT NET COMPTABLE" val1={resNetN} val2={resNetN1} val3={resNetN2} variant="grandtotal" />
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pied de page du document */}
+              <div className="px-8 py-4 border-t border-slate-100 bg-slate-50 text-[10px] text-slate-400 flex justify-between items-center">
+                <span>FinancePro OHADA — Édition automatique des états financiers révisés</span>
+                <span>Page 1 / 1</span>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
-      {/* PILIER 4 : TABLEAU DES FLUX DE TRÉSORERIE (TFT) */}
-      {activeTab === 4 && (
-        <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
-          <div className="border-b pb-3">
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-              Tableau des Flux de Trésorerie (TFT SYSCOHADA)
-            </h3>
-            <p className="text-xs text-slate-500">Explication synthétique des variations de trésorerie par activité</p>
+      {/* PILIER 4 : TABLEAU DES FLUX DE TRÉSORERIE (TFT OFFICIEL SYSCOHADA EN FCFA) */}
+      {activeTab === 4 && (() => {
+        // Helper pour une ligne du TFT
+        type TFTRowVariant = 'header-green' | 'section' | 'item' | 'total-navy' | 'footer-green';
+        const TFTRow = ({
+          refCode, label, note, valN = 0, valN1 = 0,
+          variant = 'item', italic = false, isNegative = false
+        }: {
+          refCode?: string; label: string; note?: string; valN?: number; valN1?: number;
+          variant?: TFTRowVariant; italic?: boolean; isNegative?: boolean;
+        }) => {
+          const fmt = (v: number) => {
+            if (v === 0) return <span className="text-slate-300">—</span>;
+            const formatted = Math.abs(v).toLocaleString('fr-FR');
+            const sign = v < 0 || isNegative ? '-' : '';
+            return `${sign}${formatted} FCFA`;
+          };
+
+          if (variant === 'header-green') {
+            return (
+              <tr className="bg-emerald-700 text-white font-extrabold border-b-2 border-emerald-800">
+                <td className="px-3 py-2 text-center text-[10px] font-mono border-r border-emerald-600/50">{refCode}</td>
+                <td className="px-4 py-2 text-[11px] uppercase tracking-wider">{label}</td>
+                <td className="px-3 py-2 text-center text-[10px] font-mono border-l border-emerald-600/50">{note}</td>
+                <td className="px-4 py-2 text-right text-[11px] font-mono">{fmt(valN)}</td>
+                <td className="px-4 py-2 text-right text-[11px] font-mono">{fmt(valN1)}</td>
+              </tr>
+            );
+          }
+
+          if (variant === 'section') {
+            return (
+              <tr className="bg-slate-100/80 border-t-2 border-b border-slate-300 font-extrabold">
+                <td className="px-3 py-2 text-center text-[10px] font-mono text-slate-500 border-r border-slate-200">{refCode}</td>
+                <td colSpan={4} className="px-4 py-2 text-[11px] text-slate-800 uppercase tracking-wide">
+                  {label}
+                </td>
+              </tr>
+            );
+          }
+
+          if (variant === 'total-navy') {
+            return (
+              <tr className="bg-[#1e293b] text-white font-black border-t-2 border-b-2 border-slate-900">
+                <td className="px-3 py-2 text-center text-[10px] font-mono text-emerald-400 border-r border-slate-700">{refCode}</td>
+                <td className="px-4 py-2 text-[11px] uppercase tracking-wide">{label}</td>
+                <td className="px-3 py-2 text-center text-[10px] font-mono text-amber-300 border-l border-slate-700">{note}</td>
+                <td className="px-4 py-2 text-right text-[11px] font-mono text-emerald-400">{fmt(valN)}</td>
+                <td className="px-4 py-2 text-right text-[11px] font-mono text-slate-300">{fmt(valN1)}</td>
+              </tr>
+            );
+          }
+
+          if (variant === 'footer-green') {
+            return (
+              <tr className="bg-emerald-800 text-white font-black text-xs border-t-4 border-emerald-950">
+                <td className="px-3 py-3 text-center text-xs font-mono text-amber-300 border-r border-emerald-700">{refCode}</td>
+                <td className="px-4 py-3 uppercase tracking-wider">{label}</td>
+                <td className="px-3 py-3 text-center text-xs font-mono text-amber-300 border-l border-emerald-700">{note}</td>
+                <td className="px-4 py-3 text-right font-mono text-amber-300">{fmt(valN)}</td>
+                <td className="px-4 py-3 text-right font-mono text-emerald-100">{fmt(valN1)}</td>
+              </tr>
+            );
+          }
+
+          return (
+            <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+              <td className="px-3 py-1.5 text-center text-[10px] font-mono text-slate-400 border-r border-slate-100">{refCode}</td>
+              <td className={`px-4 py-1.5 text-[11px] ${italic ? 'italic text-slate-500 pl-7' : 'text-slate-700 font-medium'}`}>
+                {label}
+              </td>
+              <td className="px-3 py-1.5 text-center text-[10px] font-mono text-slate-400 border-l border-slate-100">{note}</td>
+              <td className={`px-4 py-1.5 text-right text-[11px] font-mono ${isNegative ? 'text-rose-600' : 'text-slate-800'}`}>{fmt(valN)}</td>
+              <td className={`px-4 py-1.5 text-right text-[11px] font-mono ${isNegative ? 'text-rose-400' : 'text-slate-400'}`}>{fmt(valN1)}</td>
+            </tr>
+          );
+        };
+
+        // Données du TFT (en FCFA)
+        const tresoDebutN = 4500000;
+        const tresoDebutN1 = 3200000;
+
+        // Flux Opérationnels (ZB)
+        const cafgN = 6950000;
+        const cafgN1 = 5600000;
+        const varStocksN = -900000;
+        const varStocksN1 = -700000;
+        const varCreancesN = -1500000;
+        const varCreancesN1 = -1200000;
+        const varPassifN = 1200000;
+        const varPassifN1 = 950000;
+        const zbN = cafgN + varStocksN + varCreancesN + varPassifN; // 5 750 000
+        const zbN1 = cafgN1 + varStocksN1 + varCreancesN1 + varPassifN1; // 4 650 000
+
+        // Flux Investissement (ZC)
+        const acqIncorpN = -500000;
+        const acqIncorpN1 = -400000;
+        const acqCorpN = -2100000;
+        const acqCorpN1 = -1800000;
+        const acqFinN = -200000;
+        const acqFinN1 = 0;
+        const zcN = acqIncorpN + acqCorpN + acqFinN; // -2 800 000
+        const zcN1 = acqIncorpN1 + acqCorpN1 + acqFinN1; // -2 200 000
+
+        // Flux Financement (ZF)
+        const dividendesN = -1000000;
+        const dividendesN1 = -800000;
+        const zdN = dividendesN; // -1 000 000
+        const zdN1 = dividendesN1; // -800 000
+
+        const empruntsN = 0;
+        const empruntsN1 = 1500000;
+        const rembEmpruntsN = -450000;
+        const rembEmpruntsN1 = -350000;
+        const zeN = empruntsN + rembEmpruntsN; // -450 000
+        const zeN1 = empruntsN1 + rembEmpruntsN1; // 1 150 000
+
+        const zfN = zdN + zeN; // -1 450 000
+        const zfN1 = zdN1 + zeN1; // 350 000
+
+        // Variation de Trésorerie (ZG) & Trésorerie Fin (ZH)
+        const zgN = zbN + zcN + zfN; // +1 500 000
+        const zgN1 = zbN1 + zcN1 + zfN1; // +2 800 000
+
+        const zhN = tresoDebutN + zgN; // 6 000 000
+        const zhN1 = tresoDebutN1 + zgN1; // 4 500 000
+
+        return (
+          <div className="space-y-6">
+            {/* Barre d'action supérieure */}
+            <div className="flex items-center justify-between flex-wrap gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm print:hidden">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">💧</span>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+                    Tableau des Flux de Trésorerie (TFT) Officiel
+                  </h3>
+                  <p className="text-xs text-slate-500">Explication synthétique et réglementaire des flux d'exploitation, d'investissement et de financement</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.print()}
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-all"
+                >
+                  <Printer className="w-3.5 h-3.5" /> Imprimer A4
+                </button>
+              </div>
+            </div>
+
+            {/* Document Imprimable TFT */}
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print:rounded-none print:border-0 print:shadow-none">
+              {/* En-tête avec titre et Logo */}
+              <div className="flex items-center justify-between px-8 py-6 border-b-4 border-[#00a8c6]">
+                <div>
+                  <h1 className="text-3xl font-black text-[#00a8c6] leading-tight">Tableau des flux de trésorerie</h1>
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest mt-1">
+                    Système Normal SYSCOHADA Révisé — Exercice {currentYear}
+                  </div>
+                  <div className="text-xs text-slate-400 mt-0.5">
+                    MELARO GROUP · RCCM : CM-DOU-2026-B-14529 · NIU : M082612345678A · Durée (en mois) : 12
+                  </div>
+                </div>
+                <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center text-white font-black text-sm shadow-lg">
+                  Logo
+                </div>
+              </div>
+
+              {/* Tableau Officiel TFT */}
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="border-b-2 border-slate-300 bg-slate-50">
+                      <th className="px-3 py-3 text-center text-[11px] font-extrabold text-slate-700 w-[8%] border-r border-slate-200">
+                        REF
+                      </th>
+                      <th className="px-4 py-3 text-left text-[11px] font-extrabold text-slate-700 w-[58%]">
+                        LIBELLES
+                      </th>
+                      <th className="px-3 py-3 text-center text-[11px] font-extrabold text-slate-700 w-[8%] border-l border-r border-slate-200">
+                        Note
+                      </th>
+                      <th className="px-4 py-3 text-right text-[11px] font-extrabold text-slate-700">
+                        EXERCICE N
+                      </th>
+                      <th className="px-4 py-3 text-right text-[11px] font-bold text-slate-500">
+                        EXERCICE N-1
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* TRÉSORERIE DÉBUT */}
+                    <TFTRow
+                      refCode="ZA"
+                      label="Trésorerie nette au 1er Janvier (Trésorerie actif N-1 - Trésorerie passif N-1)"
+                      note="A"
+                      valN={tresoDebutN}
+                      valN1={tresoDebutN1}
+                      variant="header-green"
+                    />
+
+                    {/* ACTIVITÉS OPÉRATIONNELLES */}
+                    <TFTRow label="Flux de trésorerie provenant des activités opérationnelles :" variant="section" />
+                    <TFTRow refCode="FA" label="+ Capacité d'Autofinancement Globale (CAFG)" valN={cafgN} valN1={cafgN1} italic />
+                    <TFTRow refCode="FB" label="- Actif circulant HAO" valN={0} valN1={0} italic />
+                    <TFTRow refCode="FC" label="- Variation des stocks" valN={varStocksN} valN1={varStocksN1} italic isNegative />
+                    <TFTRow refCode="FD" label="- Variation des créances" valN={varCreancesN} valN1={varCreancesN1} italic isNegative />
+                    <TFTRow refCode="FE" label="+ Variation du passif circulant" valN={varPassifN} valN1={varPassifN1} italic />
+                    <tr className="border-b border-slate-200 bg-slate-50/50 italic text-[10px] text-slate-500">
+                      <td className="px-3 py-1 text-center font-mono border-r border-slate-200"></td>
+                      <td colSpan={4} className="px-4 py-1">
+                        Variation du BF lié aux activités opérationnelles (FB+FC+FD+FE) : {(varStocksN + varCreancesN + varPassifN).toLocaleString('fr-FR')} FCFA
+                      </td>
+                    </tr>
+                    <TFTRow
+                      refCode="ZB"
+                      label="Flux de trésorerie provenant des activités opérationnelles (somme FA à FE)"
+                      note="B"
+                      valN={zbN}
+                      valN1={zbN1}
+                      variant="total-navy"
+                    />
+
+                    {/* ACTIVITÉS D'INVESTISSEMENT */}
+                    <TFTRow label="Flux de trésorerie provenant des activités d'investissement :" variant="section" />
+                    <TFTRow refCode="FF" label="- Décaissements liés aux acquisitions d'immobilisations incorporelles" valN={acqIncorpN} valN1={acqIncorpN1} italic isNegative />
+                    <TFTRow refCode="FG" label="- Décaissements liés aux acquisitions d'immobilisations corporelles" valN={acqCorpN} valN1={acqCorpN1} italic isNegative />
+                    <TFTRow refCode="FH" label="- Décaissements liés aux acquisitions d'immobilisations financières" valN={acqFinN} valN1={acqFinN1} italic isNegative />
+                    <TFTRow refCode="FI" label="+ Encaissements liés aux cessions d'immobilisations incorporelles et corporelles" valN={0} valN1={0} italic />
+                    <TFTRow refCode="FJ" label="+ Encaissements liés aux cessions d'immobilisations financières" valN={0} valN1={0} italic />
+                    <TFTRow
+                      refCode="ZC"
+                      label="Flux de trésorerie provenant des activités d'investissement (somme FF à FJ)"
+                      note="C"
+                      valN={zcN}
+                      valN1={zcN1}
+                      variant="total-navy"
+                    />
+
+                    {/* ACTIVITÉS DE FINANCEMENT */}
+                    <TFTRow label="Flux de trésorerie provenant du financement par les capitaux propres :" variant="section" />
+                    <TFTRow refCode="FK" label="+ Augmentations de capital par apports nouveaux" valN={0} valN1={0} italic />
+                    <TFTRow refCode="FL" label="+ Subventions d'investissement reçues" valN={0} valN1={0} italic />
+                    <TFTRow refCode="FM" label="- Prélèvements sur le capital" valN={0} valN1={0} italic />
+                    <TFTRow refCode="FN" label="- Dividendes versés" valN={dividendesN} valN1={dividendesN1} italic isNegative />
+                    <TFTRow
+                      refCode="ZD"
+                      label="Flux de trésorerie provenant des capitaux propres (somme FK à FN)"
+                      note="D"
+                      valN={zdN}
+                      valN1={zdN1}
+                    />
+
+                    <TFTRow label="Trésorerie provenant du financement par les capitaux étrangers :" variant="section" />
+                    <TFTRow refCode="FO" label="+ Emprunts" valN={empruntsN} valN1={empruntsN1} italic />
+                    <TFTRow refCode="FP" label="+ Autres dettes financières" valN={0} valN1={0} italic />
+                    <TFTRow refCode="FQ" label="- Remboursements des emprunts et autres dettes financières" valN={rembEmpruntsN} valN1={rembEmpruntsN1} italic isNegative />
+                    <TFTRow
+                      refCode="ZE"
+                      label="Flux de trésorerie provenant des capitaux étrangers (somme FO à FQ)"
+                      note="E"
+                      valN={zeN}
+                      valN1={zeN1}
+                    />
+
+                    <TFTRow
+                      refCode="ZF"
+                      label="Flux de trésorerie provenant des activités de financement (D+E)"
+                      note="F"
+                      valN={zfN}
+                      valN1={zfN1}
+                      variant="total-navy"
+                    />
+
+                    {/* VARIATION & TRÉSORERIE FIN */}
+                    <TFTRow
+                      refCode="ZG"
+                      label="VARIATION DE LA TRÉSORERIE NETTE DE LA PÉRIODE (B+C+F)"
+                      note="G"
+                      valN={zgN}
+                      valN1={zgN1}
+                      variant="total-navy"
+                    />
+
+                    <TFTRow
+                      refCode="ZH"
+                      label="Trésorerie nette au 31 Décembre (G+A) [Contrôle : Trésorerie actif N - Trésorerie passif N]"
+                      note="H"
+                      valN={zhN}
+                      valN1={zhN1}
+                      variant="footer-green"
+                    />
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pied de page du document */}
+              <div className="px-8 py-4 border-t border-slate-100 bg-slate-50 text-[10px] text-slate-400 flex justify-between items-center">
+                <span>FinancePro OHADA — Édition automatique des états financiers révisés (TFT)</span>
+                <span>Page 1 / 1</span>
+              </div>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
-            <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 space-y-2">
-              <div className="font-extrabold text-emerald-950 uppercase text-[10px]">Flux d'Exploitation</div>
-              <div className="text-xl font-black text-emerald-700">+{formatMoney(5250000)}</div>
-              <div className="text-[10px] text-emerald-800 font-sans">Trésorerie générée par l'activité opérationnelle</div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 space-y-2">
-              <div className="font-extrabold text-rose-950 uppercase text-[10px]">Flux d'Investissement</div>
-              <div className="text-xl font-black text-rose-700">-{formatMoney(2800000)}</div>
-              <div className="text-[10px] text-rose-800 font-sans">Acquisitions d'équipements & immobilisations</div>
-            </div>
-
-            <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 space-y-2">
-              <div className="font-extrabold text-indigo-950 uppercase text-[10px]">Flux de Financement</div>
-              <div className="text-xl font-black text-indigo-700">+{formatMoney(950000)}</div>
-              <div className="text-[10px] text-indigo-800 font-sans">Emprunts bancaires et variation de capital</div>
-            </div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* PILIER 5 : VARIATION DES CAPITAUX PROPRES */}
       {activeTab === 5 && (

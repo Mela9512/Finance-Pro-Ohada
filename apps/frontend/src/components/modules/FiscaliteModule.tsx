@@ -36,9 +36,19 @@ const OHADA_COUNTRIES: CountryTaxConfig[] = [
   { code: 'CG', name: 'Congo-Brazzaville', flag: '🇨🇬', currency: 'XAF', tvaNormal: 18.0, tvaReduit: 5.0, airStandard: 3.0, airLiberal: 10.0, isNormal: 28, centimes: 5, imfMin: 1.0, deadlineDay: 20 }
 ];
 
-export const FiscaliteModule: React.FC = () => {
+interface FiscaliteModuleProps {
+  initialTab?: number;
+}
+
+export const FiscaliteModule: React.FC<FiscaliteModuleProps> = ({ initialTab = 1 }) => {
   // ── States principaux ────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = useState<number>(1);
+  const [activeTab, setActiveTab] = useState<number>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [selectedCountry, setSelectedCountry] = useState<CountryTaxConfig>(OHADA_COUNTRIES[0]);
 
   const [fiscalYear, setFiscalYear] = useState(now.getFullYear());

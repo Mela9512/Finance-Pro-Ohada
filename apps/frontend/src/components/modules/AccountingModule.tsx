@@ -763,8 +763,18 @@ const SyscohadaPedagogicalModal: React.FC<{ accountCode: string; onClose: () => 
   );
 };
 
-export const AccountingModule: React.FC = () => {
-  const [tab, setTab] = useState<AccountingTab>('dashboard');
+interface AccountingModuleProps {
+  initialTab?: AccountingTab;
+}
+
+export const AccountingModule: React.FC<AccountingModuleProps> = ({ initialTab = 'dashboard' }) => {
+  const [tab, setTab] = useState<AccountingTab>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setTab(initialTab);
+    }
+  }, [initialTab]);
   
   // States CRM Tiers
   const [tiersList, setTiersList] = useState<TiersItem[]>(MOCK_TIERS_LIST);

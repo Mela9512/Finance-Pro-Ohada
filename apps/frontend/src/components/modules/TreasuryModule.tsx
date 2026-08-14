@@ -35,7 +35,11 @@ export interface SimulationResult {
   conseilIA: string;
 }
 
-export const TreasuryModule: React.FC = () => {
+interface TreasuryModuleProps {
+  initialTab?: number;
+}
+
+export const TreasuryModule: React.FC<TreasuryModuleProps> = ({ initialTab = 1 }) => {
   // ── States principaux ────────────────────────────────────────────────────────
   const [accounts, setAccounts] = useState<TreasuryAccount[]>([]);
   const [transactions, setTransactions] = useState<TreasuryTransaction[]>([]);
@@ -43,7 +47,13 @@ export const TreasuryModule: React.FC = () => {
   const [clients, setClients] = useState<Customer[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
 
-  const [activeTab, setActiveTab] = useState<number>(1);
+  const [activeTab, setActiveTab] = useState<number>(initialTab);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterAccount, setFilterAccount] = useState<string>('TOUS');
   const [filterType, setFilterType] = useState<string>('TOUS');

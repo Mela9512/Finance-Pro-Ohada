@@ -39,66 +39,197 @@ function drawHeader(doc: PDFKit.PDFDocument, company: CompanyEntity, title: stri
 @Injectable()
 export class PdfService {
   async generateInvoicePdf(invoice: InvoiceEntity, company: CompanyEntity): Promise<Buffer> {
-    const doc = new PDFDocument({ margin: 50, size: 'A4' }) as unknown as PDFKit.PDFDocument;
-    const currency = company.currency || 'XAF';
+    const doc = new PDFDocument({ margin: 50, size: 'A4', info: { Title: invoice.invoiceNumber, Author: company.name || 'FinancePro' } }) as unknown as PDFKit.PDFDocument;
+    const currency = company.currency || 'FCFA';
+    const PAGE_W = doc.page.width;
+    const MARGIN = 50;
+    const INNER_W = PAGE_W - MARGIN * 2;
 
-    drawHeader(doc, company, invoice.type === 'VENTE' ? 'FACTURE DE VENTE' : invoice.type === 'ACHAT' ? "FACTURE D'ACHAT" : 'AVOIR');
+    const colorPrimary = '#00a8c6';
+    const colorDark    = '#1a1a2e';
+    const colorGray    = '#6b7280';
+    const colorLight   = '#f8fafc';
+    const colorLine    = '#e2e8f0';
 
-    doc.fontSize(10).font('Helvetica-Bold').text(`N° ${invoice.invoiceNumber}`);
-    doc.font('Helvetica').text(`Date : ${invoice.date}`);
-    doc.text(`Échéance : ${invoice.dueDate}`);
-    doc.moveDown(0.5);
-    doc.font('Helvetica-Bold').text(invoice.type === 'VENTE' ? 'Client :' : 'Fournisseur :');
-    doc.font('Helvetica').text(invoice.tierName);
-    doc.moveDown(1);
+    const fmtMoney = (v: number) =>
+      new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(v || 0) + ' ' + currency;
 
-    const tableTop = doc.y;
-    const colX = { desc: 50, qty: 260, pu: 320, tva: 390, total: 450 };
-    doc.font('Helvetica-Bold').fontSize(9);
-    doc.text('Désignation', colX.desc, tableTop);
-    doc.text('Qté', colX.qty, tableTop);
-    doc.text('P.U.', colX.pu, tableTop);
-    doc.text('TVA %', colX.tva, tableTop);
-    doc.text('Total TTC', colX.total, tableTop);
-    doc.moveTo(50, tableTop + 15).lineTo(545, tableTop + 15).stroke();
+    // ── Bande de couleur en haut ─────────────────────────────────────────────
+    doc.rect(0, 0, PAGE_W, 8).fill(colorPrimary);
 
-    let y = tableTop + 22;
-    doc.font('Helvetica').fontSize(9);
-    for (const item of invoice.items) {
-      doc.text(item.description, colX.desc, y, { width: 200 });
-      doc.text(String(item.quantity), colX.qty, y);
-      doc.text(formatMoney(Number(item.unitPrice), currency), colX.pu, y);
-      doc.text(`${item.tvaRate}%`, colX.tva, y);
-      doc.text(formatMoney(Number(item.totalTTC), currency), colX.total, y);
-      y += 20;
+    // ── En-tête : Titre + Logo cercle ────────────────────────────────────────
+    const titleY = 30;
+    doc.fillColor(colorPrimary)
+       .font('Helvetica-Bold')
+       .fontSize(28)
+       .text(`Facture n° ${invoice.invoiceNumber.replace('FAC-', '')}`, MARGIN, titleY, { width: 350 });
+
+    // Cercle logo (simulation)
+    const circleX = PAGE_W - MARGIN - 35;
+    const circleY = titleY + 20;
+    doc.save()
+       .circle(circleX, circleY, 32)
+       .fill('#f59e0b');
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(9).text('LOGO', circleX - 14, circleY - 6);
+    doc.restore();
+
+    // Badge statut si payée
+    const inv = invoice as any;
+    if (invoice.status === 'PAYE') {
+      const badgeY = titleY + 45;
+      doc.fontSize(8).font('Helvetica').fillColor(colorPrimary)
+         .text(`Acquittée le ${inv.paymentDate || invoice.date}${inv.paymentMode ? ' · ' + inv.paymentMode : ''}${inv.paymentReference ? ' n°' + inv.paymentReference : ''}`, MARGIN, badgeY);
     }
 
-    doc.moveTo(50, y + 5).lineTo(545, y + 5).stroke();
-    y += 15;
-    doc.font('Helvetica').text(`Sous-total HT : ${formatMoney(Number(invoice.subtotalHT), currency)}`, 350, y, { align: 'right', width: 195 });
-    y += 15;
-    doc.text(`TVA : ${formatMoney(Number(invoice.totalTVA), currency)}`, 350, y, { align: 'right', width: 195 });
-    if (Number(invoice.totalAIR) > 0) {
-      y += 15;
-      doc.text(`Retenue AIR (${invoice.airRate}%) : -${formatMoney(Number(invoice.totalAIR), currency)}`, 350, y, { align: 'right', width: 195 });
-    }
-    y += 18;
-    doc.font('Helvetica-Bold').fontSize(11).text(`Net à payer TTC : ${formatMoney(Number(invoice.totalTTC), currency)}`, 350, y, { align: 'right', width: 195 });
+    // ── Ligne séparatrice ────────────────────────────────────────────────────
+    const sep1Y = 100;
+    doc.strokeColor(colorLine).lineWidth(1).moveTo(MARGIN, sep1Y).lineTo(PAGE_W - MARGIN, sep1Y).stroke();
 
-    if (invoice.notes) {
-      doc.moveDown(3);
-      doc.font('Helvetica').fontSize(9).text(`Notes : ${invoice.notes}`);
+    // ── Bloc Émetteur / Destinataire ─────────────────────────────────────────
+    const blockY = sep1Y + 15;
+    const col2X  = MARGIN + INNER_W / 2 + 10;
+
+    // Émetteur
+    doc.fillColor(colorGray).font('Helvetica').fontSize(7.5).text('DE', MARGIN, blockY, { characterSpacing: 2 });
+    doc.fillColor(colorDark).font('Helvetica-Bold').fontSize(11).text(company.name || 'VOTRE ENTREPRISE', MARGIN, blockY + 12);
+    doc.fillColor(colorGray).font('Helvetica').fontSize(8.5);
+    if (company.address) doc.text(company.address, MARGIN, doc.y);
+    if (company.city || company.country) doc.text([company.city, company.country].filter(Boolean).join(', '), MARGIN, doc.y);
+    if (company.phone) doc.text(`Tél : ${company.phone}`, MARGIN, doc.y);
+    if (company.nif)   doc.text(`NIU : ${company.nif}`, MARGIN, doc.y);
+    if (company.rccm)  doc.text(`RCCM : ${company.rccm}`, MARGIN, doc.y);
+
+    // Destinataire
+    doc.fillColor(colorGray).font('Helvetica').fontSize(7.5).text('À', col2X, blockY, { characterSpacing: 2 });
+    doc.fillColor(colorDark).font('Helvetica-Bold').fontSize(11).text(invoice.tierName || 'CLIENT', col2X, blockY + 12);
+    doc.fillColor(colorGray).font('Helvetica').fontSize(8.5).text('Douala, Cameroun', col2X, blockY + 28);
+
+    // ── Grille Métadonnées ───────────────────────────────────────────────────
+    const metaY = blockY + 85;
+    doc.rect(MARGIN, metaY, INNER_W, 28).fill(colorLight);
+    const metaCols = [
+      { label: 'Date', value: invoice.date || '—' },
+      { label: 'Échéance', value: invoice.dueDate || '—' },
+      { label: 'Mode de règlement', value: inv.paymentMode || '—' },
+      { label: 'Référence', value: inv.paymentReference || '—' },
+    ];
+    const metaColW = INNER_W / metaCols.length;
+    metaCols.forEach((m, i) => {
+      const mx = MARGIN + i * metaColW + 8;
+      doc.fillColor(colorGray).font('Helvetica').fontSize(7).text(m.label.toUpperCase(), mx, metaY + 5, { width: metaColW - 16 });
+      doc.fillColor(colorDark).font('Helvetica-Bold').fontSize(8.5).text(m.value, mx, metaY + 14, { width: metaColW - 16 });
+    });
+
+    // ── Tableau des lignes articles ───────────────────────────────────────────
+    const tblY  = metaY + 38;
+    const tblHdrH = 20;
+    const cols = {
+      desc:  { x: MARGIN,       w: 180 },
+      qty:   { x: MARGIN + 185, w: 40  },
+      unit:  { x: MARGIN + 230, w: 50  },
+      pu:    { x: MARGIN + 285, w: 75  },
+      tva:   { x: MARGIN + 365, w: 40  },
+      total: { x: MARGIN + 410, w: 85  },
+    };
+
+    // Header du tableau
+    doc.rect(MARGIN, tblY, INNER_W, tblHdrH).fill(colorDark);
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(7.5);
+    doc.text('DÉSIGNATION', cols.desc.x + 4, tblY + 6, { width: cols.desc.w });
+    doc.text('QTÉ',  cols.qty.x,   tblY + 6, { width: cols.qty.w,   align: 'center' });
+    doc.text('UNITÉ',cols.unit.x,  tblY + 6, { width: cols.unit.w,  align: 'center' });
+    doc.text('PU HT ('+currency+')', cols.pu.x, tblY + 6, { width: cols.pu.w, align: 'right' });
+    doc.text('TVA%', cols.tva.x,   tblY + 6, { width: cols.tva.w,   align: 'right' });
+    doc.text('TOTAL TTC', cols.total.x, tblY + 6, { width: cols.total.w, align: 'right' });
+
+    // Lignes
+    let rowY = tblY + tblHdrH;
+    const items = invoice.items || [];
+    items.forEach((item, i) => {
+      const bg = i % 2 === 0 ? '#ffffff' : colorLight;
+      const rowH = 22;
+      doc.rect(MARGIN, rowY, INNER_W, rowH).fill(bg);
+      doc.fillColor(colorDark).font('Helvetica').fontSize(8);
+      doc.text(item.description || '—', cols.desc.x + 4, rowY + 7, { width: cols.desc.w - 8 });
+      doc.text(String(item.quantity), cols.qty.x, rowY + 7, { width: cols.qty.w, align: 'center' });
+      doc.text((item as any).unit || 'u', cols.unit.x, rowY + 7, { width: cols.unit.w, align: 'center' });
+      doc.text(fmtMoney(Number(item.unitPrice)), cols.pu.x, rowY + 7, { width: cols.pu.w, align: 'right' });
+      doc.text(`${item.tvaRate || 0} %`, cols.tva.x, rowY + 7, { width: cols.tva.w, align: 'right' });
+      doc.font('Helvetica-Bold').text(fmtMoney(Number(item.totalTTC)), cols.total.x, rowY + 7, { width: cols.total.w, align: 'right' });
+      rowY += rowH;
+    });
+    if (items.length === 0) {
+      doc.rect(MARGIN, rowY, INNER_W, 22).fill('#ffffff');
+      doc.fillColor(colorGray).font('Helvetica').fontSize(8).text('Aucune ligne', MARGIN + 4, rowY + 7);
+      rowY += 22;
     }
 
-    doc.fontSize(8).fillColor('#888888').text(
-      'Document généré automatiquement — Conforme au plan comptable SYSCOHADA révisé.',
-      50,
-      doc.page.height - 60,
-      { align: 'center', width: 495 },
-    );
+    // Ligne de fin tableau
+    doc.strokeColor(colorLine).lineWidth(1).moveTo(MARGIN, rowY).lineTo(PAGE_W - MARGIN, rowY).stroke();
+
+    // ── Décompte financier (bas droite) ──────────────────────────────────────
+    const sumX    = PAGE_W - MARGIN - 220;
+    const sumW    = 220;
+    let   sumY    = rowY + 12;
+    const lineH   = 16;
+
+    const subHT    = Number(invoice.subtotalHT)   || 0;
+    const remAmt   = Number(inv.remiseAmount)  || 0;
+    const eAmt     = Number(inv.escompteAmount)|| 0;
+    const portHT   = Number(inv.transportHT)   || 0;
+    const totalTVA = Number(invoice.totalTVA)      || 0;
+    const totalTTC = Number(invoice.totalTTC)      || 0;
+    const totalAIR = Number(invoice.totalAIR)      || 0;
+    const netAPayer= Number(inv.netAPayer) || (totalTTC - totalAIR);
+
+    const summaryRows: { label: string; value: string; bold?: boolean; color?: string }[] = [];
+    summaryRows.push({ label: 'Sous-total HT', value: fmtMoney(subHT) });
+    if (remAmt > 0) summaryRows.push({ label: `Remise (${inv.remiseRate || 0} %)`, value: `-${fmtMoney(remAmt)}`, color: '#059669' });
+    if (eAmt   > 0) summaryRows.push({ label: `Escompte (${inv.escompteRate || 0} %)`, value: `-${fmtMoney(eAmt)}`, color: '#059669' });
+    if (portHT > 0) summaryRows.push({ label: 'Transport & frais', value: `+${fmtMoney(portHT)}`, color: '#4f46e5' });
+    summaryRows.push({ label: 'TVA', value: `+${fmtMoney(totalTVA)}`, color: '#059669' });
+    summaryRows.push({ label: 'Total TTC', value: fmtMoney(totalTTC), bold: true });
+    if (totalAIR > 0) summaryRows.push({ label: `Retenue AIR (${invoice.airRate || 0} %)`, value: `-${fmtMoney(totalAIR)}`, color: '#d97706' });
+
+    summaryRows.forEach(row => {
+      doc.fillColor(row.color || colorGray).font(row.bold ? 'Helvetica-Bold' : 'Helvetica').fontSize(8.5);
+      doc.text(row.label, sumX, sumY, { width: 140 });
+      doc.text(row.value, sumX + 140, sumY, { width: 80, align: 'right' });
+      sumY += lineH;
+    });
+
+    // Ligne double NET À PAYER
+    sumY += 4;
+    doc.strokeColor(colorPrimary).lineWidth(1.5).moveTo(sumX, sumY).lineTo(sumX + sumW, sumY).stroke();
+    sumY += 6;
+    doc.fillColor(colorPrimary).font('Helvetica-Bold').fontSize(11);
+    doc.text('NET À PAYER', sumX, sumY, { width: 130 });
+    doc.text(fmtMoney(netAPayer), sumX + 130, sumY, { width: 90, align: 'right' });
+
+    // ── Pied de page : coordonnées bancaires ─────────────────────────────────
+    const footerY = doc.page.height - 75;
+    doc.rect(MARGIN, footerY - 5, INNER_W, 1).fill(colorLine);
+
+    const footerCols = [
+      { title: 'Siège social', lines: [company.address || '—', [company.city, company.country].filter(Boolean).join(', ')] },
+      { title: 'Coordonnées', lines: [company.phone ? `Tél : ${company.phone}` : '—', company.email || '—'] },
+      { title: 'Coordonnées bancaires', lines: [company.bankName ? `Banque : ${company.bankName}` : '—', company.bankAccount ? `N° compte : ${company.bankAccount}` : '—'] },
+    ];
+    const fcW = INNER_W / 3;
+    footerCols.forEach((fc, i) => {
+      const fx = MARGIN + i * fcW;
+      doc.fillColor(colorDark).font('Helvetica-Bold').fontSize(7.5).text(fc.title, fx, footerY + 2, { width: fcW - 10 });
+      doc.fillColor(colorGray).font('Helvetica').fontSize(7);
+      fc.lines.forEach(l => { doc.text(l, fx, doc.y, { width: fcW - 10 }); });
+    });
+
+    doc.fillColor(colorGray).font('Helvetica').fontSize(6.5)
+       .text('Document généré automatiquement par FinancePro · Conforme SYSCOHADA Révisé', MARGIN, doc.page.height - 20, { align: 'center', width: INNER_W });
 
     return toBuffer(doc);
   }
+
+
 
   async generateBilanPdf(bilan: FinancialReportBilan, company: CompanyEntity): Promise<Buffer> {
     const doc = new PDFDocument({ margin: 50, size: 'A4' }) as unknown as PDFKit.PDFDocument;

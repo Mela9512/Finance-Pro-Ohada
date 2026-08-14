@@ -161,6 +161,7 @@ export interface InvoiceItem {
   description: string;
   quantity: number;
   unitPrice: number;
+  unit?: string; // Ex: h2, m2, kg, forfait, unité
   tvaRate: number; // Ex: 18%
   totalHT: number;
   totalTVA: number;
@@ -178,14 +179,28 @@ export interface Invoice {
   dueDate: string;
   items: InvoiceItem[];
   subtotalHT: number;
+  remiseRate?: number; // Remise commerciale %
+  remiseAmount?: number; // Montant Remise commerciale
+  netCommercial?: number; // Net Commercial HT
+  escompteRate?: number; // Escompte financier %
+  escompteAmount?: number; // Montant Escompte financier
+  netFinancier?: number; // Net Financier HT
+  transportHT?: number; // Frais de transport HT
+  emballagesHT?: number; // Frais d'emballages/accessoires HT
+  baseTVA?: number; // Base imposable TVA
   totalTVA: number;
   airRate: number; // Retenue à la source AIR (ex: 2%, 5%)
   totalAIR: number;
   totalTTC: number;
+  netAPayer?: number; // Net à Payer (Total TTC - AIR)
   amountPaid: number;
   status: InvoiceStatus;
   notes?: string;
+  paymentMode?: string; // Chèque, Virement, MoMo, Espèces
+  paymentReference?: string; // N° Chèque ou Référence Virement
+  paymentDate?: string;
 }
+
 
 export interface TreasuryAccount {
   id: string;

@@ -18,6 +18,7 @@ import { SuppliersModule } from './components/modules/SuppliersModule';
 import { CommandesModule } from './components/modules/CommandesModule';
 import { InvoicingModule } from './components/modules/InvoicingModule';
 import { ReportsModule } from './components/modules/ReportsModule';
+import { FinancialAnalysisModule } from './components/modules/FinancialAnalysisModule';
 import { FiscaliteModule } from './components/modules/FiscaliteModule';
 import { ImmobilisationsModule } from './components/modules/ImmobilisationsModule';
 import { StocksModule } from './components/modules/StocksModule';
@@ -61,6 +62,7 @@ const PublicOnlyRoute: React.FC<{ children: React.ReactNode }> = ({ children }) 
 const AppShell: React.FC = () => {
   const { user, company, isLoading, logout } = useAuth();
   const [activeModule, setActiveModule] = useState<ModuleId>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<any>(undefined);
 
   const getModuleTitle = (id: ModuleId) => {
     switch (id) {
@@ -72,6 +74,7 @@ const AppShell: React.FC = () => {
       case 'commandes': return 'Commandes & livraisons';
       case 'invoicing': return 'Facturation & retenues fiscales (TVA/AIR)';
       case 'reports': return 'États financiers OHADA (Bilan & Compte de Résultat)';
+      case 'financial-analysis': return 'Cockpit d\'analyse financière & diagnostic';
       case 'fiscalite': return 'Fiscalité — Déclarations TVA & AIR';
       case 'immobilisations': return 'Immobilisations & amortissements';
       case 'stocks': return 'Stocks & inventaire — valorisation CUMP';
@@ -92,7 +95,15 @@ const AppShell: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#F8F7FF] text-slate-900">
-      <Sidebar activeModule={activeModule} onSelectModule={setActiveModule} userRole={user.role} />
+      <Sidebar
+        activeModule={activeModule}
+        activeSubTab={activeSubTab}
+        onSelectModule={(module, subTab) => {
+          setActiveModule(module);
+          setActiveSubTab(subTab);
+        }}
+        userRole={user.role}
+      />
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         <Navbar
@@ -105,15 +116,16 @@ const AppShell: React.FC = () => {
         <main className={`flex-1 bg-[#F8F7FF] ${
             activeModule === 'documents' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto p-6'
           }`}>
-          {activeModule === 'dashboard' && <DashboardModule onNavigate={setActiveModule} />}
-          {activeModule === 'accounting' && <AccountingModule />}
-          {activeModule === 'treasury' && <TreasuryModule />}
+          {activeModule === 'dashboard' && <DashboardModule onNavigate={(mod) => { setActiveModule(mod); setActiveSubTab(undefined); }} />}
+          {activeModule === 'accounting' && <AccountingModule initialTab={activeSubTab} />}
+          {activeModule === 'treasury' && <TreasuryModule initialTab={activeSubTab} />}
           {activeModule === 'clients' && <ClientsModule />}
           {activeModule === 'suppliers' && <SuppliersModule />}
           {activeModule === 'commandes' && <CommandesModule />}
           {activeModule === 'invoicing' && <InvoicingModule />}
-          {activeModule === 'reports' && <ReportsModule />}
-          {activeModule === 'fiscalite' && <FiscaliteModule />}
+          {activeModule === 'reports' && <ReportsModule initialTab={activeSubTab} />}
+          {activeModule === 'financial-analysis' && <FinancialAnalysisModule />}
+          {activeModule === 'fiscalite' && <FiscaliteModule initialTab={activeSubTab} />}
           {activeModule === 'immobilisations' && <ImmobilisationsModule />}
           {activeModule === 'stocks' && <StocksModule />}
           {activeModule === 'paie' && <PaieModule />}
