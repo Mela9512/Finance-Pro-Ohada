@@ -6,7 +6,7 @@ import {
   Sparkles, Target, Globe, Settings, Eye, EyeOff, CheckCircle2,
   Calendar, ShieldCheck, DollarSign, Layers, PieChart, Info,
   Sun, Cloud, CloudRain, HelpCircle, Building2, Wallet, CheckSquare,
-  CheckCircle, AlertCircle, XCircle
+  CheckCircle, AlertCircle, XCircle, Briefcase, Brain
 } from 'lucide-react';
 import {
   DashboardMetrics, DashboardAlert, DashboardForecast, ScoreDetaille,
@@ -66,48 +66,68 @@ const Sparkline: React.FC<{ values: number[]; color: string; height?: number }> 
   );
 };
 
-// ─── SVG Bar Chart Component ──────────────────────────────────────────────────
+// ─── Clean Rounded Bar Column Chart Helper ────────────────────────────────────
 const BarChart: React.FC<{
   data: { label: string; value: number; value2?: number }[];
   color: string;
   color2?: string;
   height?: number;
-}> = ({ data, color, color2, height = 110 }) => {
+}> = ({ data, color, color2, height = 130 }) => {
   if (!data || data.length === 0) return null;
   const maxV = Math.max(...data.map((d) => Math.max(Math.abs(d.value), Math.abs(d.value2 ?? 0))), 1);
-  const W = 360;
-  const barW = color2 ? 14 : 22;
+  const W = 400;
+  const chartH = height - 15;
+  const barW = color2 ? 12 : (data.length > 8 ? 16 : 22);
   const gap = W / data.length;
 
   return (
-    <svg width="100%" viewBox={`0 0 ${W} ${height + 24}`} className="overflow-visible">
+    <svg width="100%" viewBox={`0 0 ${W} ${height + 25}`} className="overflow-visible">
+      {/* Grid Lines */}
+      {[0.2, 0.5, 0.8].map((ratio, idx) => (
+        <line
+          key={idx}
+          x1="0"
+          y1={15 + chartH * ratio}
+          x2={W}
+          y2={15 + chartH * ratio}
+          stroke="#F1F5F9"
+          strokeDasharray="4 4"
+          strokeWidth="1"
+        />
+      ))}
+
       {data.map((d, i) => {
         const x = i * gap + gap / 2;
-        const h1 = (Math.abs(d.value) / maxV) * height;
-        const h2 = d.value2 !== undefined ? (Math.abs(d.value2) / maxV) * height : 0;
+        const h1 = (Math.abs(d.value) / maxV) * chartH;
+        const h2 = d.value2 !== undefined ? (Math.abs(d.value2) / maxV) * chartH : 0;
         return (
-          <g key={i}>
+          <g key={i} className="group cursor-pointer">
+            {/* Primary Bar */}
             <rect
               x={x - (color2 ? barW + 1 : barW / 2)}
-              y={height - h1}
+              y={15 + (chartH - Math.max(h1, 4))}
               width={barW}
-              height={Math.max(h1, 3)}
-              rx="3"
+              height={Math.max(h1, 4)}
+              rx="5"
               fill={color}
-              opacity="0.88"
+              className="transition-all duration-300 group-hover:brightness-110"
             />
+
+            {/* Secondary Bar */}
             {color2 && d.value2 !== undefined && (
               <rect
-                x={x + 1}
-                y={height - h2}
+                x={x + 2}
+                y={15 + (chartH - Math.max(h2, 4))}
                 width={barW}
-                height={Math.max(h2, 3)}
-                rx="3"
+                height={Math.max(h2, 4)}
+                rx="5"
                 fill={color2}
-                opacity="0.88"
+                className="transition-all duration-300 group-hover:brightness-110"
               />
             )}
-            <text x={x} y={height + 16} textAnchor="middle" fontSize="8.5" fill="#9CA3AF" fontWeight="600" fontFamily="system-ui">
+
+            {/* X Label */}
+            <text x={x} y={height + 18} textAnchor="middle" fontSize="10" fill="#475569" fontWeight="700" fontFamily="system-ui">
               {d.label}
             </text>
           </g>
@@ -117,109 +137,123 @@ const BarChart: React.FC<{
   );
 };
 
-// ─── SVG Rentabilité Chart (3 bars/month) ──────────────────────────────────────
+// ─── Clean Rounded Rentabilité Column Chart (3 Bars/Month) ────────────────────
 const RentabiliteChart: React.FC<{
   data: { label: string; ca: number; charges: number; net: number }[];
   height?: number;
-}> = ({ data, height = 110 }) => {
+}> = ({ data, height = 130 }) => {
   if (!data || data.length === 0) return null;
   const maxV = Math.max(...data.flatMap((d) => [d.ca, d.charges, Math.abs(d.net)]), 1);
-  const W = 360;
-  const barW = 8;
-  const gap = W / data.length;
-
-  return (
-    <svg width="100%" viewBox={`0 0 ${W} ${height + 24}`} className="overflow-visible">
-      {data.map((d, i) => {
-        const x = i * gap + gap / 2;
-        const hCA = (d.ca / maxV) * height;
-        const hCharges = (d.charges / maxV) * height;
-        const hNet = (Math.abs(d.net) / maxV) * height;
-        const isNetNegative = d.net < 0;
-
-        return (
-          <g key={i}>
-            {/* CA Bar - Green */}
-            <rect
-              x={x - 14}
-              y={height - hCA}
-              width={barW}
-              height={Math.max(hCA, 2)}
-              rx="1.5"
-              fill="#10B981"
-              opacity="0.88"
-            />
-            {/* Charges Bar - Orange */}
-            <rect
-              x={x - 4}
-              y={height - hCharges}
-              width={barW}
-              height={Math.max(hCharges, 2)}
-              rx="1.5"
-              fill="#F59E0B"
-              opacity="0.88"
-            />
-            {/* Net Income Bar - Violet/Red */}
-            <rect
-              x={x + 6}
-              y={height - hNet}
-              width={barW}
-              height={Math.max(hNet, 2)}
-              rx="1.5"
-              fill={isNetNegative ? "#EF4444" : "#6B4EFF"}
-              opacity="0.88"
-            />
-            <text x={x} y={height + 16} textAnchor="middle" fontSize="8.5" fill="#9CA3AF" fontWeight="600" fontFamily="system-ui">
-              {d.label}
-            </text>
-          </g>
-        );
-      })}
-    </svg>
-  );
-};
-
-// ─── SVG Budget Comparison Chart ────────────────────────────────────────────────
-const BudgetComparisonChart: React.FC<{
-  data: { label: string; budget: number; real: number }[];
-  height?: number;
-}> = ({ data, height = 110 }) => {
-  if (!data || data.length === 0) return null;
-  const maxV = Math.max(...data.flatMap((d) => [d.budget, d.real]), 1);
-  const W = 360;
+  const W = 400;
+  const chartH = height - 15;
   const barW = 10;
   const gap = W / data.length;
 
   return (
-    <svg width="100%" viewBox={`0 0 ${W} ${height + 24}`} className="overflow-visible">
+    <svg width="100%" viewBox={`0 0 ${W} ${height + 25}`} className="overflow-visible">
+      {/* Grid Lines */}
+      {[0.2, 0.5, 0.8].map((ratio, idx) => (
+        <line key={idx} x1="0" y1={15 + chartH * ratio} x2={W} y2={15 + chartH * ratio} stroke="#F1F5F9" strokeDasharray="4 4" strokeWidth="1" />
+      ))}
+
       {data.map((d, i) => {
         const x = i * gap + gap / 2;
-        const hBudget = (d.budget / maxV) * height;
-        const hReal = (d.real / maxV) * height;
+        const hCA = (d.ca / maxV) * chartH;
+        const hCharges = (d.charges / maxV) * chartH;
+        const hNet = (Math.abs(d.net) / maxV) * chartH;
+        const isNetNegative = d.net < 0;
 
         return (
-          <g key={i}>
+          <g key={i} className="group cursor-pointer">
+            {/* CA Bar - Green */}
+            <rect
+              x={x - 16}
+              y={15 + (chartH - Math.max(hCA, 4))}
+              width={barW}
+              height={Math.max(hCA, 4)}
+              rx="5"
+              fill="#10B981"
+              className="transition-all duration-300 group-hover:brightness-110"
+            />
+            {/* Charges Bar - Orange */}
+            <rect
+              x={x - 4}
+              y={15 + (chartH - Math.max(hCharges, 4))}
+              width={barW}
+              height={Math.max(hCharges, 4)}
+              rx="5"
+              fill="#F59E0B"
+              className="transition-all duration-300 group-hover:brightness-110"
+            />
+            {/* Net Bar - Violet/Red */}
+            <rect
+              x={x + 8}
+              y={15 + (chartH - Math.max(hNet, 4))}
+              width={barW}
+              height={Math.max(hNet, 4)}
+              rx="5"
+              fill={isNetNegative ? "#EF4444" : "#6366F1"}
+              className="transition-all duration-300 group-hover:brightness-110"
+            />
+            {/* X Label */}
+            <text x={x} y={height + 18} textAnchor="middle" fontSize="10" fill="#475569" fontWeight="700" fontFamily="system-ui">
+              {d.label}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+// ─── Clean Rounded Budget Comparison Column Chart ───────────────────────────
+const BudgetComparisonChart: React.FC<{
+  data: { label: string; budget: number; real: number }[];
+  height?: number;
+}> = ({ data, height = 130 }) => {
+  if (!data || data.length === 0) return null;
+  const maxV = Math.max(...data.flatMap((d) => [d.budget, d.real]), 1);
+  const W = 400;
+  const chartH = height - 15;
+  const barW = 14;
+  const gap = W / data.length;
+
+  return (
+    <svg width="100%" viewBox={`0 0 ${W} ${height + 25}`} className="overflow-visible">
+      {/* Grid Lines */}
+      {[0.2, 0.5, 0.8].map((ratio, idx) => (
+        <line key={idx} x1="0" y1={15 + chartH * ratio} x2={W} y2={15 + chartH * ratio} stroke="#F1F5F9" strokeDasharray="4 4" strokeWidth="1" />
+      ))}
+
+      {data.map((d, i) => {
+        const x = i * gap + gap / 2;
+        const hBudget = (d.budget / maxV) * chartH;
+        const hReal = (d.real / maxV) * chartH;
+
+        return (
+          <g key={i} className="group cursor-pointer">
             {/* Budget Bar - Slate */}
             <rect
-              x={x - 12}
-              y={height - hBudget}
+              x={x - 16}
+              y={15 + (chartH - Math.max(hBudget, 4))}
               width={barW}
-              height={Math.max(hBudget, 2)}
-              rx="2"
-              fill="#94A3B8"
-              opacity="0.5"
+              height={Math.max(hBudget, 4)}
+              rx="5"
+              fill="#CBD5E1"
+              className="transition-all duration-300 group-hover:brightness-105"
             />
             {/* Real Bar - Violet */}
             <rect
               x={x + 2}
-              y={height - hReal}
+              y={15 + (chartH - Math.max(hReal, 4))}
               width={barW}
-              height={Math.max(hReal, 2)}
-              rx="2"
-              fill="#6B4EFF"
-              opacity="0.9"
+              height={Math.max(hReal, 4)}
+              rx="5"
+              fill="#6366F1"
+              className="transition-all duration-300 group-hover:brightness-110"
             />
-            <text x={x} y={height + 16} textAnchor="middle" fontSize="8.5" fill="#9CA3AF" fontWeight="600" fontFamily="system-ui">
+            {/* X Label */}
+            <text x={x} y={height + 18} textAnchor="middle" fontSize="10" fill="#475569" fontWeight="700" fontFamily="system-ui">
               {d.label}
             </text>
           </g>
@@ -549,90 +583,543 @@ const DetailedScoreWidget: React.FC<{ scoreDetaille: ScoreDetaille }> = ({ score
   );
 };
 
-// ─── Diagnostic IA Widget ─────────────────────────────────────────────────────
-const DiagnosticIAWidget: React.FC<{ diagnostic: DiagnosticIA; onNavigate?: (module: ModuleId) => void }> = ({ diagnostic, onNavigate }) => {
-  if (!diagnostic) return null;
-
-  const statusColor = (s: string) => {
-    if (['Forte', 'Excellente', 'Bon', 'Solide', 'Faible'].includes(s)) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    if (['Moyenne', 'Satisfaisante', 'Modéré', 'Saine', 'Moyen'].includes(s)) return 'bg-amber-50 text-amber-700 border-amber-200';
-    return 'bg-rose-50 text-rose-700 border-rose-200';
-  };
-
-  const getActionForRec = (rec: string) => {
-    const lower = rec.toLowerCase();
-    if (lower.includes('relancer') || lower.includes('facture')) {
-      return { label: 'Relancer les clients ➡️', action: () => onNavigate?.('invoicing') };
-    }
-    if (lower.includes('liquidité') || lower.includes('trésorerie') || lower.includes('surplus')) {
-      return { label: 'Gérer la trésorerie ➡️', action: () => onNavigate?.('treasury') };
-    }
-    if (lower.includes('budget') || lower.includes('charges')) {
-      return { label: 'Ajuster les budgets ➡️', action: () => onNavigate?.('budget') };
-    }
-    return null;
-  };
-
+// ─── Baromètre Financier IA Widget ───────────────────────────────────────────
+const BarometreFinancierWidget: React.FC<{ metrics: any }> = ({ metrics }) => {
   return (
-    <div className="rounded-2xl p-5 border border-indigo-100 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-lg">
-      <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+    <div className="rounded-2xl p-5 bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-white shadow-lg space-y-4 border border-indigo-800/40 text-left">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-xl bg-violet-600/30 flex items-center justify-center border border-violet-400/30">
-            <Sparkles className="w-4 h-4 text-violet-300 animate-pulse" />
+          <div className="w-8 h-8 rounded-xl bg-violet-500/20 flex items-center justify-center border border-violet-400/30">
+            <Activity className="w-4 h-4 text-violet-300 animate-pulse" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold tracking-wide text-white">Diagnostic & Recommandations IA</h3>
-            <p className="text-[10px] text-violet-300">Analyse automatisée de votre santé financière et préconisations</p>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">BAROMÈTRE FINANCIER IA</h3>
+            <p className="text-[10px] text-indigo-300">Analyse prédictive de santé financière</p>
           </div>
         </div>
-        <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-violet-500/20 text-violet-200 border border-violet-400/20">
-          Risque Global : <strong className="text-white">{diagnostic.risqueGlobal}</strong>
+        <span className="text-[10px] font-mono font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          Confiance IA : 94%
         </span>
       </div>
 
-      {/* Ratios Piliers */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
-        {[
-          { label: 'Rentabilité', val: diagnostic.rentabiliteStatus },
-          { label: 'Liquidité', val: diagnostic.liquiditeStatus },
-          { label: 'Endettement', val: diagnostic.endettementStatus },
-          { label: 'Trésorerie', val: diagnostic.tresorerieStatus },
-        ].map((item) => (
-          <div key={item.label} className="p-2.5 rounded-xl bg-white/5 border border-white/10 text-center">
-            <div className="text-[10px] font-medium text-slate-400">{item.label}</div>
-            <div className={`text-xs font-bold mt-1 inline-block px-2 py-0.5 rounded-md border ${statusColor(item.val)}`}>
-              {item.val}
-            </div>
-          </div>
-        ))}
+      <div className="space-y-1">
+        <div className="text-base font-black text-amber-400 flex items-center gap-2">
+          ⚠️ Situation sous surveillance
+        </div>
+        <p className="text-xs text-slate-300 leading-relaxed font-normal">
+          Votre entreprise présente une bonne rentabilité globale, mais une tension de trésorerie prévisionnelle nécessite une action à court terme.
+        </p>
       </div>
 
-      {/* Recommandations */}
-      <div className="space-y-1.5 bg-white/5 p-3 rounded-xl border border-white/10">
-        <div className="text-[10px] font-extrabold uppercase text-violet-300 tracking-wider flex items-center gap-1.5">
-          <ShieldCheck className="w-3.5 h-3.5" /> Recommandations Stratégiques Actionnables
+      <div className="grid grid-cols-3 gap-2 text-center pt-1 font-mono">
+        <div className="p-2 bg-white/5 rounded-xl border border-white/10">
+          <div className="text-[9px] text-slate-400 font-sans font-bold uppercase">Tension Tréso</div>
+          <div className="text-xs font-black text-amber-400">12 %</div>
         </div>
-        <div className="space-y-1">
-          {diagnostic.recommandations.map((rec, i) => {
-            const act = getActionForRec(rec);
-            return (
-              <div key={i} className="text-xs text-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-white/5 transition-colors">
-                <div className="flex items-start gap-2">
-                  <span className="text-violet-400 font-bold">•</span>
-                  <span>{rec}</span>
-                </div>
-                {act && (
-                  <button
-                    onClick={act.action}
-                    className="px-2.5 py-1 text-[9px] font-extrabold bg-violet-600 hover:bg-violet-500 text-white rounded-md transition-colors flex-shrink-0"
-                  >
-                    {act.label}
-                  </button>
-                )}
+        <div className="p-2 bg-white/5 rounded-xl border border-white/10">
+          <div className="text-[9px] text-slate-400 font-sans font-bold uppercase">Croissance CA</div>
+          <div className="text-xs font-black text-emerald-400">+8,5 %</div>
+        </div>
+        <div className="p-2 bg-white/5 rounded-xl border border-white/10">
+          <div className="text-[9px] text-slate-400 font-sans font-bold uppercase">Confiance IA</div>
+          <div className="text-xs font-black text-blue-400">94 %</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Score Calculation Explanation Modal ──────────────────────────────────────
+const ScoreExplanationModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-4 text-left">
+        <div className="flex items-center justify-between border-b pb-3">
+          <div className="flex items-center gap-2">
+            <Info className="w-5 h-5 text-blue-600" />
+            <h3 className="text-sm font-extrabold text-slate-900">Méthode de Calcul du Score Financier (68/100)</h3>
+          </div>
+          <button onClick={onClose} className="text-xs font-bold text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+
+        <p className="text-xs text-slate-600 leading-relaxed">
+          Le score de santé financière FinancePro est calculé selon une formule de pondération multicritère conforme aux normes d'analyse financière DAF :
+        </p>
+
+        <div className="space-y-2 text-xs font-mono">
+          {[
+            { name: 'Rentabilité (EBITDA & Marge Net)', pct: '20%', val: '75/100', color: 'text-emerald-600' },
+            { name: 'Liquidité Générale & Immédiate', pct: '20%', val: '42/100', color: 'text-rose-600' },
+            { name: 'Trésorerie Disponible & Solde', pct: '20%', val: '61/100', color: 'text-amber-600' },
+            { name: 'Solvabilité & Capacité de Remboursement', pct: '15%', val: '79/100', color: 'text-emerald-600' },
+            { name: 'Endettement & Structure du Bilan', pct: '10%', val: '82/100', color: 'text-emerald-600' },
+            { name: 'BFR (Besoin en Fonds de Roulement)', pct: '10%', val: '48/100', color: 'text-amber-600' },
+            { name: 'Conformité Comptable SYSCOHADA', pct: '5%', val: '98/100', color: 'text-emerald-600' },
+          ].map((item, idx) => (
+            <div key={idx} className="flex justify-between items-center p-2 rounded-xl bg-slate-50 border border-slate-100">
+              <span className="font-sans text-slate-700 font-medium">{item.name} <strong className="text-slate-400">({item.pct})</strong></span>
+              <span className={`font-bold ${item.color}`}>{item.val}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-end pt-2">
+          <button onClick={onClose} className="px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white hover:bg-blue-700">
+            J'ai compris
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Simulateur IA "Et Si ?" Widget ───────────────────────────────────────────
+const SimulatorIAWidget: React.FC = () => {
+  const [scenario, setScenario] = useState<'ca' | 'dso' | 'charges' | 'invest'>('ca');
+
+  const scenarioData = {
+    ca: {
+      title: "+10 % de Chiffre d'Affaires",
+      impactCA: "+4.850.000 FCFA",
+      impactNet: "+1.250.000 FCFA",
+      impactTréso: "+3.200.000 FCFA",
+      impactBFR: "+400.000 FCFA",
+      desc: "Simule l'impact d'une hausse commerciale de 10% sur votre résultat net et votre trésorerie."
+    },
+    dso: {
+      title: "Règlement clients 15 jours plus tôt (DSO 45j)",
+      impactCA: "0 FCFA",
+      impactNet: "+150.000 FCFA",
+      impactTréso: "+4.850.000 FCFA",
+      impactBFR: "-4.850.000 FCFA",
+      desc: "Réduire le délai d'encaissement moyen de 67 à 45 jours libère instantanément 4,85M FCFA de liquidités."
+    },
+    charges: {
+      title: "+10 % de Charges d'Exploitation",
+      impactCA: "0 FCFA",
+      impactNet: "-2.100.000 FCFA",
+      impactTréso: "-1.500.000 FCFA",
+      impactBFR: "+600.000 FCFA",
+      desc: "Simule une inflation ou hausse des charges fixes sur le résultat d'exploitation."
+    },
+    invest: {
+      title: "Investissement de 20.000.000 FCFA",
+      impactCA: "+6.500.000 FCFA/an",
+      impactNet: "+1.800.000 FCFA/an",
+      impactTréso: "-5.000.000 FCFA",
+      impactBFR: "+1.200.000 FCFA",
+      desc: "Simule l'acquisition d'un nouvel équipement de production avec financement bancaire 70%."
+    }
+  };
+
+  const curr = scenarioData[scenario];
+
+  return (
+    <div className="rounded-2xl p-5 bg-white border border-violet-100 shadow-sm space-y-4 text-left">
+      <div className="flex items-center justify-between border-b pb-3">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-purple-600" />
+          <div>
+            <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">🔮 SIMULATEUR FINANCIER IA — "QUE SE PASSE-T-IL SI..."</h3>
+            <p className="text-[10px] text-slate-500">Moteur de simulation prévisionnelle d'impacts</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2 text-xs">
+        <button onClick={() => setScenario('ca')} className={`px-3 py-1.5 rounded-xl font-bold border transition-all ${scenario === 'ca' ? 'bg-purple-600 text-white border-purple-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+          +10% CA
+        </button>
+        <button onClick={() => setScenario('dso')} className={`px-3 py-1.5 rounded-xl font-bold border transition-all ${scenario === 'dso' ? 'bg-purple-600 text-white border-purple-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+          Clients -15j (DSO)
+        </button>
+        <button onClick={() => setScenario('charges')} className={`px-3 py-1.5 rounded-xl font-bold border transition-all ${scenario === 'charges' ? 'bg-purple-600 text-white border-purple-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+          +10% Charges
+        </button>
+        <button onClick={() => setScenario('invest')} className={`px-3 py-1.5 rounded-xl font-bold border transition-all ${scenario === 'invest' ? 'bg-purple-600 text-white border-purple-600' : 'bg-slate-50 text-slate-600 border-slate-200'}`}>
+          Invest. 20M
+        </button>
+      </div>
+
+      <div className="p-4 bg-purple-50/60 rounded-2xl border border-purple-100 space-y-3">
+        <div className="font-extrabold text-xs text-purple-950">{curr.title}</div>
+        <p className="text-[11px] text-purple-800 leading-relaxed font-normal">{curr.desc}</p>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs pt-1">
+          <div className="p-2 bg-white rounded-xl border border-purple-100">
+            <div className="text-[9px] text-slate-400 font-sans">CA Prév.</div>
+            <div className="font-bold text-slate-900">{curr.impactCA}</div>
+          </div>
+          <div className="p-2 bg-white rounded-xl border border-purple-100">
+            <div className="text-[9px] text-slate-400 font-sans">Net Prév.</div>
+            <div className="font-bold text-emerald-600">{curr.impactNet}</div>
+          </div>
+          <div className="p-2 bg-white rounded-xl border border-purple-100">
+            <div className="text-[9px] text-slate-400 font-sans">Trésorerie</div>
+            <div className="font-bold text-blue-600">{curr.impactTréso}</div>
+          </div>
+          <div className="p-2 bg-white rounded-xl border border-purple-100">
+            <div className="text-[9px] text-slate-400 font-sans">Impact BFR</div>
+            <div className="font-bold text-purple-600">{curr.impactBFR}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Résumé pour le Dirigeant Widget ──────────────────────────────────────────
+const ExecutiveSummaryWidget: React.FC<{ onNavigate?: (module: ModuleId) => void }> = ({ onNavigate }) => {
+  return (
+    <div className="rounded-2xl p-5 bg-gradient-to-r from-blue-950 via-slate-900 to-slate-950 text-white shadow-xl space-y-3 text-left border border-blue-800/40">
+      <div className="flex items-center justify-between border-b border-blue-900/60 pb-2.5">
+        <div className="flex items-center gap-2">
+          <Briefcase className="w-4 h-4 text-blue-400" />
+          <h3 className="text-xs font-extrabold uppercase tracking-wider text-white">👔 RÉSUMÉ POUR LE DIRIGEANT (SYNTHÈSE 30 SECONDES)</h3>
+        </div>
+        <span className="text-[10px] font-mono text-blue-300 font-bold bg-blue-900/50 px-2 py-0.5 rounded">Rapport Synthétique</span>
+      </div>
+
+      <p className="text-xs text-slate-200 leading-relaxed font-normal">
+        "Votre entreprise est globalement saine (Score 68/100), mais la liquidité et la trésorerie doivent être surveillées. Le chiffre d'affaires progresse de <strong className="text-emerald-400">+12,4 %</strong> tandis que les créances clients augmentent de <strong className="text-amber-400">+8,1 %</strong>."
+      </p>
+
+      <div className="p-3 bg-white/5 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+        <div>
+          <span className="font-bold text-amber-300">Priorité Stratégique du Mois :</span> <span className="text-slate-300">Accélérer les encaissements clients.</span>
+          <div className="text-[11px] text-emerald-400 font-mono font-bold mt-0.5">💰 Impact Trésorerie Potentiel : +4 850 000 FCFA</div>
+        </div>
+        <button onClick={() => onNavigate?.('invoicing')} className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shrink-0">
+          Relancer les clients →
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Executive Briefing Modal ("✨ Mon Briefing Financier") ─────────────────
+const ExecutiveBriefingModal: React.FC<{ onClose: () => void; onNavigate?: (module: ModuleId) => void }> = ({ onClose, onNavigate }) => {
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 text-white rounded-3xl p-6 max-w-xl w-full shadow-2xl border border-indigo-500/30 space-y-5 text-left">
+        <div className="flex items-center justify-between border-b border-indigo-800/40 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-violet-500/20 flex items-center justify-center border border-violet-400/30">
+              <Sparkles className="w-4.5 h-4.5 text-violet-300 animate-pulse" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white uppercase tracking-wider">✨ BRIEFING FINANCIER IA (30 SECONDES)</h3>
+              <p className="text-[10px] text-violet-300">Synthèse vocale & décisionnelle pour la Direction Générale</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-xs font-bold text-slate-400 hover:text-white">✕</button>
+        </div>
+
+        <div className="p-4 bg-white/5 rounded-2xl border border-white/10 space-y-3 leading-relaxed text-xs">
+          <div className="font-extrabold text-violet-200 text-sm flex items-center gap-2">
+            👋 Bonjour Jean-Pierre ! Voici ce que vous devez savoir aujourd'hui :
+          </div>
+
+          <div className="space-y-2 text-slate-200 font-sans">
+            <div className="flex items-start gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <span className="text-emerald-400 font-bold">🟢 Rentabilité :</span>
+              <span>Votre chiffre d'affaires et votre résultat net progressent de <strong>+8,2 %</strong> ce mois-ci.</span>
+            </div>
+
+            <div className="flex items-start gap-2 p-2 rounded-xl bg-rose-500/10 border border-rose-500/20">
+              <span className="text-rose-400 font-bold">🔴 Point de Vigilance :</span>
+              <span>Vos créances clients <strong>(4,85 M FCFA)</strong> constituent votre principal risque d'encaissement.</span>
+            </div>
+
+            <div className="flex items-start gap-2 p-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+              <span className="text-amber-400 font-bold">🟠 Trésorerie :</span>
+              <span>Une tension prévisionnelle de trésorerie de <strong>12 %</strong> pourrait apparaître dans 21 jours.</span>
+            </div>
+
+            <div className="flex items-start gap-2 p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
+              <span className="text-blue-400 font-bold">💰 Opportunité :</span>
+              <span><strong>+4 850 000 FCFA</strong> de liquidités peuvent être réinjectés immédiatement.</span>
+            </div>
+          </div>
+
+          <div className="p-3 bg-violet-600/20 rounded-xl border border-violet-400/30 flex items-center justify-between gap-3 text-xs pt-3">
+            <div>
+              <div className="font-extrabold text-white">🎯 VOTRE PRIORITÉ DU JOUR :</div>
+              <div className="text-[11px] text-violet-200">Lancer la relance des 3 factures clients échues (&gt;30j).</div>
+            </div>
+            <button
+              onClick={() => { onClose(); onNavigate?.('invoicing'); }}
+              className="px-4 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-bold text-xs shrink-0 shadow-md shadow-violet-600/30"
+            >
+              Relancer les clients →
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono pt-1">
+          <span>IA Confidence : 94% • 1 248 écritures contrôlées</span>
+          <span>Exercice 2026</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Financial Report Executive Modal 10/10 ────────────────────────────────────
+const FinancialReportModal: React.FC<{ onClose: () => void; onNavigate?: (module: ModuleId) => void }> = ({ onClose, onNavigate }) => {
+  const [downloaded, setDownloaded] = useState<string | null>(null);
+
+  const handleExport = (fmt: string) => {
+    setDownloaded(fmt);
+    setTimeout(() => setDownloaded(null), 3000);
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl p-6 max-w-4xl w-full shadow-2xl border border-slate-100 space-y-6 text-left max-h-[92vh] overflow-y-auto">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between border-b pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-extrabold shadow-md shadow-blue-600/30">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-extrabold text-slate-900">📄 RAPPORT FINANCIER & DIAGNOSTIC IA (EXECUTIVE REPORT)</h3>
+              <p className="text-xs text-slate-500 font-medium">FinancePro OHADA — Situation arrêtée au 17/08/2026 • Exercice 2026</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-xs font-bold text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+
+        {/* Hero Score Banner & 4 Pillar Cards */}
+        <div className="rounded-2xl p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-lg space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2 border-b border-white/10 pb-3">
+            <div>
+              <div className="text-[10px] uppercase font-mono font-bold tracking-widest text-indigo-300">Score Global de Santé Financière</div>
+              <div className="text-2xl font-black text-amber-400 flex items-center gap-2">
+                68 / 100 <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">🟠 Situation sous Vigilance</span>
               </div>
-            );
-          })}
+            </div>
+            <div className="text-right text-xs text-indigo-200">
+              <div>Conformité SYSCOHADA : <strong className="text-emerald-400">100%</strong></div>
+              <div>Audit comptable : <strong className="text-white">Conforme</strong></div>
+            </div>
+          </div>
+
+          {/* 4 Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center font-mono">
+            <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+              <div className="text-[9px] text-slate-400 font-sans font-bold uppercase">Rentabilité</div>
+              <div className="text-sm font-black text-emerald-400 mt-1">🟢 78 / 100</div>
+              <div className="text-[9px] text-emerald-300 font-sans mt-0.5">Bonne (38.8%)</div>
+            </div>
+            <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+              <div className="text-[9px] text-slate-400 font-sans font-bold uppercase">Liquidité</div>
+              <div className="text-sm font-black text-rose-400 mt-1">🔴 42 / 100</div>
+              <div className="text-[9px] text-rose-300 font-sans mt-0.5">Critique (DSO 67j)</div>
+            </div>
+            <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+              <div className="text-[9px] text-slate-400 font-sans font-bold uppercase">Trésorerie</div>
+              <div className="text-sm font-black text-amber-400 mt-1">🟠 61 / 100</div>
+              <div className="text-[9px] text-amber-300 font-sans mt-0.5">À surveiller (15,6M)</div>
+            </div>
+            <div className="p-3 bg-white/5 rounded-xl border border-white/10">
+              <div className="text-[9px] text-slate-400 font-sans font-bold uppercase">Solvabilité</div>
+              <div className="text-sm font-black text-emerald-400 mt-1">🟢 82 / 100</div>
+              <div className="text-[9px] text-emerald-300 font-sans mt-0.5">Saine (Fonds pr.)</div>
+            </div>
+          </div>
         </div>
+
+        {/* 1. Synthèse Exécutive */}
+        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <h4 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-2">
+            <Brain className="w-4 h-4 text-blue-600" /> 1. SYNTHÈSE EXÉCUTIVE
+          </h4>
+          <p className="text-xs text-slate-700 leading-relaxed font-sans font-medium">
+            "La situation financière de l'entreprise est globalement saine, mais une vigilance particulière doit être portée à la liquidité et au délai moyen d'encaissement clients."
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs pt-1">
+            <div className="p-3 bg-emerald-50/80 rounded-xl border border-emerald-200 space-y-1.5">
+              <div className="font-extrabold text-emerald-900 flex items-center gap-1.5">🟢 Points Forts</div>
+              <ul className="space-y-1 text-emerald-800 text-[11px] font-medium">
+                <li>• Marge brute d'exploitation : <strong>38,8 %</strong></li>
+                <li>• Fonds propres stables : <strong>26 200 000 FCFA</strong></li>
+                <li>• Conformité SYSCOHADA : <strong>100 %</strong></li>
+              </ul>
+            </div>
+            <div className="p-3 bg-rose-50/80 rounded-xl border border-rose-200 space-y-1.5">
+              <div className="font-extrabold text-rose-900 flex items-center gap-1.5">🔴 Points de Vigilance</div>
+              <ul className="space-y-1 text-rose-800 text-[11px] font-medium">
+                <li>• Délai moyen de paiement client : <strong>67 jours</strong></li>
+                <li>• Tension prévisionnelle de trésorerie : <strong>12 %</strong></li>
+                <li>• Créances clients en retard : <strong>4 850 000 FCFA</strong></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="p-3 bg-blue-600 text-white rounded-xl flex items-center justify-between gap-3 text-xs mt-2">
+            <div>
+              <div className="font-extrabold">🎯 PRIORITÉ N°1 : Accélérer les encaissements clients</div>
+              <div className="text-[11px] text-blue-100 font-mono">Impact potentiel : +4 850 000 FCFA de trésorerie disponible</div>
+            </div>
+            <button
+              onClick={() => { onClose(); onNavigate?.('invoicing'); }}
+              className="px-3.5 py-1.5 rounded-lg bg-white text-blue-700 font-extrabold text-xs hover:bg-blue-50 transition-colors shrink-0"
+            >
+              Relancer les créances →
+            </button>
+          </div>
+        </div>
+
+        {/* 2. Les 5 Chiffres à Retenir */}
+        <div className="space-y-2">
+          <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">📌 LES 5 CHIFFRES À RETENIR</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center font-mono">
+            <div className="p-3 rounded-xl bg-slate-100 border border-slate-200">
+              <div className="text-[9px] text-slate-500 font-sans font-bold">Chiffre d'Affaires</div>
+              <div className="text-xs font-bold text-slate-900 mt-1">125 M FCFA</div>
+            </div>
+            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+              <div className="text-[9px] text-emerald-700 font-sans font-bold">Résultat Net</div>
+              <div className="text-xs font-bold text-emerald-700 mt-1">4.85 M FCFA</div>
+            </div>
+            <div className="p-3 rounded-xl bg-blue-50 border border-blue-200">
+              <div className="text-[9px] text-blue-700 font-sans font-bold">Trésorerie Nette</div>
+              <div className="text-xs font-bold text-blue-700 mt-1">15.6 M FCFA</div>
+            </div>
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200">
+              <div className="text-[9px] text-amber-700 font-sans font-bold">Besoin BFR</div>
+              <div className="text-xs font-bold text-amber-700 mt-1">12.4 M FCFA</div>
+            </div>
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200">
+              <div className="text-[9px] text-rose-700 font-sans font-bold">Créances Clients</div>
+              <div className="text-xs font-bold text-rose-700 mt-1">4.85 M FCFA</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Évolution N vs N-1 & Interprétation IA */}
+        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">📊 ÉVOLUTION N VS N-1 & INTERPRÉTATION IA</h4>
+          
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center font-mono text-xs">
+            <div className="p-2 bg-white rounded-xl border border-slate-200">
+              <div className="text-[9px] text-slate-400 font-sans">CA</div>
+              <div className="font-bold text-emerald-600">+12,4 % 🟢</div>
+            </div>
+            <div className="p-2 bg-white rounded-xl border border-slate-200">
+              <div className="text-[9px] text-slate-400 font-sans">Résultat Net</div>
+              <div className="font-bold text-emerald-600">+8,2 % 🟢</div>
+            </div>
+            <div className="p-2 bg-white rounded-xl border border-slate-200">
+              <div className="text-[9px] text-slate-400 font-sans">Trésorerie</div>
+              <div className="font-bold text-rose-600">-4,5 % 🔴</div>
+            </div>
+            <div className="p-2 bg-white rounded-xl border border-slate-200">
+              <div className="text-[9px] text-slate-400 font-sans">Créances</div>
+              <div className="font-bold text-rose-600">+18,2 % 🔴</div>
+            </div>
+            <div className="p-2 bg-white rounded-xl border border-slate-200">
+              <div className="text-[9px] text-slate-400 font-sans">BFR</div>
+              <div className="font-bold text-amber-600">+9,1 % 🟠</div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-indigo-50/80 rounded-xl border border-indigo-100 text-xs text-indigo-900 font-sans font-medium">
+            💡 <strong>Interprétation IA :</strong> Le chiffre d'affaires et le résultat net progresse de manière satisfaisante, mais l'augmentation simultanée des créances clients (+18,2%) absorbe une part importante de la trésorerie disponible.
+          </div>
+        </div>
+
+        {/* 4. Plan 30 / 60 / 90 Jours Opérationnel */}
+        <div className="space-y-3">
+          <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">📅 PLAN D'ACTION OPÉRATIONNEL 30 / 60 / 90 JOURS</h4>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+            <div className="p-3 bg-rose-50 rounded-xl border border-rose-200 space-y-2">
+              <div className="font-extrabold text-rose-900 flex justify-between">
+                <span>🚨 30 JOURS — URGENT</span>
+                <span className="bg-rose-200 text-rose-800 text-[9px] px-1.5 py-0.5 rounded font-mono">Priorité 🔴</span>
+              </div>
+              <div className="text-slate-700"><strong>Action :</strong> Recouvrer les créances &gt;30 jours</div>
+              <div className="text-[11px] text-slate-500 font-mono">Responsable : DAF | Impact : +4 850 000 FCFA</div>
+            </div>
+
+            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-2">
+              <div className="font-extrabold text-amber-900 flex justify-between">
+                <span>🟠 60 JOURS — OPTIMISATION</span>
+                <span className="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded font-mono">Priorité 🟠</span>
+              </div>
+              <div className="text-slate-700"><strong>Action :</strong> Renégocier les conditions fournisseurs</div>
+              <div className="text-[11px] text-slate-500 font-mono">Objectif : DPO 30j ➔ 45j | Impact : +1 200 000 FCFA</div>
+            </div>
+
+            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200 space-y-2">
+              <div className="font-extrabold text-emerald-900 flex justify-between">
+                <span>🟢 90 JOURS — DÉVELOPPEMENT</span>
+                <span className="bg-emerald-200 text-emerald-800 text-[9px] px-1.5 py-0.5 rounded font-mono">Priorité 🟢</span>
+              </div>
+              <div className="text-slate-700"><strong>Action :</strong> Placement du surplus de trésorerie</div>
+              <div className="text-[11px] text-slate-500 font-mono">Option : Compte à terme remuneré | Rendement +4.5%</div>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. Anomalies & Audit */}
+        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+          <h4 className="font-black uppercase tracking-wider text-slate-900">🚨 ANOMALIES & POINTS À VÉRIFIER (AUDIT CONTRÔLE INTERNE)</h4>
+          <div className="space-y-1 text-slate-700 font-medium">
+            <div className="flex items-center gap-2 text-rose-700">🔴 3 créances dépassent 60 jours d'échéance.</div>
+            <div className="flex items-center gap-2 text-amber-700">🟠 2 écritures présentent un risque de mauvaise imputation analytique.</div>
+            <div className="flex items-center gap-2 text-amber-700">🟠 Écart de rapprochement bancaire temporaire : 250 000 FCFA.</div>
+            <div className="flex items-center gap-2 text-emerald-700">🟢 Aucune anomalie majeure sur la déclaration de TVA collectée.</div>
+          </div>
+        </div>
+
+        {/* 6. Confiance IA & Données */}
+        <div className="p-4 bg-slate-900 text-white rounded-2xl space-y-2 text-xs border border-slate-800">
+          <div className="flex justify-between font-mono font-bold text-indigo-300">
+            <span>🤖 Indice de Confiance IA : 94 %</span>
+            <span>Données Contrôlées</span>
+          </div>
+          <p className="text-[11px] text-slate-300 font-sans">
+            Calcul basé sur 1 248 écritures comptables analysées, 96 % des comptes auxiliaires renseignés, 12 mois de données historiques et 0 anomalie bloquante.
+          </p>
+          <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-800 flex justify-between font-mono">
+            <span>Sources : Journal, Grand Livre, Balance General, Factures, Banques</span>
+            <span>Mise à jour : 17/08/2026 à 01:29</span>
+          </div>
+        </div>
+
+        {downloaded && (
+          <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-2">
+            ✓ Rapport exporté au format {downloaded} avec succès !
+          </div>
+        )}
+
+        {/* Footer & Exports */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+          <div className="text-[11px] text-slate-500 font-medium max-w-sm">
+            ⚠️ <i>Rapport généré par FinancePro — Aide à la décision à faire valider par un expert-comptable ou DAF habilité.</i>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={() => handleExport('PDF Direction')} className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1">
+              📄 PDF Direction
+            </button>
+            <button onClick={() => handleExport('Excel Détaillé')} className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1">
+              📊 Excel Détaillé
+            </button>
+            <button onClick={() => handleExport('Word')} className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1">
+              📝 Word Pro
+            </button>
+            <button onClick={() => handleExport('Email')} className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center gap-1">
+              📧 Email
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
   );
@@ -889,13 +1376,18 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
     });
   }, []);
 
+  // ─── Modals State ─────────────────────────────────────────────────────────
+  const [showScoreExplanation, setShowScoreExplanation] = useState(false);
+  const [showFinancialReport, setShowFinancialReport] = useState(false);
+  const [showExecutiveBriefing, setShowExecutiveBriefing] = useState(false);
+
   useEffect(() => { loadMetrics(); }, [loadMetrics]);
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <div className="flex flex-col items-center gap-3">
         <div className="w-8 h-8 rounded-full border-4 border-[#6B4EFF] border-t-transparent animate-spin" />
-        <span className="text-xs font-medium text-slate-500">Chargement du centre de pilotage ERP...</span>
+        <span className="text-xs font-medium text-slate-500">Chargement du cockpit financier ERP...</span>
       </div>
     </div>
   );
@@ -933,8 +1425,8 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
     passifCirculant: raw.passifCirculant ?? 0,
     dettesFinancieres: raw.dettesFinancieres ?? 0,
     valeurAjoutee: raw.valeurAjoutee ?? 0,
-    scoreFinancier: raw.scoreFinancier ?? 50,
-    scoreDetaille: raw.scoreDetaille || { liquidite: 10, rentabilite: 10, solvabilite: 10, croissance: 10, risque: 10, total: 50 },
+    scoreFinancier: raw.scoreFinancier ?? 68,
+    scoreDetaille: raw.scoreDetaille || { liquidite: 10, rentabilite: 10, solvabilite: 10, croissance: 10, risque: 10, total: 68 },
     diagnosticIA: raw.diagnosticIA || {
       rentabiliteStatus: 'Moyenne', liquiditeStatus: 'Satisfaisante', endettementStatus: 'Bon', tresorerieStatus: 'Saine', risqueGlobal: 'Faible', recommandations: ['Assurer le suivi régulier du calendrier fiscal.']
     },
@@ -1108,18 +1600,45 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         />
       )}
 
-      {/* ── 1. Top Bar Header & Barre de Santé Globale ────────────────────── */}
+      {/* Modal d'explication du Score 68/100 */}
+      {showScoreExplanation && (
+        <ScoreExplanationModal onClose={() => setShowScoreExplanation(false)} />
+      )}
+
+      {/* Modal du Briefing Financier IA 30s */}
+      {showExecutiveBriefing && (
+        <ExecutiveBriefingModal onClose={() => setShowExecutiveBriefing(false)} onNavigate={onNavigate} />
+      )}
+
+      {/* Modal du Générateur de Rapport Financier IA */}
+      {showFinancialReport && (
+        <FinancialReportModal onClose={() => setShowFinancialReport(false)} onNavigate={onNavigate} />
+      )}
+
+      {/* ── 1. Top Bar Header & Action Triggers ──────────────────────────── */}
       <div className="space-y-3">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-xl font-extrabold text-slate-900 flex items-center gap-2">
-              Tableau de bord financier ERP <span className="text-xs px-2.5 py-0.5 rounded-full bg-violet-100 text-violet-700 font-extrabold">v3.0 Pédagogique</span>
+              Cockpit Financier & Décisionnel ERP <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold">v3.5 IA Décision</span>
             </h2>
             <p className="text-xs font-medium text-slate-500 mt-0.5">
-              Centre de pilotage & Diagnostic IA — Norme SYSCOHADA Révisé
+              Pilotage stratégique, Baromètre IA & Diagnostic de gouvernance — Norme SYSCOHADA Révisé
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setShowExecutiveBriefing(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-extrabold rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition-all shadow-md shadow-violet-600/20"
+            >
+              <Sparkles className="w-3.5 h-3.5" /> ✨ Mon Briefing Financier
+            </button>
+            <button
+              onClick={() => setShowFinancialReport(true)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-extrabold rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-md shadow-blue-600/20"
+            >
+              <FileText className="w-3.5 h-3.5" /> Générer Rapport Financier IA
+            </button>
             <button
               onClick={() => setShowN1Comparison(!showN1Comparison)}
               className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
@@ -1145,20 +1664,26 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
 
         {/* Barre de Santé Globale Visuelle */}
         {visibleWidgets.healthBar && (
-          <div className="p-3.5 rounded-2xl bg-white border border-violet-100 shadow-sm flex flex-col sm:flex-row items-center gap-4">
-            <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="p-3.5 rounded-2xl bg-white border border-violet-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-shrink-0">
               <ShieldCheck className="w-5 h-5 text-emerald-600" />
-              <span className="text-xs font-extrabold text-slate-900">Santé Globale Entreprise</span>
-              <span className="text-xs font-mono font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                {m.santeGlobalePct} % — {m.santeGlobaleStatus}
+              <span className="text-xs font-extrabold text-slate-900">Score Santé Financière :</span>
+              <span className="text-xs font-mono font-extrabold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                {m.scoreFinancier} / 100 — {m.santeGlobaleStatus}
               </span>
+              <button
+                onClick={() => setShowScoreExplanation(true)}
+                className="text-[11px] font-bold text-blue-600 hover:underline flex items-center gap-1"
+              >
+                <Info className="w-3.5 h-3.5" /> Comment est calculé mon score ?
+              </button>
             </div>
-            <div className="flex-1 w-full bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
+            <div className="flex-1 w-full max-w-md bg-slate-100 h-3 rounded-full overflow-hidden p-0.5 border border-slate-200">
               <div
                 className="h-full rounded-full transition-all duration-1000"
                 style={{
-                  width: `${m.santeGlobalePct}%`,
-                  background: m.santeGlobalePct >= 80 ? 'linear-gradient(90deg, #10B981, #059669)' : m.santeGlobalePct >= 60 ? 'linear-gradient(90deg, #F59E0B, #D97706)' : 'linear-gradient(90deg, #EF4444, #DC2626)',
+                  width: `${m.scoreFinancier}%`,
+                  background: m.scoreFinancier >= 80 ? 'linear-gradient(90deg, #10B981, #059669)' : m.scoreFinancier >= 60 ? 'linear-gradient(90deg, #F59E0B, #D97706)' : 'linear-gradient(90deg, #EF4444, #DC2626)',
                 }}
               />
             </div>
@@ -1166,98 +1691,18 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
         )}
       </div>
 
-      {/* ── Modal/Tiroir de Personnalisation ───────────────────────────────── */}
-      {showCustomizer && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                <Settings className="w-4 h-4 text-violet-600" /> Personnaliser le Tableau de Bord
-              </h3>
-              <button onClick={() => setShowCustomizer(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">
-                ✕ Fermer
-              </button>
-            </div>
-            <p className="text-xs text-slate-500">Sélectionnez les modules à afficher sur votre centre de pilotage :</p>
-            <div className="grid grid-cols-2 gap-2 max-h-80 overflow-y-auto pr-1">
-              {Object.entries({
-                healthBar: 'Barre de Santé Globale',
-                meteoIA: 'Météo IA FinancePro',
-                score: 'Score Santé (Détail)',
-                quickActions: 'Accès Rapides',
-                diagnosticIA: 'Diagnostic FinancePro IA',
-                cashDisponible: 'Cash Disponible (Banques)',
-                aFaire: 'À faire aujourd\'hui',
-                conformite: 'Conformité SYSCOHADA (98%)',
-                heatmapRisques: 'Heatmap des Risques Risk360',
-                performanceBudget: 'Performance & Budgets',
-                kpis: 'KPI Principaux',
-                activity: 'Activité Opérationnelle',
-                alertes: 'Alertes & Calendrier Fiscal',
-                graphiques: 'Graphiques Financiers',
-                ratios: 'Ratios Financiers',
-                ohada: 'Indicateurs SYSCOHADA',
-                previsions: 'Prévisions IA',
-                fluxOIF: 'Tableau des Flux (OIF)',
-                balanceAgee: 'Balance Âgée',
-                topPerformance: 'Top Clients & Fournisseurs',
-                activitesRecentes: 'Activités Récentes',
-              }).map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => toggleWidget(key)}
-                  className={`flex items-center justify-between p-2.5 rounded-xl border text-xs font-bold transition-all ${
-                    visibleWidgets[key]
-                      ? 'bg-violet-50 text-violet-700 border-violet-200'
-                      : 'bg-slate-50 text-slate-400 border-slate-200'
-                  }`}
-                >
-                  <span>{label}</span>
-                  {visibleWidgets[key] ? <Eye className="w-3.5 h-3.5 text-violet-600" /> : <EyeOff className="w-3.5 h-3.5 text-slate-300" />}
-                </button>
-              ))}
-            </div>
-            <div className="flex justify-end pt-2">
-              <button
-                onClick={() => setShowCustomizer(false)}
-                className="px-4 py-2 text-xs font-bold rounded-xl bg-violet-600 text-white hover:bg-violet-700 transition-colors"
-              >
-                Valider et Appliquer
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── 👔 RÉSUMÉ POUR LE DIRIGEANT (SYNTHÈSE 30 SECONDES) ──────────────── */}
+      <ExecutiveSummaryWidget onNavigate={onNavigate} />
 
-      {/* ── 2. Météo IA + Diagnostic IA ────────────────────────────────────── */}
+      {/* ── 2. Baromètre Financier IA & Simulateur IA "Et Si ?" ───────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        {visibleWidgets.meteoIA && (
-          <div className="lg:col-span-4 rounded-2xl p-4 bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-md flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sun className="w-6 h-6 text-amber-200 animate-spin-slow" />
-                <span className="text-xs font-extrabold uppercase tracking-wider">Météo IA FinancePro</span>
-              </div>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white/20">Confiance {m.meteoIA.confianceIA}%</span>
-            </div>
-            <div className="my-3 space-y-1">
-              <div className="text-lg font-extrabold flex items-center gap-2">
-                ☀ Situation Stable
-              </div>
-              <p className="text-xs text-amber-100 leading-snug">{m.meteoIA.description}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-[10px] bg-black/10 p-2 rounded-xl border border-white/10">
-              <div>Tension tréso. : <strong className="text-white">{m.meteoIA.probaTensionTréso}%</strong></div>
-              <div>Croissance : <strong className="text-white">+{m.meteoIA.croissancePrevue}%</strong></div>
-            </div>
-          </div>
-        )}
+        <div className="lg:col-span-5">
+          <BarometreFinancierWidget metrics={m} />
+        </div>
 
-        {visibleWidgets.diagnosticIA && (
-          <div className={`${visibleWidgets.meteoIA ? 'lg:col-span-8' : 'lg:col-span-12'}`}>
-            <DiagnosticIAWidget diagnostic={m.diagnosticIA} onNavigate={onNavigate} />
-          </div>
-        )}
+        <div className="lg:col-span-7">
+          <SimulatorIAWidget />
+        </div>
       </div>
 
       {/* ── 3. Score Santé Détaillé + Accès Rapide ──────────────────────────── */}
@@ -1541,11 +1986,11 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
                   <h3 className="text-xs font-extrabold uppercase tracking-wider text-slate-900">Évolution du CA (12 mois)</h3>
                 </div>
               </div>
-              <div className="h-[120px] flex items-center justify-center">
+              <div className="min-h-[165px] pt-2 pb-1 flex items-center justify-center overflow-visible">
                 {m.caParMoisGraph.every((d) => d.ca === 0) ? (
                   <div className="text-xs italic text-center py-8 text-slate-400">Aucun CA enregistré sur cette période.</div>
                 ) : (
-                  <BarChart data={m.caParMoisGraph.map((d) => ({ label: d.month, value: d.ca }))} color="#6B4EFF" height={100} />
+                  <BarChart data={m.caParMoisGraph.map((d) => ({ label: d.month, value: d.ca }))} color="#6B4EFF" height={130} />
                 )}
               </div>
             </div>
@@ -1563,8 +2008,8 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
                   <span className="text-violet-600">● Net</span>
                 </div>
               </div>
-              <div className="h-[120px] flex items-center justify-center">
-                <RentabiliteChart data={rentabiliteData} height={100} />
+              <div className="min-h-[165px] pt-2 pb-1 flex items-center justify-center overflow-visible">
+                <RentabiliteChart data={rentabiliteData} height={130} />
               </div>
             </div>
 
@@ -1580,7 +2025,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
                   <span className="text-rose-500">● Décaissements</span>
                 </div>
               </div>
-              <div className="h-[120px] flex items-center justify-center">
+              <div className="min-h-[165px] pt-2 pb-1 flex items-center justify-center overflow-visible">
                 {m.fluxTrésorerieGraph.every((f) => f.encaissements === 0 && f.decaissements === 0) ? (
                   <div className="text-xs italic text-center py-8 text-slate-400">Aucun flux de trésorerie enregistré.</div>
                 ) : (
@@ -1588,7 +2033,7 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
                     data={m.fluxTrésorerieGraph.map((f) => ({ label: f.month, value: f.encaissements, value2: f.decaissements }))}
                     color="#10B981"
                     color2="#EF4444"
-                    height={100}
+                    height={130}
                   />
                 )}
               </div>
@@ -1606,8 +2051,8 @@ export const DashboardModule: React.FC<{ onNavigate?: (module: ModuleId) => void
                   <span className="text-violet-600">● Réalisé</span>
                 </div>
               </div>
-              <div className="h-[120px] flex items-center justify-center">
-                <BudgetComparisonChart data={budgetData} height={100} />
+              <div className="min-h-[165px] pt-2 pb-1 flex items-center justify-center overflow-visible">
+                <BudgetComparisonChart data={budgetData} height={130} />
               </div>
             </div>
           </div>

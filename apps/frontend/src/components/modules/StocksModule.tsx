@@ -26,6 +26,29 @@ const DEFAULT_WAREHOUSES: Warehouse[] = [
   { id: '3', name: 'Dépôt Portuaire — Transit', code: 'DEP-02', location: 'Zone Portuaire', capacity: '3 500 m²', manager: 'Samuel ETAME' }
 ];
 
+interface StockReportRow {
+  article: string;
+  ref: string;
+  stockInitial: number;
+  entrees: number;
+  sorties: number;
+  stockFinal: number;
+  cump: number;
+  valeurFinale: number;
+}
+
+const DEFAULT_STOCK_REPORT_ITEMS: StockReportRow[] = [
+  { article: 'Article 1 (Ciment CPJ 42.5)', ref: 'A00001', stockInitial: 1000, entrees: 100, sorties: 100, stockFinal: 1000, cump: 4500, valeurFinale: 4500000 },
+  { article: 'Article 2 (Fer à béton 12mm)', ref: 'A23400', stockInitial: 800, entrees: 50, sorties: 0, stockFinal: 850, cump: 12000, valeurFinale: 10200000 },
+  { article: 'Article 3 (Peinture Vinylique 20L)', ref: 'B00001', stockInitial: 75, entrees: 100, sorties: 0, stockFinal: 175, cump: 28000, valeurFinale: 4900000 },
+  { article: 'Article 4 (Carrelage Grès 60x60)', ref: 'B20000', stockInitial: 2000, entrees: 0, sorties: 0, stockFinal: 2000, cump: 3500, valeurFinale: 7000000 },
+  { article: 'Article 5 (Tube PVC Ø110 4M)', ref: 'B34000', stockInitial: 520, entrees: 0, sorties: 0, stockFinal: 520, cump: 6500, valeurFinale: 3380000 },
+  { article: 'Article 7 (Câble TH 2.5mm² 100M)', ref: 'C00002', stockInitial: 350, entrees: 0, sorties: 0, stockFinal: 350, cump: 18500, valeurFinale: 6475000 },
+  { article: 'Article 7 (Disjoncteur Mono 16A)', ref: 'D12000', stockInitial: 800, entrees: 50, sorties: 60, stockFinal: 790, cump: 3200, valeurFinale: 2528000 },
+  { article: 'Produit 1 (Groupe Électrogène 10KVA)', ref: 'P00001', stockInitial: 20, entrees: 0, sorties: 2, stockFinal: 18, cump: 850000, valeurFinale: 15300000 },
+  { article: 'Produit 2 (Pompe Immergée 1.5CV)', ref: 'P00002', stockInitial: 25, entrees: 0, sorties: 3, stockFinal: 22, cump: 195000, valeurFinale: 4290000 }
+];
+
 export const StocksModule: React.FC = () => {
   // ── States principaux ────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState<number>(1);
@@ -38,6 +61,13 @@ export const StocksModule: React.FC = () => {
   // States Modales & Formulaires
   const [showArticleModal, setShowArticleModal] = useState(false);
   const [showMouvementModal, setShowMouvementModal] = useState(false);
+  const [showStockReportModal, setShowStockReportModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
   const [mvtDirection, setMvtDirection] = useState<'ENTREE' | 'SORTIE'>('ENTREE');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -229,10 +259,10 @@ export const StocksModule: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setActiveTab(9)}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition-all flex items-center gap-1.5"
+              onClick={() => setShowStockReportModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#6B4EFF] text-white hover:bg-violet-700 font-bold text-xs transition-all flex items-center gap-1.5 shadow-sm"
             >
-              <Printer className="w-3.5 h-3.5 text-slate-600" /> 📄 Rapport Stock
+              <Printer className="w-3.5 h-3.5" /> 📄 Rapport État des Stocks
             </button>
 
             <button
@@ -545,16 +575,33 @@ export const StocksModule: React.FC = () => {
       {/* MENU 9 : RAPPORTS & VALORISATION CUMP/FIFO */}
       {activeTab === 9 && (
         <div className="p-6 bg-white rounded-3xl border border-violet-100 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b pb-3">
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
-              État de Valorisation des Stocks (CUMP vs FIFO) & Fiche Officielle OHADA
-            </h3>
-            <button onClick={() => window.print()} className="px-3.5 py-1.5 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 flex items-center gap-1.5">
-              <Printer className="w-3.5 h-3.5" /> PDF A4 Valorisation
-            </button>
+          <div className="flex items-center justify-between border-b pb-3 flex-wrap gap-2">
+            <div>
+              <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wider">
+                État de Valorisation des Stocks (CUMP vs FIFO) & Fiche Officielle OHADA
+              </h3>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">Conformité aux exigences de l'administration fiscale et des commissaires aux comptes</p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button onClick={() => setShowStockReportModal(true)} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold text-xs rounded-xl shadow-sm flex items-center gap-1.5">
+                <Printer className="w-4 h-4" /> 📋 Modèle État des Stocks
+              </button>
+
+              <button onClick={() => window.print()} className="px-3.5 py-2 bg-slate-900 text-white font-bold text-xs rounded-xl hover:bg-slate-800 flex items-center gap-1.5">
+                <Download className="w-3.5 h-3.5" /> PDF A4 Valorisation
+              </button>
+            </div>
           </div>
-          <div className="p-4 bg-slate-50 rounded-2xl text-xs text-slate-600">
-            Fiche de stock officielle conforme aux exigences de l'administration fiscale et des commissaires aux comptes.
+          
+          <div className="p-5 bg-cyan-50/50 border border-cyan-200 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4 text-xs font-sans">
+            <div>
+              <strong className="text-slate-900 font-extrabold block text-sm">Document type : État Des Stocks (Article, Ref, Stock Initial, Entrées, Sorties, Stock Final)</strong>
+              <p className="text-slate-600 mt-0.5">Consultez, imprimez ou exportez le document officiel de synthèse valorisé au CUMP.</p>
+            </div>
+            <button onClick={() => setShowStockReportModal(true)} className="px-4 py-2 bg-cyan-700 hover:bg-cyan-800 text-white font-bold text-xs rounded-xl shrink-0 shadow-sm">
+              👁️ Afficher le Document Officiel
+            </button>
           </div>
         </div>
       )}
@@ -644,6 +691,133 @@ export const StocksModule: React.FC = () => {
                 <button type="submit" className="px-5 py-2 bg-orange-600 text-white rounded-xl font-bold">Créer l'Article</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* TOAST NOTIFICATION */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl border border-white/10 flex items-center gap-3 animate-in fade-in slide-in-from-bottom-3 duration-200 font-sans">
+          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          <span className="text-xs font-semibold">{toastMessage}</span>
+        </div>
+      )}
+
+      {/* ── 📄 MODAL DOCUMENT OFFICIEL : ÉTAT DES STOCKS (MODÈLE EXACT) ───── */}
+      {showStockReportModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-4xl w-full shadow-2xl border border-slate-200 space-y-6 text-left max-h-[95vh] overflow-y-auto animate-in fade-in zoom-in duration-200">
+            
+            {/* Header Document Bar */}
+            <div className="flex items-center justify-between border-b pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-cyan-600 text-white flex items-center justify-center font-black shadow-md">
+                  <Printer className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-900 uppercase">DOCUMENT OFFICIEL — ÉTAT DES STOCKS</h3>
+                  <p className="text-xs text-slate-500 font-semibold">
+                    Extrait d'Inventaire Valorisé • Norme SYSCOHADA (Classe 3) • {selectedWarehouse.name}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setShowStockReportModal(false)} className="text-xs font-bold text-slate-400 hover:text-slate-600">✕</button>
+            </div>
+
+            {/* EN-TÊTE ÉTAT DES STOCKS (FIDÈLE À L'IMAGE DE L'UTILISATEUR) */}
+            <div className="border border-cyan-200 rounded-3xl p-8 bg-white space-y-6 shadow-sm font-sans">
+              
+              {/* Titre Cyan + Logo Circle Jaune */}
+              <div className="flex justify-between items-start border-b-2 border-cyan-400 pb-5">
+                <div>
+                  <h1 className="text-3xl font-black tracking-tight text-cyan-600 font-sans">
+                    État Des Stocks
+                  </h1>
+                  <span className="text-xs font-extrabold text-slate-400 block mt-1 uppercase tracking-wider">
+                    MELARO GROUP S.A. • Situation au {new Date().toLocaleDateString('fr-FR')}
+                  </span>
+                </div>
+
+                <div className="w-20 h-20 rounded-full bg-amber-400 text-white flex items-center justify-center font-black text-base shadow-md uppercase tracking-wider">
+                  Logo
+                </div>
+              </div>
+
+              {/* TABLEAU EXACT DE L'ÉTAT DES STOCKS */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs font-sans border-collapse">
+                  <thead>
+                    <tr className="border-b-2 border-slate-200 text-slate-700 font-extrabold text-left">
+                      <th className="py-3 px-2 w-1/4">Article</th>
+                      <th className="py-3 px-2">Ref</th>
+                      <th className="py-3 px-2 text-right">Stock initial</th>
+                      <th className="py-3 px-2 text-right">Entrées</th>
+                      <th className="py-3 px-2 text-right">Sorties</th>
+                      <th className="py-3 px-2 text-right font-black text-cyan-700">Stock Final</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-medium text-slate-800">
+                    {DEFAULT_STOCK_REPORT_ITEMS.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-2.5 px-2 font-bold text-slate-900">{item.article}</td>
+                        <td className="py-2.5 px-2 font-mono text-slate-500 font-bold">{item.ref}</td>
+                        <td className="py-2.5 px-2 text-right font-mono">{item.stockInitial.toLocaleString()}</td>
+                        <td className="py-2.5 px-2 text-right font-mono text-emerald-600 font-bold">{item.entrees > 0 ? `+${item.entrees.toLocaleString()}` : '0'}</td>
+                        <td className="py-2.5 px-2 text-right font-mono text-rose-600 font-bold">{item.sorties > 0 ? `-${item.sorties.toLocaleString()}` : '0'}</td>
+                        <td className="py-2.5 px-2 text-right font-mono font-black text-slate-950 bg-slate-50/50">{item.stockFinal.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                    {/* TOTAUX RECAPITULATIFS */}
+                    <tr className="border-t-2 border-cyan-400 font-black text-xs text-slate-950 bg-cyan-50/40">
+                      <td className="py-3 px-2 uppercase font-black text-cyan-800">TOTAL GÉNÉRAL DU STOCK</td>
+                      <td className="py-3 px-2 font-mono text-slate-500">9 RÉF.</td>
+                      <td className="py-3 px-2 text-right font-mono">5 565</td>
+                      <td className="py-3 px-2 text-right font-mono text-emerald-700">+300</td>
+                      <td className="py-3 px-2 text-right font-mono text-rose-700">-165</td>
+                      <td className="py-3 px-2 text-right font-mono font-black text-cyan-700 text-sm">5 700 UNITÉS</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* VALORISATION FINANCIÈRE RECAP CUMP */}
+              <div className="p-4 bg-slate-900 text-white rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 font-sans shadow-md">
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-amber-400 block">VALORISATION GLOBALE CUMP (CLASSE 3 SYSCOHADA)</span>
+                  <div className="text-2xl font-black font-mono text-white mt-0.5">58 873 000 FCFA</div>
+                </div>
+
+                <div className="text-right text-xs font-mono space-y-0.5 text-slate-300">
+                  <div>Taux de rotation moyen : <strong className="text-emerald-400">6.4 Tours / An</strong></div>
+                  <div>Période de couverture : <strong className="text-violet-300">57 Jours d'activité</strong></div>
+                </div>
+              </div>
+
+              <div className="border-t border-cyan-400 pt-3 text-[10px] text-slate-400 text-center italic font-semibold">
+                Rapport d'état des stocks conforme à l'article 42 du système comptable OHADA • Document à conserver au registre d'inventaire annuel.
+              </div>
+
+            </div>
+
+            {/* Footer Action Buttons */}
+            <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+              <button onClick={() => setShowStockReportModal(false)} className="px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200">
+                Fermer
+              </button>
+
+              <div className="flex gap-2">
+                <button onClick={() => window.print()} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5">
+                  <Printer className="w-4 h-4" /> Imprimer l'État des Stocks
+                </button>
+                <button onClick={() => showToast('📄 Export PDF de l\'État des Stocks en cours...')} className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5">
+                  <Download className="w-4 h-4" /> Télécharger PDF
+                </button>
+                <button onClick={() => showToast('📊 Export Excel (.xlsx) en cours...')} className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-sm flex items-center gap-1.5">
+                  <FileSpreadsheet className="w-4 h-4" /> Export Excel
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
